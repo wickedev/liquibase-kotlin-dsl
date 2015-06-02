@@ -282,6 +282,10 @@ class ChangeSetDelegate {
 		addChange(change)
 	}
 
+	void dropProcedure(Map params) {
+		addMapBasedChange('dropProcedure', DropProcedureChange, params)
+	}
+
 	void addLookupTable(Map params) {
 		addMapBasedChange('addLookupTable', AddLookupTableChange, params)
 	}
