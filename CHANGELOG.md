@@ -1,5 +1,7 @@
 Changes for 1.1.1
 =================
+- Updated the DSL to support Liquibase 3.3.5 (Issue 29 from the old repsitory)
+
 - Fixed a ```createProcedure``` bug and added support for ```dropProcedure```
   with thanks to Carlos Hernandez (Issue #3)
 Changes for 1.1.0

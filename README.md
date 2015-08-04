@@ -6,6 +6,9 @@ project was started by Tim Berglund, and is currently maintained by Steve
 Saliman.
 
 ## News
+###August 3, 2015
+The Liquibase Groovy DSL now supports Liquibase 3.3.5.
+
 ###May 16, 2015
 We are proud to announce that the Liquibase Groovy DSL is now a part of the 
 Liquibase organization.  I will continue maintain the code, but bringing this 
@@ -22,22 +25,6 @@ support in bringing the Liquibase project and the Groovy DSL into one home.
 The Liquibase Groovy DSL now supports Liquibase 3.3.2, and is built with Groovy
 2.4.1.  Version 1.0.2 fixes a bug with version 1.0.1 that prevented it from
 working with Java 7 or earler.
-
-###June 15, 2014
-We are proud to announce the long awaited release of version 1.0.0 of the 
-Liquibase Groovy parser. Version 1.0.0 uses version the latest release of 
-Liquibase (3.1.1), and it appears to work fine with both Gradle 1.x releases as
-well as the upcoming Gradle 2.0 release.
-
-Tim Berglund has asked me to take on the continued maintenance of this project,
-so I've had to change the maven group ID to one for which I have permission to 
-publish on Maven Central.  Going forward, this parser will be available under 
-the ```net.saliman``` group id.  The artifact ID, ```groovy-liquibase-dsl```,
-will remain the same.
-
-My thanks to Tim for the opportunity to help out with this great project.
- 
-Steve Saliman
 
 **IMPORTANT NOTE FOR USERS UPGRADING FROM A PRE 1.0.0 RELEASE OF THE GROOVY DSL:**
 
