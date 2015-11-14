@@ -16,9 +16,6 @@
 
 package org.liquibase.groovy.delegate
 
-import liquibase.change.ColumnConfig
-import liquibase.change.core.CreateIndexChange
-import liquibase.change.core.DropIndexChange
 import liquibase.changelog.ChangeLogParameters
 import liquibase.changelog.DatabaseChangeLog
 import liquibase.exception.ChangeLogParseException
@@ -550,16 +547,41 @@ databaseChangeLog {
 	}
 
 	/**
-	 * Try creating a property with all supported attributes.
+	 * Try creating a property with all supported attributes, and a boolean for
+	 * the global attribute.
 	 */
 	@Test
-	void propertyFull() {
+	void propertyFullBooleanGlobal() {
 		def changeLog = buildChangeLog {
-			property(name: 'emotion', value: 'angry', dbms: 'mysql', labels: 'test_label', context: 'test')
+			property(name: 'emotion', value: 'angry', dbms: 'mysql', labels: 'test_label', context: 'test', 'global': true)
 		}
 
 		// change log parameters are not exposed through the API, so get them
-		// using reflection.  Also, there are
+		// using reflection.
+		def changeLogParameters = changeLog.changeLogParameters
+		Field f = changeLogParameters.getClass().getDeclaredField("changeLogParameters")
+		f.setAccessible(true)
+		def properties = f.get(changeLogParameters)
+		def property = properties[properties.size()-1] // The last one is ours.
+		assertEquals 'emotion', property.key
+		assertEquals 'angry', property.value
+		assertEquals 'mysql', property.validDatabases[0]
+		assertEquals 'test', property.validContexts.contexts.toArray()[0]
+		assertEquals 'test_label', property.labels.toString()
+	}
+
+	/**
+	 * Try creating a property with all supported attributes and a String for
+	 * the global attribute.
+	 */
+	@Test
+	void propertyFullStringGlobal() {
+		def changeLog = buildChangeLog {
+			property(name: 'emotion', value: 'angry', dbms: 'mysql', labels: 'test_label', context: 'test', 'global': 'true')
+		}
+
+		// change log parameters are not exposed through the API, so get them
+		// using reflection.
 		def changeLogParameters = changeLog.changeLogParameters
 		Field f = changeLogParameters.getClass().getDeclaredField("changeLogParameters")
 		f.setAccessible(true)

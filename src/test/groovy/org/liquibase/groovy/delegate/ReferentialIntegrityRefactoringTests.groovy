@@ -98,7 +98,7 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 			addForeignKeyConstraint([:])
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -142,7 +142,7 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 							                onUpdate: 'CASCADE')
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -188,7 +188,7 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 							onUpdate: 'SET NULL')
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -233,7 +233,7 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 							onUpdate: 'NO ACTION')
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -276,7 +276,7 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 							onUpdate: 'NO ACTION')
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -307,7 +307,7 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 			dropForeignKeyConstraint([:])
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -331,7 +331,7 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 							                 constraintName: 'fk_monkey_emotion')
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -353,7 +353,7 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 			dropAllForeignKeyConstraints([:])
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -376,7 +376,7 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 							                     baseTableName: 'monkey')
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -397,7 +397,7 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 			addPrimaryKey([:])
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -427,7 +427,7 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 			              clustered: true)
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -452,7 +452,7 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 			dropPrimaryKey([:])
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -476,7 +476,7 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 							       constraintName: 'pk_monkey')
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()

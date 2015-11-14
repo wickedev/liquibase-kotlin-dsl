@@ -48,7 +48,11 @@ class GroovyChangeLogSerializer
 		['groovy']
 	}
 
-	/**
+	@Override
+	int getPriority() {
+		return PRIORITY_DEFAULT
+	}
+/**
 	 * Convert a single serializable Liquibase change into its Groovy
 	 * representation.
 	 * @param change the change to serialize.
@@ -64,7 +68,6 @@ class GroovyChangeLogSerializer
 
 	}
 
-//	@Override
 	@Override
 	void write(List changeSets, OutputStream out) {
 		out << 'databaseChangeLog {\n'

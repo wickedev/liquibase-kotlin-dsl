@@ -76,7 +76,7 @@ class CustomRefactoringTests extends ChangeSetTests {
 			sql ([:]) {}
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -100,7 +100,7 @@ class CustomRefactoringTests extends ChangeSetTests {
 			sql "UPDATE monkey SET emotion='ANGRY' WHERE id IN (1,2,3,4,5)"
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -125,7 +125,7 @@ class CustomRefactoringTests extends ChangeSetTests {
 			}
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -151,7 +151,7 @@ class CustomRefactoringTests extends ChangeSetTests {
 			}
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -180,7 +180,7 @@ class CustomRefactoringTests extends ChangeSetTests {
 			}
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -210,7 +210,7 @@ class CustomRefactoringTests extends ChangeSetTests {
 			}
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -239,7 +239,7 @@ class CustomRefactoringTests extends ChangeSetTests {
 			sqlFile(path: 'src/test/changelog/file.sql')
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -272,7 +272,7 @@ class CustomRefactoringTests extends ChangeSetTests {
 			        dbms: 'oracle')
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -298,7 +298,7 @@ class CustomRefactoringTests extends ChangeSetTests {
 			executeCommand([:]) {	}
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -321,7 +321,7 @@ class CustomRefactoringTests extends ChangeSetTests {
 			executeCommand([:])
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -345,7 +345,7 @@ class CustomRefactoringTests extends ChangeSetTests {
 							       os: 'Mac OS X, Linux')
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -374,7 +374,7 @@ class CustomRefactoringTests extends ChangeSetTests {
 			}
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -407,7 +407,7 @@ class CustomRefactoringTests extends ChangeSetTests {
 			}
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -433,7 +433,7 @@ class CustomRefactoringTests extends ChangeSetTests {
 			customChange(class: 'org.liquibase.change.custom.MonkeyChange')
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -452,7 +452,7 @@ class CustomRefactoringTests extends ChangeSetTests {
 			}
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
@@ -482,7 +482,7 @@ class CustomRefactoringTests extends ChangeSetTests {
 			}
 		}
 
-		assertEquals 0, changeSet.getRollBackChanges().length
+		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 0, changes.size()
