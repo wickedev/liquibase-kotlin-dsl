@@ -6,6 +6,9 @@ project was started by Tim Berglund, and is currently maintained by Steve
 Saliman.
 
 ## News
+###November 30, 2015
+The Liquibase Groovy DSL now supports Liquibase 3.4.2.
+
 ###August 3, 2015
 The Liquibase Groovy DSL now supports Liquibase 3.3.5.
 

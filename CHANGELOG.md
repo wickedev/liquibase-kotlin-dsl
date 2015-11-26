@@ -1,9 +1,15 @@
+Changes for 1.2.0
+================
+- Updated the DSL to support Liquibase 3.4.2 (Issues 4 and 6 from the Gradle
+  plugin repository)
+
 Changes for 1.1.1
 =================
 - Updated the DSL to support Liquibase 3.3.5 (Issue 29 from the old repsitory)
 
 - Fixed a ```createProcedure``` bug and added support for ```dropProcedure```
   with thanks to Carlos Hernandez (Issue #3)
+
 Changes for 1.1.0
 =================
 - Refactored the project to fit into the Liquibase organization.
