@@ -64,7 +64,11 @@ documented separately from the Liquibase XML format.  We will, however let you
 know about the minor differences or enhancements to the XML format, and help out
 with a couple of the gaping holes in Liquibase's documentation of the XML.
 
-##### Deprecated Items
+##### Deprecated and Unsupported Items
+* Liquibase has a ```whereParam``` element for changes like the ```update``` 
+  change.  It isn't documented in the Liquibase documentation, and I just don't
+   see the any benefits of using it value of it over the simpler ```where``` 
+   element, so it has been left out of the Groovy DSL.
 * In the Liquibase XML, you can set a ```sql``` attribute in a ```sqlFile```
   change, but that doesn't make a lot sense, so this has been disabled in the
   Groovy DSL.
