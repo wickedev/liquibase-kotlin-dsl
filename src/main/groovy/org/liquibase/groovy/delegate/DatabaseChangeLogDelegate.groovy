@@ -19,6 +19,8 @@ package org.liquibase.groovy.delegate
 import liquibase.ContextExpression
 import liquibase.Labels
 import liquibase.changelog.ChangeSet
+import liquibase.changelog.IncludeAllFilter
+import liquibase.database.ObjectQuotingStrategy
 import liquibase.exception.ChangeLogParseException
 import liquibase.parser.ChangeLogParserFactory
 
@@ -67,29 +69,31 @@ class DatabaseChangeLogDelegate {
 			throw new ChangeLogParseException("Error: ChangeSet '${params.id}': the alwaysRun attribute of a changeSet has been removed.  Please use 'runAlways' instead.")
 		}
 
-		def unsupportedKeys = params.keySet() - ['id', 'author', 'dbms', 'runAlways', 'runOnChange', 'context', 'labels', 'runInTransaction', 'failOnError', 'onValidationFail']
+		def unsupportedKeys = params.keySet() - ['id', 'author', 'dbms', 'runAlways', 'runOnChange', 'context', 'labels', 'runInTransaction', 'failOnError', 'onValidationFail', 'objectQuotingStrategy']
 		if (unsupportedKeys.size() > 0) {
 			throw new ChangeLogParseException("ChangeSet '${params.id}': ${unsupportedKeys.toArray()[0]} is not a supported ChangeSet attribute")
 		}
 
-		// Groovy's "elvis" operator doesn't work for runInTransaction because
-		// it uses the default for a false value. This works fine when the default
-		// is false, but we want this one to default to true.
-		def runInTransaction = true
-		if (params.containsKey('runInTransaction')) {
-			runInTransaction = params.runInTransaction.toBoolean()
+		def objectQuotingStrategy = null
+		if ( params.containsKey("objectQuotingStrategy") ) {
+			try {
+				objectQuotingStrategy = ObjectQuotingStrategy.valueOf(params.objectQuotingStrategy)
+			} catch ( IllegalArgumentException e) {
+				throw new ChangeLogParseException("ChangeSet '${params.id}': ${params.objectQuotingStrategy} is not a supported ChangeSet ObjectQuotingStrategy")
+			}
 		}
 
 		// Todo: We should probably support expanded expressions here...
 		def changeSet = new ChangeSet(
 				params.id,
 				params.author,
-				params.runAlways?.toBoolean() ?: false, // convert null to false
-				params.runOnChange?.toBoolean() ?: false, // convert null to false
+				DelegateUtil.parseTruth(params.runAlways, false),
+				DelegateUtil.parseTruth(params.runOnChange, false),
 				databaseChangeLog.filePath,
 				params.context,
 				params.dbms,
-				runInTransaction,
+				DelegateUtil.parseTruth(params.runInTransaction, true),
+				objectQuotingStrategy,
 				databaseChangeLog)
 
 		if (params.containsKey('failOnError')) {
@@ -114,11 +118,6 @@ class DatabaseChangeLogDelegate {
 		databaseChangeLog.addChangeSet(changeSet)
 	}
 
-
-	void preConditions(Map params = [:], Closure closure) {
-		databaseChangeLog.preconditions = PreconditionDelegate.buildPreconditionContainer(databaseChangeLog, '<none>', params, closure)
-	}
-
 	/**
 	 * Process the include element to include a file with change sets.
 	 * @param params
@@ -136,11 +135,8 @@ class DatabaseChangeLogDelegate {
 		}
 
 		def physicalChangeLogLocation = databaseChangeLog.physicalFilePath.replace(System.getProperty("user.dir").toString() + "/", "")
-		def relativeToChangelogFile = false
 
-		if (params.relativeToChangelogFile) {
-			relativeToChangelogFile = params.relativeToChangelogFile
-		}
+		def relativeToChangelogFile = DelegateUtil.parseTruth(params.relativeToChangelogFile, false)
 
 		if (relativeToChangelogFile && (physicalChangeLogLocation.contains("/") || physicalChangeLogLocation.contains("\\\\"))) {
 			params.file = physicalChangeLogLocation.replaceFirst("/[^/]*\$", "") + "/" + params.file
@@ -156,33 +152,54 @@ class DatabaseChangeLogDelegate {
 	// Todo: We should probably support expanded expressions here...
 	void includeAll(Map params = [:]) {
 		// validate parameters.
-		def unsupportedKeys = params.keySet() - ['path', 'relativeToChangelogFile']
+		def unsupportedKeys = params.keySet() - ['path', 'relativeToChangelogFile', 'errorIfMissingOrEmpty', 'resourceFilter']
 		if (unsupportedKeys.size() > 0) {
 			throw new ChangeLogParseException("DatabaseChangeLog:  '${unsupportedKeys.toArray()[0]}' is not a supported attribute of the 'includeAll' element.")
 		}
 
 		def physicalChangeLogLocation = databaseChangeLog.physicalFilePath.replace(System.getProperty("user.dir").toString() + "/", "")
-		def relativeToChangelogFile = false
-
-		if (params.relativeToChangelogFile) {
-			relativeToChangelogFile = params.relativeToChangelogFile
-		}
+		def relativeToChangelogFile = DelegateUtil.parseTruth(params.relativeToChangelogFile, false)
+		def errorIfMissingOrEmpty = DelegateUtil.parseTruth(params.errorIfMissingOrEmpty, true)
 
 		if (relativeToChangelogFile && (physicalChangeLogLocation.contains("/") || physicalChangeLogLocation.contains("\\\\"))) {
 			params.path = physicalChangeLogLocation.replaceFirst("/[^/]*\$", "") + "/" + params.path
 		}
 
-		def files = []
-		new File(params.path).eachFileMatch(~/.*.groovy/) { file ->
-			files << file.path
+		IncludeAllFilter resourceFilter = null
+		if ( params.resourceFilter ) {
+			resourceFilter = (IncludeAllFilter) Class.forName(params.resourceFilter).newInstance();
 		}
 
-		files.sort().each { filename ->
-			includeChangeLog(filename)
+		def files = []
+
+		try {
+			new File(params.path).eachFileMatch(~/.*.groovy/) { file ->
+				if (resourceFilter == null || resourceFilter.include(file.path)) {
+					files << file.path
+				}
+			}
+
+			// if files is empty, and errIfMissing, error.
+			if ( files.size() < 1 && errorIfMissingOrEmpty ) {
+				throw new ChangeLogParseException("DatabaseChangeLog: includeAll path '${params.path} does not exist, or has no files that match the filter.")
+			}
+			files.sort().each { filename ->
+				includeChangeLog(filename)
+			}
+		} catch (FileNotFoundException fne) {
+			// unless we've set the errorIfMissingOrEmpty  property to false,
+			// we want to throw an exception.  If we had set it to false, eat
+			// the exception.
+			if ( errorIfMissingOrEmpty ) {
+				throw new ChangeLogParseException("DatabaseChangeLog: includeAll path '${params.path} does not exist, or has no files that match the filter.")
+			}
 		}
 	}
 
-
+	/**
+	 * Helper method to do the actual work of including a changelog file.
+	 * @param filename the file to include.
+	 */
 	private def includeChangeLog(filename) {
 		def parser = ChangeLogParserFactory.getInstance().getParser(filename, resourceAccessor)
 		def includedChangeLog = parser.parse(filename, databaseChangeLog.changeLogParameters, resourceAccessor)
@@ -192,6 +209,15 @@ class DatabaseChangeLogDelegate {
 		includedChangeLog?.preconditionContainer?.nestedPreconditions.each { precondition ->
 			databaseChangeLog.preconditionContainer.addNestedPrecondition(precondition)
 		}
+	}
+
+	/**
+	 * Process nested preConditions elements in a database change log.
+	 * @param params the attributes of the preConditions
+	 * @param closure the closure containing nested elements of a precondition.
+	 */
+	void preConditions(Map params = [:], Closure closure) {
+		databaseChangeLog.preconditions = PreconditionDelegate.buildPreconditionContainer(databaseChangeLog, '<none>', params, closure)
 	}
 
 	/**
@@ -214,15 +240,8 @@ class DatabaseChangeLogDelegate {
 			labels = new Labels(params['labels'])
 		}
 		def dbms = params['dbms'] ?: null
-		def global = true // The default prior to Liquibase 3.4
-		def globalParam = params['global']
-		if (globalParam != null) {
-			if ( globalParam instanceof Boolean ) {
-				global = globalParam
-			} else {
-				global = globalParam.toString().equalsIgnoreCase("true")
-			}
-		}
+		// The default for global was true prior to Liquibase 3.4
+		def global = DelegateUtil.parseTruth(params.global, true)
 
 		def changeLogParameters = databaseChangeLog.changeLogParameters
 

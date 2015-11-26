@@ -172,583 +172,6 @@ class StructuralRefactoringTests extends ChangeSetTests {
 	}
 
 	/**
-	 * Test parsing a renameColumn change when we have no attributes to make sure
-	 * the DSL doesn't introduce any unintended defaults.
-	 */
-	@Test
-	void renameColumnEmpty() {
-		buildChangeSet {
-			renameColumn([:])
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof RenameColumnChange
-		assertNull changes[0].catalogName
-		assertNull changes[0].schemaName
-		assertNull changes[0].tableName
-		assertNull changes[0].oldColumnName
-		assertNull changes[0].newColumnName
-		assertNull changes[0].columnDataType
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing a renameColumn change when we have all supported attributes.
-	 */
-	@Test
-	void renameColumnFull() {
-		buildChangeSet {
-			renameColumn(catalogName: 'catalog',
-							     schemaName: 'schema',
-							     tableName: 'monkey',
-							     oldColumnName: 'fail',
-							     newColumnName: 'win',
-							     columnDataType: 'varchar(9001)')
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof RenameColumnChange
-		assertEquals 'catalog', changes[0].catalogName
-		assertEquals 'schema', changes[0].schemaName
-		assertEquals 'monkey', changes[0].tableName
-		assertEquals 'fail', changes[0].oldColumnName
-		assertEquals 'win', changes[0].newColumnName
-		assertEquals 'varchar(9001)', changes[0].columnDataType
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing a dropColumn change with no attributes and and empty closure.
-	 * This just makes sure the DSL doesn't introduce any unexpected defaults.
-	 */
-	@Test
-	void dropColumnEmpty() {
-		buildChangeSet {
-			dropColumn([:]) { }
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof DropColumnChange
-		assertNull changes[0].catalogName
-		assertNull changes[0].schemaName
-		assertNull changes[0].tableName
-		assertNull changes[0].columnName
-		assertEquals 0, changes[0].columns.size()
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing a delete change when we have all attributes and a column
-	 * closure.  This probably wouldn't ever get used, but we will support it.
-	 */
-	@Test
-	void dropColumnFull() {
-		buildChangeSet {
-			dropColumn(catalogName: 'catalog',
-							schemaName: 'schema',
-							tableName: 'monkey',
-							columnName: 'emotion') {
-				column(name: 'monkey_status')
-				column(name: 'monkey_business')
-			}
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof DropColumnChange
-		assertEquals 'catalog', changes[0].catalogName
-		assertEquals 'schema', changes[0].schemaName
-		assertEquals 'monkey', changes[0].tableName
-		assertEquals 'emotion', changes[0].columnName
-		def columns = changes[0].columns
-		assertNotNull columns
-		assertEquals 2, columns.size()
-		assertEquals 'monkey_status', columns[0].name
-		assertEquals 'monkey_business', columns[1].name
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing a dropColumn change without a closure. This is the use case
-	 * when we put the column names in an attribute instead of the closure, and
-	 * is the original way the dropColumn method was used.
-	 */
-	@Test
-	void dropColumnNoClosure() {
-		buildChangeSet {
-			dropColumn(catalogName: 'catalog',
-							schemaName: 'schema',
-							tableName: 'monkey',
-							columnName: 'emotion')
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof DropColumnChange
-		assertEquals 'catalog', changes[0].catalogName
-		assertEquals 'schema', changes[0].schemaName
-		assertEquals 'monkey', changes[0].tableName
-		assertEquals 'emotion', changes[0].columnName
-		def columns = changes[0].columns
-		assertNotNull columns
-		assertEquals 0, columns.size()
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing a delete change when we have an invalid method in the closure.
-	 * This is not allowed and should be caught by the parser.
-	 */
-	@Test(expected = ChangeLogParseException)
-	void deleteDataWithColumns() {
-		buildChangeSet {
-			dropColumn(catalogName: 'catalog',
-							schemaName: 'schema',
-							tableName: 'monkey',
-							columnName: 'emotion') {
-				where(name: 'emotion')
-			}
-		}
-	}
-
-	/**
-	 * Test parsing a createTable change when we have no attributes and an empty
-	 * closure.  This just makes sure the DSL doesn't add any defaults.  We
-	 * don't need to support no map or no closure because it makes no sense to
-	 * have a createTable without at least a name and one column.
-	 */
-	@Test
-	void createTableEmpty() {
-		buildChangeSet {
-			createTable([:]) {}
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof CreateTableChange
-		assertNull changes[0].catalogName
-		assertNull changes[0].schemaName
-		assertNull changes[0].tablespace
-		assertNull changes[0].tableName
-		assertNull changes[0].remarks
-
-		def columns = changes[0].columns
-		assertNotNull columns
-		assertEquals 0, columns.size()
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing a createTable change with all supported attributes and a
-	 * couple of columns.
-	 */
-	@Test
-	void createTableFull() {
-		buildChangeSet {
-			createTable(catalogName: 'catalog',
-							    schemaName: 'schema',
-							    tablespace: 'oracle_tablespace',
-							    tableName: 'monkey',
-							    remarks: 'angry') {
-				column(name: 'status', type: 'varchar(100)')
-				column(name: 'id', type: 'int')
-			}
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof CreateTableChange
-		assertEquals 'catalog', changes[0].catalogName
-		assertEquals 'schema', changes[0].schemaName
-		assertEquals 'oracle_tablespace', changes[0].tablespace
-		assertEquals 'monkey', changes[0].tableName
-		assertEquals 'angry', changes[0].remarks
-
-		def columns = changes[0].columns
-		assertNotNull columns
-		assertEquals 2, columns.size()
-		assertTrue columns[0] instanceof ColumnConfig
-		assertEquals 'status', columns[0].name
-		assertEquals 'varchar(100)', columns[0].type
-		assertTrue columns[1] instanceof ColumnConfig
-		assertEquals 'id', columns[1].name
-		assertEquals 'int', columns[1].type
-		assertNoOutput()
-	}
-
-	/**
-	 * A where clause is not valid for createTable, so try one and make sure it
-	 * gets rejected.
-	 */
-	@Test(expected = ChangeLogParseException)
-	void createTableWithWhereClause() {
-		buildChangeSet {
-			createTable(catalogName: 'zoo', schemaName: 'animal', tableName: 'monkey') {
-				where "invalid"
-			}
-		}
-	}
-
-	/**
-	 * Test parsing a renameTable change when we have no attributes to make sure
-	 * we don't get any unintended defautls.
-	 */
-	@Test
-	void renameTableEmpty() {
-		buildChangeSet {
-			renameTable([:])
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof RenameTableChange
-		assertNull changes[0].catalogName
-		assertNull changes[0].schemaName
-		assertNull changes[0].oldTableName
-		assertNull changes[0].newTableName
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing a renameTable change with all supported attributes.
-	 */
-	@Test
-	void renameTableFull() {
-		buildChangeSet {
-			renameTable(catalogName: 'catalog',
-							    schemaName: 'schema',
-							    oldTableName: 'fail_table',
-							    newTableName: 'win_table')
-		}
-
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof RenameTableChange
-		assertEquals 'catalog', changes[0].catalogName
-		assertEquals 'schema', changes[0].schemaName
-		assertEquals 'fail_table', changes[0].oldTableName
-		assertEquals 'win_table', changes[0].newTableName
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing a dropTable change with no attributes to make sure the DSL
-	 * doesn't introduce any unexpected changes.
-	 */
-	@Test
-	void dropTableEmpty() {
-		buildChangeSet {
-			dropTable([:])
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof DropTableChange
-		assertNull changes[0].catalogName
-		assertNull changes[0].schemaName
-		assertNull changes[0].tableName
-		assertNull changes[0].cascadeConstraints
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing a dropTable change with all supported attributes.
-	 */
-	@Test
-	void dropTableFull() {
-		buildChangeSet {
-			dropTable(catalogName: 'catalog',
-							  schemaName: 'schema',
-							  tableName: 'fail_table',
-							  cascadeConstraints: true)
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof DropTableChange
-		assertEquals 'catalog', changes[0].catalogName
-		assertEquals 'schema', changes[0].schemaName
-		assertEquals 'fail_table', changes[0].tableName
-		assertTrue changes[0].cascadeConstraints
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing a createView change with an empty attribute map and an empty
-	 * closure to make sure the DSL doesn't introduce any defaults.
-	 */
-	@Test
-	void createViewEmpty() {
-		buildChangeSet {
-			createView([:]) {}
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof CreateViewChange
-		assertNull changes[0].catalogName
-		assertNull changes[0].schemaName
-		assertNull changes[0].viewName
-		assertNull changes[0].replaceIfExists
-		assertNull changes[0].fullDefinition
-		assertNull changes[0].selectQuery
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing a createView change with all supported attributes and a
-	 * closure.  Since createView changes need to have at least a name and
-	 * query, we don't need to test for sql by itself.
-	 */
-	@Test
-	void createViewFull() {
-		buildChangeSet {
-			createView(catalogName: 'catalog',
-							   schemaName: 'schema',
-							   viewName: 'monkey_view',
-							   replaceIfExists: true,
-			           fullDefinition: false) {
-				"SELECT * FROM monkey WHERE state='angry'"
-			}
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof CreateViewChange
-		assertEquals 'catalog', changes[0].catalogName
-		assertEquals 'schema', changes[0].schemaName
-		assertEquals 'monkey_view', changes[0].viewName
-		assertTrue changes[0].replaceIfExists
-		assertFalse changes[0].fullDefinition
-		assertEquals "SELECT * FROM monkey WHERE state='angry'", changes[0].selectQuery
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing a renameView change when we have no attributes to make sure
-	 * we don't get any unintended defaults.
-	 */
-	@Test
-	void renameViewEmpty() {
-		buildChangeSet {
-			renameView([:])
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof RenameViewChange
-		assertNull changes[0].catalogName
-		assertNull changes[0].schemaName
-		assertNull changes[0].oldViewName
-		assertNull changes[0].newViewName
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing a renameView change with all the supported attributes.
-	 */
-	@Test
-	void renameViewFull() {
-		buildChangeSet {
-			renameView(catalogName: 'catalog',
-							   schemaName: 'schema',
-							   oldViewName: 'fail_view',
-							   newViewName: 'win_view')
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof RenameViewChange
-		assertEquals 'catalog', changes[0].catalogName
-		assertEquals 'schema', changes[0].schemaName
-		assertEquals 'fail_view', changes[0].oldViewName
-		assertEquals 'win_view', changes[0].newViewName
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing a dropView change with no attributes to make sure the DSL
-	 * doesn't introduce any unexpected defaults.
-	 */
-	@Test
-	void dropViewEmpty() {
-		buildChangeSet {
-			dropView([:])
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof DropViewChange
-		assertNull changes[0].catalogName
-		assertNull changes[0].schemaName
-		assertNull changes[0].viewName
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing a dropView change with all supported options
-	 */
-	@Test
-	void dropViewFull() {
-		buildChangeSet {
-			dropView(catalogName: 'catalog',
-							 schemaName: 'schema',
-							 viewName: 'fail_view')
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof DropViewChange
-		assertEquals 'catalog', changes[0].catalogName
-		assertEquals 'schema', changes[0].schemaName
-		assertEquals 'fail_view', changes[0].viewName
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing a mergeColumn change when there are no attributes to make sure
-	 * the DSL doesn't introduce unintended defaults.
-	 */
-	@Test
-	void mergeColumnsEmpty() {
-		buildChangeSet {
-			mergeColumns([:])
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof MergeColumnChange
-		assertNull changes[0].catalogName
-		assertNull changes[0].schemaName
-		assertNull changes[0].tableName
-		assertNull changes[0].column1Name
-		assertNull changes[0].column2Name
-		assertNull changes[0].finalColumnName
-		assertNull changes[0].finalColumnType
-		assertNull changes[0].joinString
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing a mergeColumn change when we have all supported attributes.
-	 */
-	@Test
-	void mergeColumnsFull() {
-		buildChangeSet {
-			mergeColumns(catalogName: 'catalog',
-							     schemaName: 'schema',
-							     tableName: 'table',
-							     column1Name: 'first_name',
-							     column2Name: 'last_name',
-							     finalColumnName: 'full_name',
-							     finalColumnType: 'varchar(99)',
-							     joinString: ' ')
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof MergeColumnChange
-		assertEquals 'catalog', changes[0].catalogName
-		assertEquals 'schema', changes[0].schemaName
-		assertEquals 'table', changes[0].tableName
-		assertEquals 'first_name', changes[0].column1Name
-		assertEquals 'last_name', changes[0].column2Name
-		assertEquals 'full_name', changes[0].finalColumnName
-		assertEquals 'varchar(99)', changes[0].finalColumnType
-		assertEquals ' ', changes[0].joinString
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing a mergeColumn change when there are no attributes to make sure
-	 * the DSL doesn't introduce unintended defaults.
-	 */
-	@Test
-	void modifyDataTypeEmpty() {
-		buildChangeSet {
-			modifyDataType([:])
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof ModifyDataTypeChange
-		assertNull changes[0].catalogName
-		assertNull changes[0].schemaName
-		assertNull changes[0].tableName
-		assertNull changes[0].columnName
-		assertNull changes[0].newDataType
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing a mergeColumn change when we have all supported attributes.
-	 */
-	@Test
-	void modifyDataTypeFull() {
-		buildChangeSet {
-			modifyDataType(catalogName: 'catalog',
-							schemaName: 'schema',
-							tableName: 'table',
-							columnName: 'first_name',
-							newDataType: 'varchar(99)')
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof ModifyDataTypeChange
-		assertEquals 'catalog', changes[0].catalogName
-		assertEquals 'schema', changes[0].schemaName
-		assertEquals 'table', changes[0].tableName
-		assertEquals 'first_name', changes[0].columnName
-		assertEquals 'varchar(99)', changes[0].newDataType
-		assertNoOutput()
-	}
-
-	/**
 	 * Test parsing a createProcedure change when we have an empty map and
 	 * closure to make sure the DSL doesn't try to set any defaults.
 	 */
@@ -858,15 +281,16 @@ BEGIN
  -- do something with the monkey
 END;"""
 		buildChangeSet {
-			createProcedure(comments: 'someComments',
-			                catalogName: 'catalog',
-			                schemaName: 'schema',
-			                procedureName: 'procedure',
-			                dbms: 'mysql',
-			                path: 'mypath',
-			                relativeToChangelogFile: false,
-			                encoding: 'utf8',
-			                replaceIfExists: true) { sql }
+			createProcedure(
+					comments: 'someComments',
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					procedureName: 'procedure',
+					dbms: 'mysql',
+					path: 'mypath',
+					relativeToChangelogFile: false,
+					encoding: 'utf8',
+					replaceIfExists: true) { sql }
 		}
 
 		assertEquals 0, changeSet.rollback.changes.size()
@@ -956,6 +380,248 @@ END;"""
 	}
 
 	/**
+	 * Test parsing a createTable change when we have no attributes and an empty
+	 * closure.  This just makes sure the DSL doesn't add any defaults.  We
+	 * don't need to support no map or no closure because it makes no sense to
+	 * have a createTable without at least a name and one column.
+	 */
+	@Test
+	void createTableEmpty() {
+		buildChangeSet {
+			createTable([:]) {}
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof CreateTableChange
+		assertNull changes[0].catalogName
+		assertNull changes[0].schemaName
+		assertNull changes[0].tablespace
+		assertNull changes[0].tableName
+		assertNull changes[0].remarks
+
+		def columns = changes[0].columns
+		assertNotNull columns
+		assertEquals 0, columns.size()
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a createTable change with all supported attributes and a
+	 * couple of columns.
+	 */
+	@Test
+	void createTableFull() {
+		buildChangeSet {
+			createTable(
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					tablespace: 'oracle_tablespace',
+					tableName: 'monkey',
+					remarks: 'angry') {
+				column(name: 'status', type: 'varchar(100)')
+				column(name: 'id', type: 'int')
+			}
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof CreateTableChange
+		assertEquals 'catalog', changes[0].catalogName
+		assertEquals 'schema', changes[0].schemaName
+		assertEquals 'oracle_tablespace', changes[0].tablespace
+		assertEquals 'monkey', changes[0].tableName
+		assertEquals 'angry', changes[0].remarks
+
+		def columns = changes[0].columns
+		assertNotNull columns
+		assertEquals 2, columns.size()
+		assertTrue columns[0] instanceof ColumnConfig
+		assertEquals 'status', columns[0].name
+		assertEquals 'varchar(100)', columns[0].type
+		assertTrue columns[1] instanceof ColumnConfig
+		assertEquals 'id', columns[1].name
+		assertEquals 'int', columns[1].type
+		assertNoOutput()
+	}
+
+	/**
+	 * A where clause is not valid for createTable, so try one and make sure it
+	 * gets rejected.
+	 */
+	@Test(expected = ChangeLogParseException)
+	void createTableWithWhereClause() {
+		buildChangeSet {
+			createTable(catalogName: 'zoo', schemaName: 'animal', tableName: 'monkey') {
+				where "invalid"
+			}
+		}
+	}
+
+	/**
+	 * Test parsing a createView change with an empty attribute map and an empty
+	 * closure to make sure the DSL doesn't introduce any defaults.
+	 */
+	@Test
+	void createViewEmpty() {
+		buildChangeSet {
+			createView([:]) {}
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof CreateViewChange
+		assertNull changes[0].catalogName
+		assertNull changes[0].schemaName
+		assertNull changes[0].viewName
+		assertNull changes[0].replaceIfExists
+		assertNull changes[0].fullDefinition
+		assertNull changes[0].selectQuery
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a createView change with all supported attributes and a
+	 * closure.  Since createView changes need to have at least a name and
+	 * query, we don't need to test for sql by itself.
+	 */
+	@Test
+	void createViewFull() {
+		buildChangeSet {
+			createView(
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					viewName: 'monkey_view',
+					replaceIfExists: true,
+					fullDefinition: false) {
+				"SELECT * FROM monkey WHERE state='angry'"
+			}
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof CreateViewChange
+		assertEquals 'catalog', changes[0].catalogName
+		assertEquals 'schema', changes[0].schemaName
+		assertEquals 'monkey_view', changes[0].viewName
+		assertTrue changes[0].replaceIfExists
+		assertFalse changes[0].fullDefinition
+		assertEquals "SELECT * FROM monkey WHERE state='angry'", changes[0].selectQuery
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a dropColumn change with no attributes and and empty closure.
+	 * This just makes sure the DSL doesn't introduce any unexpected defaults.
+	 */
+	@Test
+	void dropColumnEmpty() {
+		buildChangeSet {
+			dropColumn([:]) { }
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof DropColumnChange
+		assertNull changes[0].catalogName
+		assertNull changes[0].schemaName
+		assertNull changes[0].tableName
+		assertNull changes[0].columnName
+		assertEquals 0, changes[0].columns.size()
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a delete change when we have all attributes and a column
+	 * closure.  This probably wouldn't ever get used, but we will support it.
+	 */
+	@Test
+	void dropColumnFull() {
+		buildChangeSet {
+			dropColumn(catalogName: 'catalog',
+					   schemaName: 'schema',
+					   tableName: 'monkey',
+					   columnName: 'emotion') {
+				column(name: 'monkey_status')
+				column(name: 'monkey_business')
+			}
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof DropColumnChange
+		assertEquals 'catalog', changes[0].catalogName
+		assertEquals 'schema', changes[0].schemaName
+		assertEquals 'monkey', changes[0].tableName
+		assertEquals 'emotion', changes[0].columnName
+		def columns = changes[0].columns
+		assertNotNull columns
+		assertEquals 2, columns.size()
+		assertEquals 'monkey_status', columns[0].name
+		assertEquals 'monkey_business', columns[1].name
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a dropColumn change without a closure. This is the use case
+	 * when we put the column names in an attribute instead of the closure, and
+	 * is the original way the dropColumn method was used.
+	 */
+	@Test
+	void dropColumnNoClosure() {
+		buildChangeSet {
+			dropColumn(
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					tableName: 'monkey',
+					columnName: 'emotion'
+			)
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof DropColumnChange
+		assertEquals 'catalog', changes[0].catalogName
+		assertEquals 'schema', changes[0].schemaName
+		assertEquals 'monkey', changes[0].tableName
+		assertEquals 'emotion', changes[0].columnName
+		def columns = changes[0].columns
+		assertNotNull columns
+		assertEquals 0, columns.size()
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a dropColumn change when we have an invalid method in the
+	 * closure. This is not allowed and should be caught by the parser.
+	 */
+	@Test(expected = ChangeLogParseException)
+	void dropColumnWithWhere() {
+		buildChangeSet {
+			dropColumn(catalogName: 'catalog',
+					   schemaName: 'schema',
+					   tableName: 'monkey',
+					   columnName: 'emotion') {
+				where(name: 'emotion')
+			}
+		}
+	}
+
+	/**
 	 * Test the dropProcedure changeSet with no attributes to make sure the
 	 * DSL doesn't try to set any defaults.
 	 */
@@ -971,8 +637,8 @@ END;"""
 		assertEquals 1, changes.size()
 		assertTrue changes[0] instanceof DropProcedureChange
 		assertNull changes[0].catalogName
-		assertNull changes[0].procedureName
 		assertNull changes[0].schemaName
+		assertNull changes[0].procedureName
 		assertNoOutput()
 	}
 
@@ -982,9 +648,11 @@ END;"""
 	@Test
 	void dropProcedureFull() {
 		buildChangeSet {
-			dropProcedure(catalogName: 'catalog',
-					procedureName: 'procedureName',
-					schemaName: 'schema')
+			dropProcedure(
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					procedureName: 'procedureName'
+			)
 		}
 
 		assertEquals 0, changeSet.rollback.changes.size()
@@ -993,9 +661,367 @@ END;"""
 		assertEquals 1, changes.size()
 		assertTrue changes[0] instanceof DropProcedureChange
 		assertEquals 'catalog', changes[0].catalogName
-		assertEquals 'procedureName', changes[0].procedureName
 		assertEquals 'schema', changes[0].schemaName
+		assertEquals 'procedureName', changes[0].procedureName
 		assertNoOutput()
 	}
+
+	/**
+	 * Test parsing a dropTable change with no attributes to make sure the DSL
+	 * doesn't introduce any unexpected changes.
+	 */
+	@Test
+	void dropTableEmpty() {
+		buildChangeSet {
+			dropTable([:])
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof DropTableChange
+		assertNull changes[0].catalogName
+		assertNull changes[0].schemaName
+		assertNull changes[0].tableName
+		assertNull changes[0].cascadeConstraints
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a dropTable change with all supported attributes.
+	 */
+	@Test
+	void dropTableFull() {
+		buildChangeSet {
+			dropTable(
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					tableName: 'fail_table',
+					cascadeConstraints: true
+			)
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof DropTableChange
+		assertEquals 'catalog', changes[0].catalogName
+		assertEquals 'schema', changes[0].schemaName
+		assertEquals 'fail_table', changes[0].tableName
+		assertTrue changes[0].cascadeConstraints
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a dropView change with no attributes to make sure the DSL
+	 * doesn't introduce any unexpected defaults.
+	 */
+	@Test
+	void dropViewEmpty() {
+		buildChangeSet {
+			dropView([:])
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof DropViewChange
+		assertNull changes[0].catalogName
+		assertNull changes[0].schemaName
+		assertNull changes[0].viewName
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a dropView change with all supported options
+	 */
+	@Test
+	void dropViewFull() {
+		buildChangeSet {
+			dropView(
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					viewName: 'fail_view'
+			)
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof DropViewChange
+		assertEquals 'catalog', changes[0].catalogName
+		assertEquals 'schema', changes[0].schemaName
+		assertEquals 'fail_view', changes[0].viewName
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a mergeColumn change when there are no attributes to make sure
+	 * the DSL doesn't introduce unintended defaults.
+	 */
+	@Test
+	void mergeColumnsEmpty() {
+		buildChangeSet {
+			mergeColumns([:])
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof MergeColumnChange
+		assertNull changes[0].catalogName
+		assertNull changes[0].schemaName
+		assertNull changes[0].tableName
+		assertNull changes[0].column1Name
+		assertNull changes[0].column2Name
+		assertNull changes[0].finalColumnName
+		assertNull changes[0].finalColumnType
+		assertNull changes[0].joinString
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a mergeColumn change when we have all supported attributes.
+	 */
+	@Test
+	void mergeColumnsFull() {
+		buildChangeSet {
+			mergeColumns(
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					tableName: 'table',
+					column1Name: 'first_name',
+					column2Name: 'last_name',
+					finalColumnName: 'full_name',
+					finalColumnType: 'varchar(99)',
+					joinString: ' '
+			)
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof MergeColumnChange
+		assertEquals 'catalog', changes[0].catalogName
+		assertEquals 'schema', changes[0].schemaName
+		assertEquals 'table', changes[0].tableName
+		assertEquals 'first_name', changes[0].column1Name
+		assertEquals 'last_name', changes[0].column2Name
+		assertEquals 'full_name', changes[0].finalColumnName
+		assertEquals 'varchar(99)', changes[0].finalColumnType
+		assertEquals ' ', changes[0].joinString
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a mergeColumn change when there are no attributes to make sure
+	 * the DSL doesn't introduce unintended defaults.
+	 */
+	@Test
+	void modifyDataTypeEmpty() {
+		buildChangeSet {
+			modifyDataType([:])
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof ModifyDataTypeChange
+		assertNull changes[0].catalogName
+		assertNull changes[0].schemaName
+		assertNull changes[0].tableName
+		assertNull changes[0].columnName
+		assertNull changes[0].newDataType
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a mergeColumn change when we have all supported attributes.
+	 */
+	@Test
+	void modifyDataTypeFull() {
+		buildChangeSet {
+			modifyDataType(
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					tableName: 'table',
+					columnName: 'first_name',
+					newDataType: 'varchar(99)'
+			)
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof ModifyDataTypeChange
+		assertEquals 'catalog', changes[0].catalogName
+		assertEquals 'schema', changes[0].schemaName
+		assertEquals 'table', changes[0].tableName
+		assertEquals 'first_name', changes[0].columnName
+		assertEquals 'varchar(99)', changes[0].newDataType
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a renameColumn change when we have no attributes to make sure
+	 * the DSL doesn't introduce any unintended defaults.
+	 */
+	@Test
+	void renameColumnEmpty() {
+		buildChangeSet {
+			renameColumn([:])
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof RenameColumnChange
+		assertNull changes[0].catalogName
+		assertNull changes[0].schemaName
+		assertNull changes[0].tableName
+		assertNull changes[0].oldColumnName
+		assertNull changes[0].newColumnName
+		assertNull changes[0].columnDataType
+		assertNull changes[0].remarks
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a renameColumn change when we have all supported attributes.
+	 */
+	@Test
+	void renameColumnFull() {
+		buildChangeSet {
+			renameColumn(
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					tableName: 'monkey',
+					oldColumnName: 'fail',
+					newColumnName: 'win',
+					columnDataType: 'varchar(9001)',
+					remarks: 'just because'
+			)
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof RenameColumnChange
+		assertEquals 'catalog', changes[0].catalogName
+		assertEquals 'schema', changes[0].schemaName
+		assertEquals 'monkey', changes[0].tableName
+		assertEquals 'fail', changes[0].oldColumnName
+		assertEquals 'win', changes[0].newColumnName
+		assertEquals 'varchar(9001)', changes[0].columnDataType
+		assertEquals 'just because', changes[0].remarks
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a renameTable change when we have no attributes to make sure
+	 * we don't get any unintended defautls.
+	 */
+	@Test
+	void renameTableEmpty() {
+		buildChangeSet {
+			renameTable([:])
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof RenameTableChange
+		assertNull changes[0].catalogName
+		assertNull changes[0].schemaName
+		assertNull changes[0].oldTableName
+		assertNull changes[0].newTableName
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a renameTable change with all supported attributes.
+	 */
+	@Test
+	void renameTableFull() {
+		buildChangeSet {
+			renameTable(
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					oldTableName: 'fail_table',
+					newTableName: 'win_table'
+			)
+		}
+
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof RenameTableChange
+		assertEquals 'catalog', changes[0].catalogName
+		assertEquals 'schema', changes[0].schemaName
+		assertEquals 'fail_table', changes[0].oldTableName
+		assertEquals 'win_table', changes[0].newTableName
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a renameView change when we have no attributes to make sure
+	 * we don't get any unintended defaults.
+	 */
+	@Test
+	void renameViewEmpty() {
+		buildChangeSet {
+			renameView([:])
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof RenameViewChange
+		assertNull changes[0].catalogName
+		assertNull changes[0].schemaName
+		assertNull changes[0].oldViewName
+		assertNull changes[0].newViewName
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a renameView change with all the supported attributes.
+	 */
+	@Test
+	void renameViewFull() {
+		buildChangeSet {
+			renameView(
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					oldViewName: 'fail_view',
+					newViewName: 'win_view'
+			)
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof RenameViewChange
+		assertEquals 'catalog', changes[0].catalogName
+		assertEquals 'schema', changes[0].schemaName
+		assertEquals 'fail_view', changes[0].oldViewName
+		assertEquals 'win_view', changes[0].newViewName
+		assertNoOutput()
+	}
+
+
 }
 

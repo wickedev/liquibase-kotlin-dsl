@@ -66,11 +66,7 @@ class ModifySqlDelegate {
 				modifySqlLabels = new Labels(value as String)
 			}
 
-
-			modifySqlAppliedOnRollback = false
-			if ( params.applyToRollback ) {
-				modifySqlAppliedOnRollback = params.applyToRollback.toBoolean()
-			}
+			modifySqlAppliedOnRollback = DelegateUtil.parseTruth(params.applyToRollback, false)
 		}
 	}
 

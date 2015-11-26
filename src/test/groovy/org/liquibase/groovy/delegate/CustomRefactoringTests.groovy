@@ -64,6 +64,214 @@ import liquibase.resource.FileSystemResourceAccessor
  */
 class CustomRefactoringTests extends ChangeSetTests {
 
+	@Test
+	void customRefactoringWithClassAndNoParameters() {
+		buildChangeSet {
+			customChange(class: 'org.liquibase.change.custom.MonkeyChange')
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof CustomChangeWrapper
+		assertEquals 'org.liquibase.change.custom.MonkeyChange', changes[0].className
+		assertNoOutput()
+	}
+
+
+	@Test
+	void customRefactoringWithClassAndParameters() {
+		buildChangeSet {
+			customChange(class: 'org.liquibase.change.custom.MonkeyChange') {
+				emotion('angry')
+				'rfid-tag'(28763)
+			}
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof CustomChangeWrapper
+		assertEquals 'org.liquibase.change.custom.MonkeyChange', changes[0].className
+		def args = changes[0].paramValues
+		assertNotNull args
+		assertEquals 2, args.size()
+		assertTrue args.containsKey('emotion')
+		assertTrue args.containsKey('rfid-tag')
+		assertEquals 'angry', args.emotion
+		assertEquals '28763', args.'rfid-tag'
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing an executeCommand with no args and an empty closure to make
+	 * sure the DSL doesn't introduce any unintended defaults.
+	 */
+	@Test
+	void executeCommandEmptyMapEmptyClosure() {
+		buildChangeSet {
+			executeCommand([:]) {}
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof ExecuteShellCommandChange
+		assertNull changes[0].executable
+		assertNull changes[0].os
+		def args = changes[0].args
+		assertNotNull args
+		assertEquals 0, args.size()
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing an executeCommand change when we have no attributes and there
+	 * is no closure.
+	 */
+	@Test
+	void executeCommandEmptyMapNoClosure() {
+		buildChangeSet {
+			executeCommand([:])
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof ExecuteShellCommandChange
+		assertNull changes[0].executable
+		assertNull changes[0].os
+		def args = changes[0].args
+		assertNotNull args
+		assertEquals 0, args.size()
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing executeCommand when we have all supported attributes,but
+	 * no argument closure.
+	 */
+	@Test
+	void executeCommandWithNoArgs() {
+		buildChangeSet {
+			executeCommand(executable: "awk '/monkey/ { count++ } END { print count }'",
+					os: 'Mac OS X, Linux')
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof ExecuteShellCommandChange
+		assertEquals "awk '/monkey/ { count++ } END { print count }'", changes[0].executable
+		assertNotNull changes[0].os
+		assertEquals 2, changes[0].os.size
+		assertEquals 'Mac OS X', changes[0].os[0]
+		assertEquals 'Linux', changes[0].os[1]
+		def args = changes[0].args
+		assertNotNull args
+		assertEquals 0, args.size()
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing an executeCommand change where the arguments are maps, like
+	 * the XML would do it.
+	 */
+	@Test
+	void executeCommandWithArgsInMap() {
+		buildChangeSet {
+			executeCommand(executable: "awk", os: 'Mac OS X, Linux') {
+				arg(value: '/monkey/ { count++ } END { print count }')
+				arg(value: '-f database.log')
+			}
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof ExecuteShellCommandChange
+		assertEquals "awk", changes[0].executable
+		assertNotNull changes[0].os
+		assertEquals 2, changes[0].os.size
+		assertEquals 'Mac OS X', changes[0].os[0]
+		assertEquals 'Linux', changes[0].os[1]
+		def args = changes[0].args
+		assertNotNull args
+		assertEquals 2, args.size()
+		assertTrue args.every { arg -> arg instanceof String }
+		assertEquals '/monkey/ { count++ } END { print count }', args[0]
+		assertEquals '-f database.log', args[1]
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing an executeCommand change where the arguments are just Strings.
+	 * This is not the way the XML does it, but it is the way the Groovy DSL has
+	 * always done it, and it is nice shorthand.
+	 */
+	@Test
+	void executeCommandWithStringArgs() {
+		buildChangeSet {
+			executeCommand(executable: "awk", os: 'Mac OS X, Linux') {
+				arg('/monkey/ { count++ } END { print count }')
+				arg('-f database.log')
+			}
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof ExecuteShellCommandChange
+		assertEquals "awk", changes[0].executable
+		assertNotNull changes[0].os
+		assertEquals 2, changes[0].os.size
+		assertEquals 'Mac OS X', changes[0].os[0]
+		assertEquals 'Linux', changes[0].os[1]
+		def args = changes[0].args
+		assertNotNull args
+		assertEquals 2, args.size()
+		assertTrue args.every { arg -> arg instanceof String }
+		assertEquals '/monkey/ { count++ } END { print count }', args[0]
+		assertEquals '-f database.log', args[1]
+		assertNoOutput()
+	}
+
+	/**
+	 * Make sure modifySql works.  Most of the tests for this are in
+	 * {@link ModifySqlDelegateTests}, this just needs to make sure that the
+	 * SqlVisitors that the delegate returns are added to the changeSet.  This
+	 * one also tests that we can have a modifySql with no attributes of its own.
+	 */
+	@Test
+	void modifySqlValid() {
+		buildChangeSet {
+			modifySql {
+				prepend(value: 'engine INNODB')
+			}
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 0, changes.size()
+		assertEquals 1, changeSet.sqlVisitors.size()
+		assertTrue changeSet.sqlVisitors[0] instanceof PrependSqlVisitor
+		assertEquals 'engine INNODB', changeSet.sqlVisitors[0].value
+		assertNull changeSet.sqlVisitors[0].applicableDbms
+		assertNull changeSet.sqlVisitors[0].contexts
+		assertFalse changeSet.sqlVisitors[0].applyToRollback
+		assertNoOutput()
+
+
+	}
+
 	/**
 	 * Test parsing a sql change when we have an empty attribute map and an
 	 * empty closure to make sure we don't get any unintended defaults. Also test
@@ -73,7 +281,7 @@ class CustomRefactoringTests extends ChangeSetTests {
 	@Test
 	void sqlWithoutAttributesOrClosure() {
 		buildChangeSet {
-			sql ([:]) {}
+			sql([:]) {}
 		}
 
 		assertEquals 0, changeSet.rollback.changes.size()
@@ -173,9 +381,9 @@ class CustomRefactoringTests extends ChangeSetTests {
 	void sqlFullWithNoComments() {
 		buildChangeSet {
 			sql(dbms: 'oracle',
-					splitStatements: false,
-  				stripComments: true,
-					endDelimiter: '!') {
+				splitStatements: false,
+				stripComments: true,
+				endDelimiter: '!') {
 				"UPDATE monkey SET emotion='ANGRY' WHERE id IN (1,2,3,4,5)"
 			}
 		}
@@ -202,9 +410,9 @@ class CustomRefactoringTests extends ChangeSetTests {
 	void sqlFullWithComments() {
 		buildChangeSet {
 			sql(dbms: 'oracle',
-							splitStatements: false,
-							stripComments: true,
-							endDelimiter: '!') {
+				splitStatements: false,
+				stripComments: true,
+				endDelimiter: '!') {
 				comment("No comment")
 				"UPDATE monkey SET emotion='ANGRY' WHERE id IN (1,2,3,4,5)"
 			}
@@ -264,12 +472,12 @@ class CustomRefactoringTests extends ChangeSetTests {
 		resourceAccessor = new FileSystemResourceAccessor()
 		buildChangeSet {
 			sqlFile(path: 'src/test/changelog/file.sql',
-							relativeToChangelogFile: false,
-							stripComments: true,
-							splitStatements: false,
-							encoding: 'UTF-8',
-							endDelimiter: '@',
-			        dbms: 'oracle')
+					relativeToChangelogFile: false,
+					stripComments: true,
+					splitStatements: false,
+					encoding: 'UTF-8',
+					endDelimiter: '@',
+					dbms: 'oracle')
 		}
 
 		assertEquals 0, changeSet.rollback.changes.size()
@@ -286,215 +494,6 @@ class CustomRefactoringTests extends ChangeSetTests {
 		assertEquals 'oracle', changes[0].dbms
 		assertNotNull 'SQLFileChange.resourceAccessor cannot be null', changes[0].resourceAccessor
 		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing an executeCommand with no args and an empty closure to make
-	 * sure the DSL doesn't introduce any unintended defaults.
-	 */
-	@Test
-	void executeCommandEmptyMapEmptyClosure() {
-		buildChangeSet {
-			executeCommand([:]) {	}
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof ExecuteShellCommandChange
-		assertNull changes[0].executable
-		assertNull changes[0].os
-		def args = changes[0].args
-		assertNotNull args
-		assertEquals 0, args.size()
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing an executeCommand change when we have no attributes and there
-	 * is no closure.
-	 */
-	@Test
-	void executeCommandEmptyMapNoClosure() {
-		buildChangeSet {
-			executeCommand([:])
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof ExecuteShellCommandChange
-		assertNull changes[0].executable
-		assertNull changes[0].os
-		def args = changes[0].args
-		assertNotNull args
-		assertEquals 0, args.size()
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing executeCommand when we have all supported attributes,but
-	 * no argument closure.
-	 */
-	@Test
-	void executeCommandWithNoArgs() {
-		buildChangeSet {
-			executeCommand(executable: "awk '/monkey/ { count++ } END { print count }'",
-							       os: 'Mac OS X, Linux')
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof ExecuteShellCommandChange
-		assertEquals "awk '/monkey/ { count++ } END { print count }'", changes[0].executable
-		assertNotNull changes[0].os
-		assertEquals 2, changes[0].os.size
-		assertEquals 'Mac OS X', changes[0].os[0]
-		assertEquals 'Linux', changes[0].os[1]
-		def args = changes[0].args
-		assertNotNull args
-		assertEquals 0, args.size()
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing an executeCommand change where the arguments are maps, like
-	 * the XML would do it.
-	 */
-	@Test
-	void executeCommandWithArgsInMap() {
-		buildChangeSet {
-			executeCommand(executable: "awk", os: 'Mac OS X, Linux') {
-				arg(value: '/monkey/ { count++ } END { print count }')
-				arg(value: '-f database.log')
-			}
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof ExecuteShellCommandChange
-		assertEquals "awk", changes[0].executable
-		assertNotNull changes[0].os
-		assertEquals 2, changes[0].os.size
-		assertEquals 'Mac OS X', changes[0].os[0]
-		assertEquals 'Linux', changes[0].os[1]
-		def args = changes[0].args
-		assertNotNull args
-		assertEquals 2, args.size()
-		assertTrue args.every { arg -> arg instanceof String }
-		assertEquals '/monkey/ { count++ } END { print count }', args[0]
-		assertEquals '-f database.log', args[1]
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing an executeCommand change where the arguments are just Strings.
-	 * This is not the way the XML does it, but it is the way the Groovy DSL has
-	 * always done it, and it is nice shorthand.
-	 */
-	@Test
-	void executeCommandWithStringArgs() {
-		buildChangeSet {
-			executeCommand(executable: "awk", os: 'Mac OS X, Linux') {
-				arg('/monkey/ { count++ } END { print count }')
-				arg('-f database.log')
-			}
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof ExecuteShellCommandChange
-		assertEquals "awk", changes[0].executable
-		assertNotNull changes[0].os
-		assertEquals 2, changes[0].os.size
-		assertEquals 'Mac OS X', changes[0].os[0]
-		assertEquals 'Linux', changes[0].os[1]
-		def args = changes[0].args
-		assertNotNull args
-		assertEquals 2, args.size()
-		assertTrue args.every { arg -> arg instanceof String }
-		assertEquals '/monkey/ { count++ } END { print count }', args[0]
-		assertEquals '-f database.log', args[1]
-		assertNoOutput()
-	}
-
-
-	@Test
-	void customRefactoringWithClassAndNoParameters() {
-		buildChangeSet {
-			customChange(class: 'org.liquibase.change.custom.MonkeyChange')
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof CustomChangeWrapper
-		assertEquals 'org.liquibase.change.custom.MonkeyChange', changes[0].className
-		assertNoOutput()
-	}
-
-
-	@Test
-	void customRefactoringWithClassAndParameters() {
-		buildChangeSet {
-			customChange(class: 'org.liquibase.change.custom.MonkeyChange') {
-				emotion('angry')
-				'rfid-tag'(28763)
-			}
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof CustomChangeWrapper
-		assertEquals 'org.liquibase.change.custom.MonkeyChange', changes[0].className
-		def args = changes[0].paramValues
-		assertNotNull args
-		assertEquals 2, args.size()
-		assertTrue args.containsKey('emotion')
-		assertTrue args.containsKey('rfid-tag')
-		assertEquals 'angry', args.emotion
-		assertEquals '28763', args.'rfid-tag'
-		assertNoOutput()
-	}
-
-	/**
-	 * Make sure modifySql works.  Most of the tests for this are in
-	 * {@link ModifySqlDelegateTests}, this just needs to make sure that the
-	 * SqlVisitors that the delegate returns are added to the changeSet.  This
-	 * one also tests that we can have a modifySql with no attributes of its own.
-	 */
-	@Test
-	void modifySqlValid() {
-		buildChangeSet {
-			modifySql {
-				prepend(value: 'engine INNODB')
-			}
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 0, changes.size()
-		assertEquals 1, changeSet.sqlVisitors.size()
-		assertTrue changeSet.sqlVisitors[0] instanceof PrependSqlVisitor
-		assertEquals 'engine INNODB', changeSet.sqlVisitors[0].value
-		assertNull changeSet.sqlVisitors[0].applicableDbms
-		assertNull changeSet.sqlVisitors[0].contexts
-		assertFalse changeSet.sqlVisitors[0].applyToRollback
-		assertNoOutput()
-
-
 	}
 }
 

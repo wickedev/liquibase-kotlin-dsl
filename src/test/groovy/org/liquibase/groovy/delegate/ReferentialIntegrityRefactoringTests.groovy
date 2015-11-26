@@ -16,15 +16,19 @@
 
 package org.liquibase.groovy.delegate
 
+import liquibase.change.core.AddForeignKeyConstraintChange
+import liquibase.change.core.AddPrimaryKeyChange
 import liquibase.change.core.DropAllForeignKeyConstraintsChange
+import liquibase.change.core.DropForeignKeyConstraintChange
+import liquibase.change.core.DropPrimaryKeyChange
 import liquibase.exception.ChangeLogParseException
 import org.junit.Test
-import static org.junit.Assert.*
 
-import liquibase.change.core.AddForeignKeyConstraintChange
-import liquibase.change.core.DropForeignKeyConstraintChange
-import liquibase.change.core.AddPrimaryKeyChange
-import liquibase.change.core.DropPrimaryKeyChange
+import static org.junit.Assert.assertEquals
+import static org.junit.Assert.assertFalse
+import static org.junit.Assert.assertNotNull
+import static org.junit.Assert.assertNull
+import static org.junit.Assert.assertTrue
 
 /**
  * This is one of several classes that test the creation of refactoring changes
@@ -71,20 +75,22 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 	@Test(expected = ChangeLogParseException)
 	void addForeignKeyConstraintInvalid() {
 		buildChangeSet {
-			addForeignKeyConstraint(constraintName: 'fk_monkey_emotion',
-							baseTableName: 'monkey',
-							baseTableCatalogName: 'base_catalog',
-							baseTableSchemaName: 'base_schema',
-							baseColumnNames: 'emotion_id',
-							referencedTableName: 'emotions',
-							referencedTableCatalogName: 'referenced_catalog',
-							referencedTableSchemaName: 'referenced_schema',
-							referencedColumnNames: 'id',
-							deferrable: true,
-							initiallyDeferred: false,
-							onDelete: 'RESTRICT',
-							onUpdate: 'CASCADE',
-			        invalidAttribute: 'invalid')
+			addForeignKeyConstraint(
+					constraintName: 'fk_monkey_emotion',
+					baseTableCatalogName: 'base_catalog',
+					baseTableSchemaName: 'base_schema',
+					baseTableName: 'monkey',
+					baseColumnNames: 'emotion_id',
+					referencedTableCatalogName: 'referenced_catalog',
+					referencedTableSchemaName: 'referenced_schema',
+					referencedTableName: 'emotions',
+					referencedColumnNames: 'id',
+					deferrable: true,
+					initiallyDeferred: false,
+					onDelete: 'RESTRICT',
+					onUpdate: 'CASCADE',
+					invalidAttribute: 'invalid'
+			)
 		}
 	}
 
@@ -104,13 +110,13 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 		assertEquals 1, changes.size()
 		assertTrue changes[0] instanceof AddForeignKeyConstraintChange
 		assertNull changes[0].constraintName
-		assertNull changes[0].baseTableName
 		assertNull changes[0].baseTableCatalogName
 		assertNull changes[0].baseTableSchemaName
+		assertNull changes[0].baseTableName
 		assertNull changes[0].baseColumnNames
-		assertNull changes[0].referencedTableName
 		assertNull changes[0].referencedTableCatalogName
 		assertNull changes[0].referencedTableSchemaName
+		assertNull changes[0].referencedTableName
 		assertNull changes[0].referencedColumnNames
 		assertNull changes[0].deferrable
 		assertNull changes[0].initiallyDeferred
@@ -127,19 +133,21 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 	@Test
 	void addForeignKeyConstraintFull() {
 		buildChangeSet {
-			addForeignKeyConstraint(constraintName: 'fk_monkey_emotion',
-							                baseTableName: 'monkey',
-							                baseTableCatalogName: 'base_catalog',
-							                baseTableSchemaName: 'base_schema',
-							                baseColumnNames: 'emotion_id',
-							                referencedTableName: 'emotions',
-							                referencedTableCatalogName: 'referenced_catalog',
-							                referencedTableSchemaName: 'referenced_schema',
-							                referencedColumnNames: 'id',
-							                deferrable: true,
-							                initiallyDeferred: false,
-							                onDelete: 'RESTRICT',
-							                onUpdate: 'CASCADE')
+			addForeignKeyConstraint(
+					constraintName: 'fk_monkey_emotion',
+					baseTableCatalogName: 'base_catalog',
+					baseTableSchemaName: 'base_schema',
+					baseColumnNames: 'emotion_id',
+					baseTableName: 'monkey',
+					referencedTableCatalogName: 'referenced_catalog',
+					referencedTableSchemaName: 'referenced_schema',
+					referencedTableName: 'emotions',
+					referencedColumnNames: 'id',
+					deferrable: true,
+					initiallyDeferred: false,
+					onDelete: 'RESTRICT',
+					onUpdate: 'CASCADE'
+			)
 		}
 
 		assertEquals 0, changeSet.rollback.changes.size()
@@ -148,13 +156,13 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 		assertEquals 1, changes.size()
 		assertTrue changes[0] instanceof AddForeignKeyConstraintChange
 		assertEquals 'fk_monkey_emotion', changes[0].constraintName
-		assertEquals 'monkey', changes[0].baseTableName
 		assertEquals 'base_catalog', changes[0].baseTableCatalogName
 		assertEquals 'base_schema', changes[0].baseTableSchemaName
+		assertEquals 'monkey', changes[0].baseTableName
 		assertEquals 'emotion_id', changes[0].baseColumnNames
-		assertEquals 'emotions', changes[0].referencedTableName
 		assertEquals 'referenced_catalog', changes[0].referencedTableCatalogName
 		assertEquals 'referenced_schema', changes[0].referencedTableSchemaName
+		assertEquals 'emotions', changes[0].referencedTableName
 		assertEquals 'id', changes[0].referencedColumnNames
 		assertTrue changes[0].deferrable
 		assertFalse changes[0].initiallyDeferred
@@ -172,20 +180,22 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 	@Test
 	void addForeignKeyConstraintWithReferencesUniqueColumnProperty() {
 		buildChangeSet {
-			addForeignKeyConstraint(constraintName: 'fk_monkey_emotion',
-							baseTableName: 'monkey',
-							baseTableCatalogName: 'base_catalog',
-							baseTableSchemaName: 'base_schema',
-							baseColumnNames: 'emotion_id',
-							referencedTableName: 'emotions',
-							referencedTableCatalogName: 'referenced_catalog',
-							referencedTableSchemaName: 'referenced_schema',
-							referencedColumnNames: 'id',
-							referencesUniqueColumn: 'true',
-							deferrable: false,
-							initiallyDeferred: true,
-							onDelete: 'SET DEFAULT',
-							onUpdate: 'SET NULL')
+			addForeignKeyConstraint(
+					constraintName: 'fk_monkey_emotion',
+					baseTableCatalogName: 'base_catalog',
+					baseTableSchemaName: 'base_schema',
+					baseTableName: 'monkey',
+					baseColumnNames: 'emotion_id',
+					referencedTableCatalogName: 'referenced_catalog',
+					referencedTableSchemaName: 'referenced_schema',
+					referencedTableName: 'emotions',
+					referencedColumnNames: 'id',
+					referencesUniqueColumn: 'true',
+					deferrable: false,
+					initiallyDeferred: true,
+					onDelete: 'SET DEFAULT',
+					onUpdate: 'SET NULL'
+			)
 		}
 
 		assertEquals 0, changeSet.rollback.changes.size()
@@ -194,13 +204,13 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 		assertEquals 1, changes.size()
 		assertTrue changes[0] instanceof AddForeignKeyConstraintChange
 		assertEquals 'fk_monkey_emotion', changes[0].constraintName
-		assertEquals 'monkey', changes[0].baseTableName
 		assertEquals 'base_catalog', changes[0].baseTableCatalogName
 		assertEquals 'base_schema', changes[0].baseTableSchemaName
+		assertEquals 'monkey', changes[0].baseTableName
 		assertEquals 'emotion_id', changes[0].baseColumnNames
-		assertEquals 'emotions', changes[0].referencedTableName
 		assertEquals 'referenced_catalog', changes[0].referencedTableCatalogName
 		assertEquals 'referenced_schema', changes[0].referencedTableSchemaName
+		assertEquals 'emotions', changes[0].referencedTableName
 		assertEquals 'id', changes[0].referencedColumnNames
 		assertFalse changes[0].deferrable
 		assertTrue changes[0].initiallyDeferred
@@ -218,19 +228,21 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 	@Test
 	void addForeignKeyConstraintWithWithNoActionType() {
 		buildChangeSet {
-			addForeignKeyConstraint(constraintName: 'fk_monkey_emotion',
-							baseTableName: 'monkey',
-							baseTableCatalogName: 'base_catalog',
-							baseTableSchemaName: 'base_schema',
-							baseColumnNames: 'emotion_id',
-							referencedTableName: 'emotions',
-							referencedTableCatalogName: 'referenced_catalog',
-							referencedTableSchemaName: 'referenced_schema',
-							referencedColumnNames: 'id',
-							deferrable: false,
-							initiallyDeferred: true,
-							onDelete: 'NO ACTION',
-							onUpdate: 'NO ACTION')
+			addForeignKeyConstraint(
+					constraintName: 'fk_monkey_emotion',
+					baseTableCatalogName: 'base_catalog',
+					baseTableSchemaName: 'base_schema',
+					baseTableName: 'monkey',
+					baseColumnNames: 'emotion_id',
+					referencedTableCatalogName: 'referenced_catalog',
+					referencedTableSchemaName: 'referenced_schema',
+					referencedTableName: 'emotions',
+					referencedColumnNames: 'id',
+					deferrable: false,
+					initiallyDeferred: true,
+					onDelete: 'NO ACTION',
+					onUpdate: 'NO ACTION'
+			)
 		}
 
 		assertEquals 0, changeSet.rollback.changes.size()
@@ -239,13 +251,13 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 		assertEquals 1, changes.size()
 		assertTrue changes[0] instanceof AddForeignKeyConstraintChange
 		assertEquals 'fk_monkey_emotion', changes[0].constraintName
-		assertEquals 'monkey', changes[0].baseTableName
 		assertEquals 'base_catalog', changes[0].baseTableCatalogName
 		assertEquals 'base_schema', changes[0].baseTableSchemaName
+		assertEquals 'monkey', changes[0].baseTableName
 		assertEquals 'emotion_id', changes[0].baseColumnNames
-		assertEquals 'emotions', changes[0].referencedTableName
 		assertEquals 'referenced_catalog', changes[0].referencedTableCatalogName
 		assertEquals 'referenced_schema', changes[0].referencedTableSchemaName
+		assertEquals 'emotions', changes[0].referencedTableName
 		assertEquals 'id', changes[0].referencedColumnNames
 		assertFalse changes[0].deferrable
 		assertTrue changes[0].initiallyDeferred
@@ -261,19 +273,21 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 	@Test
 	void addForeignKeyConstraintWithWithBooleanCascade() {
 		buildChangeSet {
-			addForeignKeyConstraint(constraintName: 'fk_monkey_emotion',
-							baseTableName: 'monkey',
-							baseTableCatalogName: 'base_catalog',
-							baseTableSchemaName: 'base_schema',
-							baseColumnNames: 'emotion_id',
-							referencedTableName: 'emotions',
-							referencedTableCatalogName: 'referenced_catalog',
-							referencedTableSchemaName: 'referenced_schema',
-							referencedColumnNames: 'id',
-							deferrable: false,
-							initiallyDeferred: true,
-							deleteCascade: true,
-							onUpdate: 'NO ACTION')
+			addForeignKeyConstraint(
+					constraintName: 'fk_monkey_emotion',
+			        baseTableCatalogName: 'base_catalog',
+			        baseTableSchemaName: 'base_schema',
+			        baseTableName: 'monkey',
+			        baseColumnNames: 'emotion_id',
+			        referencedTableCatalogName: 'referenced_catalog',
+			        referencedTableSchemaName: 'referenced_schema',
+			        referencedTableName: 'emotions',
+			        referencedColumnNames: 'id',
+			        deferrable: false,
+			        initiallyDeferred: true,
+			        deleteCascade: true,
+			        onUpdate: 'NO ACTION'
+			)
 		}
 
 		assertEquals 0, changeSet.rollback.changes.size()
@@ -282,13 +296,13 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 		assertEquals 1, changes.size()
 		assertTrue changes[0] instanceof AddForeignKeyConstraintChange
 		assertEquals 'fk_monkey_emotion', changes[0].constraintName
-		assertEquals 'monkey', changes[0].baseTableName
 		assertEquals 'base_catalog', changes[0].baseTableCatalogName
 		assertEquals 'base_schema', changes[0].baseTableSchemaName
+		assertEquals 'monkey', changes[0].baseTableName
 		assertEquals 'emotion_id', changes[0].baseColumnNames
-		assertEquals 'emotions', changes[0].referencedTableName
 		assertEquals 'referenced_catalog', changes[0].referencedTableCatalogName
 		assertEquals 'referenced_schema', changes[0].referencedTableSchemaName
+		assertEquals 'emotions', changes[0].referencedTableName
 		assertEquals 'id', changes[0].referencedColumnNames
 		assertFalse changes[0].deferrable
 		assertTrue changes[0].initiallyDeferred
@@ -298,48 +312,68 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 	}
 
 	/**
-	 * Test parsing a dropForeignKeyConstraint change with no attributes to make
-	 * sure the DSL doesn't introduce unexpected defaults.
+	 * Test parsing an addPrimaryKey change with no attributes to make sure the
+	 * DSL doesn't make up any defaults.
 	 */
 	@Test
-	void dropForeignKeyConstraintEmpty() {
+	void addPrimaryKeyEmpty() {
 		buildChangeSet {
-			dropForeignKeyConstraint([:])
+			addPrimaryKey([:])
 		}
 
 		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof DropForeignKeyConstraintChange
-		assertNull changes[0].baseTableCatalogName
-		assertNull changes[0].baseTableSchemaName
-		assertNull changes[0].baseTableName
+		assertTrue changes[0] instanceof AddPrimaryKeyChange
 		assertNull changes[0].constraintName
+		assertNull changes[0].catalogName
+		assertNull changes[0].schemaName
+		assertNull changes[0].tableName
+		assertNull changes[0].tablespace
+		assertNull changes[0].columnNames
+		assertNull changes[0].clustered
+		assertNull changes[0].forIndexCatalogName
+		assertNull changes[0].forIndexSchemaName
+		assertNull changes[0].forIndexName
 		assertNoOutput()
 	}
 
 	/**
-	 * Test parsing a dropForeignKeyConstraint with all supported options.
+	 * Test parsing an addPrimaryKey change with all supported attributes set.
 	 */
 	@Test
-	void dropForeignKeyConstraintFull() {
+	void addPrimaryKeyFull() {
 		buildChangeSet {
-			dropForeignKeyConstraint(baseTableCatalogName: 'catalog',
-							                 baseTableSchemaName: 'schema',
-							                 baseTableName: 'monkey',
-							                 constraintName: 'fk_monkey_emotion')
+			addPrimaryKey(
+					constraintName: 'pk_monkey',
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					tableName: 'monkey',
+					columnNames: 'id',
+					tablespace: 'tablespace',
+					clustered: true,
+					forIndexCatalogName: 'index_catalog',
+					forIndexSchemaName: 'index_schema',
+					forIndexName: 'pk_monkey_idx'
+			)
 		}
 
 		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof DropForeignKeyConstraintChange
-		assertEquals 'catalog', changes[0].baseTableCatalogName
-		assertEquals 'schema', changes[0].baseTableSchemaName
-		assertEquals 'monkey', changes[0].baseTableName
-		assertEquals 'fk_monkey_emotion', changes[0].constraintName
+		assertTrue changes[0] instanceof AddPrimaryKeyChange
+		assertEquals 'pk_monkey', changes[0].constraintName
+		assertEquals 'catalog', changes[0].catalogName
+		assertEquals 'schema', changes[0].schemaName
+		assertEquals 'monkey', changes[0].tableName
+		assertEquals 'tablespace', changes[0].tablespace
+		assertEquals 'id', changes[0].columnNames
+		assertTrue changes[0].clustered
+		assertEquals 'index_catalog', changes[0].forIndexCatalogName
+		assertEquals 'index_schema', changes[0].forIndexSchemaName
+		assertEquals 'pk_monkey_idx', changes[0].forIndexName
 		assertNoOutput()
 	}
 
@@ -371,9 +405,11 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 	@Test
 	void dropAllForeignKeyConstraintsFull() {
 		buildChangeSet {
-			dropAllForeignKeyConstraints(baseTableCatalogName: 'catalog',
-							                     baseTableSchemaName: 'schema',
-							                     baseTableName: 'monkey')
+			dropAllForeignKeyConstraints(
+					baseTableCatalogName: 'catalog',
+					baseTableSchemaName: 'schema',
+					baseTableName: 'monkey'
+			)
 		}
 
 		assertEquals 0, changeSet.rollback.changes.size()
@@ -388,57 +424,50 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 	}
 
 	/**
-	 * Test parsing an addPrimaryKey change with no attributes to make sure the
-	 * DSL doesn't make up any defaults.
+	 * Test parsing a dropForeignKeyConstraint change with no attributes to make
+	 * sure the DSL doesn't introduce unexpected defaults.
 	 */
 	@Test
-	void addPrimaryKeyEmpty() {
+	void dropForeignKeyConstraintEmpty() {
 		buildChangeSet {
-			addPrimaryKey([:])
+			dropForeignKeyConstraint([:])
 		}
 
 		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof AddPrimaryKeyChange
+		assertTrue changes[0] instanceof DropForeignKeyConstraintChange
+		assertNull changes[0].baseTableCatalogName
+		assertNull changes[0].baseTableSchemaName
+		assertNull changes[0].baseTableName
 		assertNull changes[0].constraintName
-		assertNull changes[0].catalogName
-		assertNull changes[0].schemaName
-		assertNull changes[0].tableName
-		assertNull changes[0].tablespace
-		assertNull changes[0].columnNames
-		assertNull changes[0].clustered
 		assertNoOutput()
 	}
 
 	/**
-	 * Test parsing an addPrimaryKey change with all supported attributes set.
+	 * Test parsing a dropForeignKeyConstraint with all supported options.
 	 */
 	@Test
-	void addPrimaryKeyFull() {
+	void dropForeignKeyConstraintFull() {
 		buildChangeSet {
-			addPrimaryKey(catalogName: 'catalog',
-							      schemaName: 'schema',
-							      tableName: 'monkey',
-							      columnNames: 'id',
-							      constraintName: 'pk_monkey',
-							      tablespace: 'tablespace',
-			              clustered: true)
+			dropForeignKeyConstraint(
+					baseTableCatalogName: 'catalog',
+					baseTableSchemaName: 'schema',
+					baseTableName: 'monkey',
+					constraintName: 'fk_monkey_emotion'
+			)
 		}
 
 		assertEquals 0, changeSet.rollback.changes.size()
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof AddPrimaryKeyChange
-		assertEquals 'pk_monkey', changes[0].constraintName
-		assertEquals 'catalog', changes[0].catalogName
-		assertEquals 'schema', changes[0].schemaName
-		assertEquals 'monkey', changes[0].tableName
-		assertEquals 'tablespace', changes[0].tablespace
-		assertEquals 'id', changes[0].columnNames
-		assertTrue changes[0].clustered
+		assertTrue changes[0] instanceof DropForeignKeyConstraintChange
+		assertEquals 'catalog', changes[0].baseTableCatalogName
+		assertEquals 'schema', changes[0].baseTableSchemaName
+		assertEquals 'monkey', changes[0].baseTableName
+		assertEquals 'fk_monkey_emotion', changes[0].constraintName
 		assertNoOutput()
 	}
 
@@ -470,10 +499,11 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 	@Test
 	void dropPrimaryKeyFull() {
 		buildChangeSet {
-			dropPrimaryKey(catalogName: 'catalog',
-							       schemaName: 'schema',
-							       tableName: 'monkey',
-							       constraintName: 'pk_monkey')
+			dropPrimaryKey(
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					tableName: 'monkey',
+					constraintName: 'pk_monkey')
 		}
 
 		assertEquals 0, changeSet.rollback.changes.size()

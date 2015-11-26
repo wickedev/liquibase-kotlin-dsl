@@ -54,11 +54,11 @@ class ConstraintDelegateTests {
 	 */
 	@After
 	void restoreStdOut() {
-		if ( oldStdOut != null ) {
+		if (oldStdOut != null) {
 			System.out = oldStdOut
 		}
 		String testOutput = bufStr.toString()
-		if ( testOutput != null && testOutput.length() > 0 ) {
+		if (testOutput != null && testOutput.length() > 0) {
 			println("Test output:\n${testOutput}")
 		}
 	}
@@ -113,20 +113,22 @@ class ConstraintDelegateTests {
 	@Test
 	void fullArgumentsNoClosure() {
 		def constraint = buildConstraint {
-			constraints(nullable: true,
-			            primaryKey: true,
-			            primaryKeyName: 'myPrimaryKey',
-			            primaryKeyTablespace: 'myPrimaryTablespace',
-							    foreignKeyName: 'fk_monkey',
-			            references: 'monkey(id)',
-			            referencedTableName: 'monkey',
-			            referencedColumnNames: 'id',
-			            unique: true,
-			            uniqueConstraintName: 'myUniqueKey',
-			            checkConstraint: 'myCheckConstraint',
-			            deleteCascade: true,
-							    initiallyDeferred: true,
-							    deferrable: true)
+			constraints(
+					nullable: true,
+					primaryKey: true,
+					primaryKeyName: 'myPrimaryKey',
+					primaryKeyTablespace: 'myPrimaryTablespace',
+					foreignKeyName: 'fk_monkey',
+					references: 'monkey(id)',
+					referencedTableName: 'monkey',
+					referencedColumnNames: 'id',
+					unique: true,
+					uniqueConstraintName: 'myUniqueKey',
+					checkConstraint: 'myCheckConstraint',
+					deleteCascade: true,
+					initiallyDeferred: true,
+					deferrable: true
+			)
 		}
 
 		assertNotNull constraint
@@ -155,12 +157,14 @@ class ConstraintDelegateTests {
 	@Test
 	void onlyNullableArgIsTrue() {
 		def constraint = buildConstraint {
-			constraints(nullable: true,
-						    	primaryKey: false,
-							    unique: false,
-							    deleteCascade: false,
-							    initiallyDeferred: false,
-							    deferrable: false)
+			constraints(
+					nullable: true,
+					primaryKey: false,
+					unique: false,
+					deleteCascade: false,
+					initiallyDeferred: false,
+					deferrable: false
+			)
 		}
 
 		assertNotNull constraint
@@ -181,12 +185,14 @@ class ConstraintDelegateTests {
 	@Test
 	void onlyPrimaryKeyArgIsTrue() {
 		def constraint = buildConstraint {
-			constraints(nullable: false,
-							    primaryKey: true,
-							    unique: false,
-							    deleteCascade: false,
-							    initiallyDeferred: false,
-							    deferrable: false)
+			constraints(
+					nullable: false,
+					primaryKey: true,
+					unique: false,
+					deleteCascade: false,
+					initiallyDeferred: false,
+					deferrable: false
+			)
 		}
 
 		assertNotNull constraint
@@ -207,12 +213,14 @@ class ConstraintDelegateTests {
 	@Test
 	void onlyUniqueArgIsTrue() {
 		def constraint = buildConstraint {
-			constraints(nullable: false,
-							    primaryKey: false,
-							    unique: true,
-							    deleteCascade: false,
-							    initiallyDeferred: false,
-							    deferrable: false)
+			constraints(
+					nullable: false,
+					primaryKey: false,
+					unique: true,
+					deleteCascade: false,
+					initiallyDeferred: false,
+					deferrable: false
+			)
 		}
 
 		assertNotNull constraint
@@ -233,12 +241,14 @@ class ConstraintDelegateTests {
 	@Test
 	void onlyDeleteCascadeArgIsTrue() {
 		def constraint = buildConstraint {
-			constraints(nullable: false,
-							    primaryKey: false,
-							    unique: false,
-							    deleteCascade: true,
-							    initiallyDeferred: false,
-							    deferrable: false)
+			constraints(
+					nullable: false,
+					primaryKey: false,
+					unique: false,
+					deleteCascade: true,
+					initiallyDeferred: false,
+					deferrable: false
+			)
 		}
 
 		assertNotNull constraint
@@ -260,12 +270,14 @@ class ConstraintDelegateTests {
 	@Test
 	void onlyInitiallyDeferredArgIsTrue() {
 		def constraint = buildConstraint {
-			constraints(nullable: false,
-							    primaryKey: false,
-						    	unique: false,
-							    deleteCascade: false,
-							    initiallyDeferred: true,
-							    deferrable: false)
+			constraints(
+					nullable: false,
+					primaryKey: false,
+					unique: false,
+					deleteCascade: false,
+					initiallyDeferred: true,
+					deferrable: false
+			)
 		}
 
 		assertNotNull constraint
@@ -286,12 +298,14 @@ class ConstraintDelegateTests {
 	@Test
 	void onlyDeferrableArgIsTrue() {
 		def constraint = buildConstraint {
-			constraints(nullable: false,
-							    primaryKey: false,
-							    unique: false,
-							    deleteCascade: false,
-							    initiallyDeferred: false,
-							    deferrable: true)
+			constraints(
+					nullable: false,
+					primaryKey: false,
+					unique: false,
+					deleteCascade: false,
+					initiallyDeferred: false,
+					deferrable: true
+			)
 		}
 
 		assertNotNull constraint
@@ -307,8 +321,8 @@ class ConstraintDelegateTests {
 	}
 
 	/**
-	 * Test parsing constraints in a closure was removed.  Make sure we get a
-	 * parse exception.
+	 * Test parsing constraints with attributes in a closure.  This feature
+	 * was removed, so make sure we get a parse exception.
 	 */
 	@Test(expected = ChangeLogParseException)
 	void fullArgumentsInClosure() {
@@ -375,7 +389,7 @@ class ConstraintDelegateTests {
 	@Test(expected = ChangeLogParseException)
 	void constraintHasInvalidMethod() {
 		buildConstraint {
-			constraints{
+			constraints {
 				someAttr('value')
 			}
 		}
@@ -388,7 +402,7 @@ class ConstraintDelegateTests {
 	void assertNoOutput() {
 		String testOutput = bufStr.toString()
 		assertTrue "Did not expect to have output, but got:\n '${testOutput}",
-						testOutput.length() < 1
+				testOutput.length() < 1
 	}
 
 	/**
@@ -401,9 +415,11 @@ class ConstraintDelegateTests {
 		def changelog = new DatabaseChangeLog()
 		changelog.changeLogParameters = new ChangeLogParameters()
 
-		def delegate = new ConstraintDelegate(databaseChangeLog: changelog,
-						changeSetId: 'test-change-set',
-						changeName: 'test-change')
+		def delegate = new ConstraintDelegate(
+				databaseChangeLog: changelog,
+				changeSetId: 'test-change-set',
+				changeName: 'test-change'
+		)
 		closure.delegate = delegate
 		closure.resolveStrategy = Closure.DELEGATE_FIRST
 		closure.call()

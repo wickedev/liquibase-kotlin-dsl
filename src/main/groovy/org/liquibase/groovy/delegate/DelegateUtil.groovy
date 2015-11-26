@@ -35,4 +35,32 @@ class DelegateUtil {
 			databaseChangeLog.changeLogParameters.expandExpressions(expression.toString(), databaseChangeLog)
 		}
 	}
+
+	/**
+	 * Helper method to determine the truth of a value.  We need this because
+	 * Groovy's {@code asBoolean} method for Strings treats any non-empty string
+	 * as true, including the string whose contents are "false".  This means
+	 * that a property whose value is "false" would be set to true in a simple
+	 * if statement.
+	 * <p>
+	 * We get around this problem by using the {@code toBoolean} method if the
+	 * given value is a String.  This way, only the strings "1", "true", and
+	 * "y" are treated as true.  All others are treated as false.
+	 * <p>
+	 * Examples of "true" values are {@code true}, {@code 1}, and {@code "true"}.
+	 * Examples of "false" are {@code false}, {@code 0}, and {@code "false"}.
+	 * @param value the value to parse
+	 * @param defaultValue the default value to use if there is no value given.
+	 * @return whether or not the given value is "true", or the defaultValue
+	 * if no value is given.
+	 */
+	static boolean parseTruth(value, defaultValue) {
+		if ( value == null ) {
+			return defaultValue
+		}
+		if ( value instanceof String ) {
+			return value.toBoolean()
+		}
+		return value.asBoolean()
+	}
 }

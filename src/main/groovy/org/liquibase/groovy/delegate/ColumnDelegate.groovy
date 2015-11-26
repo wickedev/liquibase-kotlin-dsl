@@ -48,7 +48,7 @@ class ColumnDelegate {
 	def changeName = '<unknown>' // used for error messages
 
 	/**
-	 * Parse a single column entry ina closure.
+	 * Parse a single column entry in a closure.
 	 * @param params the attributes to set.
 	 * @param closure a child closure to call, such as a constraint clause
 	 */

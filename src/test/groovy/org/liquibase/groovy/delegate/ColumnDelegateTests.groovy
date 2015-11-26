@@ -70,11 +70,12 @@ class ColumnDelegateTests {
 		assertNull delegate.columns[0].defaultValueDate
 		assertNull delegate.columns[0].defaultValueBoolean
 		assertNull delegate.columns[0].defaultValueComputed
+		assertNull delegate.columns[0].defaultValueSequenceNext
 		assertNull delegate.columns[0].autoIncrement
 		assertNull delegate.columns[0].startWith
 		assertNull delegate.columns[0].incrementBy
 		assertNull delegate.columns[0].remarks
-		assertNull delegate.columns[0].defaultValueSequenceNext
+		assertNull delegate.columns[0].descending
 		assertNull delegate.columns[0].constraints
 	}
 
@@ -110,11 +111,12 @@ class ColumnDelegateTests {
 		assertNull delegate.columns[0].defaultValueDate
 		assertNull delegate.columns[0].defaultValueBoolean
 		assertNull delegate.columns[0].defaultValueComputed
+		assertNull delegate.columns[0].defaultValueSequenceNext
 		assertNull delegate.columns[0].autoIncrement
 		assertNull delegate.columns[0].startWith
 		assertNull delegate.columns[0].incrementBy
 		assertNull delegate.columns[0].remarks
-		assertNull delegate.columns[0].defaultValueSequenceNext
+		assertNull delegate.columns[0].descending
 		assertNotNull delegate.columns[0].constraints
 	}
 
@@ -135,28 +137,31 @@ class ColumnDelegateTests {
 		def columnDefaultDate = parseSqlTimestamp(defaultDate)
 
 		def delegate = buildColumnDelegate(ColumnConfig.class) {
-			column(name: 'columnName',
-						 computed: true,
-						 type: 'varchar(30)',
-						 value: 'someValue',
-						 valueNumeric: 1,
-						 valueBoolean: false,
-						 valueDate: dateValue,
-						 valueComputed: new DatabaseFunction('databaseValue'),
-						 valueSequenceNext: new SequenceNextValueFunction('sequenceNext'),
-						 valueSequenceCurrent: new SequenceCurrentValueFunction('sequenceCurrent'),
-						 valueBlobFile: 'someBlobFile',
-						 valueClobFile: 'someClobFile',
-						 defaultValue: 'someDefaultValue',
-						 defaultValueNumeric: 2,
-						 defaultValueDate: defaultDate,
-						 defaultValueBoolean: false,
-						 defaultValueComputed: new DatabaseFunction("defaultDatabaseValue"),
-						 autoIncrement: true, // should be the only true.
-						 startWith: 3,
-						 incrementBy: 4,
-						 remarks: 'No comment',
-						 defaultValueSequenceNext: new SequenceNextValueFunction('defaultSequence'))
+			column(
+					name: 'columnName',
+					computed: true,
+					type: 'varchar(30)',
+					value: 'someValue',
+					valueNumeric: 1,
+					valueBoolean: false,
+					valueDate: dateValue,
+					valueComputed: new DatabaseFunction('databaseValue'),
+					valueSequenceNext: new SequenceNextValueFunction('sequenceNext'),
+					valueSequenceCurrent: new SequenceCurrentValueFunction('sequenceCurrent'),
+					valueBlobFile: 'someBlobFile',
+					valueClobFile: 'someClobFile',
+					defaultValue: 'someDefaultValue',
+					defaultValueNumeric: 2,
+					defaultValueDate: defaultDate,
+					defaultValueBoolean: false,
+					defaultValueComputed: new DatabaseFunction("defaultDatabaseValue"),
+					defaultValueSequenceNext: new SequenceNextValueFunction('defaultSequence'),
+					autoIncrement: true, // should be the only true.
+					startWith: 3,
+					incrementBy: 4,
+					remarks: 'No comment',
+					descending: true
+			)
 		}
 
 		assertNull delegate.whereClause
@@ -179,11 +184,12 @@ class ColumnDelegateTests {
 		assertEquals columnDefaultDate, delegate.columns[0].defaultValueDate
 		assertFalse delegate.columns[0].defaultValueBoolean
 		assertEquals 'defaultDatabaseValue', delegate.columns[0].defaultValueComputed.value
+		assertEquals 'defaultSequence', delegate.columns[0].defaultValueSequenceNext.value
 		assertTrue delegate.columns[0].autoIncrement
 		assertEquals 3G, delegate.columns[0].startWith
 		assertEquals 4G, delegate.columns[0].incrementBy
 		assertEquals 'No comment', delegate.columns[0].remarks
-		assertEquals 'defaultSequence', delegate.columns[0].defaultValueSequenceNext.value
+		assertTrue delegate.columns[0].descending
 		assertNull delegate.columns[0].constraints
 	}
 
@@ -196,15 +202,19 @@ class ColumnDelegateTests {
 	void twoColumns() {
 		def delegate = buildColumnDelegate(ColumnConfig.class) {
 			// first one has only the boolean value set to true
-			column(name: 'first',
-						 valueBoolean: true,
-			       defaultValueBoolean: false,
-			       autoIncrement: false)
+			column(
+					name: 'first',
+					valueBoolean: true,
+			        defaultValueBoolean: false,
+			        autoIncrement: false
+			)
 			// the second one has just the default value set to true.
-			column(name: 'second',
-						 valueBoolean: false,
-						 defaultValueBoolean: true,
-						 autoIncrement: false)
+			column(
+					name: 'second',
+					valueBoolean: false,
+					defaultValueBoolean: true,
+					autoIncrement: false
+			)
 		}
 
 		assertNull delegate.whereClause
@@ -233,8 +243,7 @@ class ColumnDelegateTests {
 	void columnWithConstraint() {
 		def delegate = buildColumnDelegate(ColumnConfig.class) {
 			// first one has only the boolean value set to true
-			column(name: 'first',
-						 type: 'int') {
+			column(name: 'first', type: 'int') {
 				constraints(nullable: false, unique: true)
 			}
 		}
@@ -267,31 +276,34 @@ class ColumnDelegateTests {
 		def columnDefaultDate = parseSqlTimestamp(defaultDate)
 
 		def delegate = buildColumnDelegate(AddColumnConfig.class) {
-			column(name: 'columnName',
-							computed: false,
-							type: 'varchar(30)',
-							value: 'someValue',
-							valueNumeric: 1,
-							valueBoolean: false,
-							valueDate: dateValue,
-							valueComputed: new DatabaseFunction('databaseValue'),
-							valueSequenceNext: new SequenceNextValueFunction('sequenceNext'),
-							valueSequenceCurrent: new SequenceCurrentValueFunction('sequenceCurrent'),
-							valueBlobFile: 'someBlobFile',
-							valueClobFile: 'someClobFile',
-							defaultValue: 'someDefaultValue',
-							defaultValueNumeric: 2,
-							defaultValueDate: defaultDate,
-							defaultValueBoolean: false,
-							defaultValueComputed: new DatabaseFunction("defaultDatabaseValue"),
-							autoIncrement: true, // should be the only true.
-							startWith: 3,
-							incrementBy: 4,
-							remarks: 'No comment',
-							defaultValueSequenceNext: new SequenceNextValueFunction('defaultSequence'),
+			column(
+					name: 'columnName',
+					computed: false,
+					type: 'varchar(30)',
+					value: 'someValue',
+					valueNumeric: 1,
+					valueBoolean: false,
+					valueDate: dateValue,
+					valueComputed: new DatabaseFunction('databaseValue'),
+					valueSequenceNext: new SequenceNextValueFunction('sequenceNext'),
+					valueSequenceCurrent: new SequenceCurrentValueFunction('sequenceCurrent'),
+					valueBlobFile: 'someBlobFile',
+					valueClobFile: 'someClobFile',
+					defaultValue: 'someDefaultValue',
+					defaultValueNumeric: 2,
+					defaultValueDate: defaultDate,
+					defaultValueBoolean: false,
+					defaultValueComputed: new DatabaseFunction("defaultDatabaseValue"),
+					defaultValueSequenceNext: new SequenceNextValueFunction('defaultSequence'),
+					autoIncrement: true, // should be the only true.
+					startWith: 3,
+					incrementBy: 4,
+					remarks: 'No comment',
+					descending: false,
 			        beforeColumn: 'before',
 			        afterColumn: 'after',
-			        position: 5)
+			        position: 5
+			)
 		}
 
 		assertNull delegate.whereClause
@@ -314,11 +326,12 @@ class ColumnDelegateTests {
 		assertEquals columnDefaultDate, delegate.columns[0].defaultValueDate
 		assertFalse delegate.columns[0].defaultValueBoolean
 		assertEquals 'defaultDatabaseValue', delegate.columns[0].defaultValueComputed.value
+		assertEquals 'defaultSequence', delegate.columns[0].defaultValueSequenceNext.value
 		assertTrue delegate.columns[0].autoIncrement
 		assertEquals 3G, delegate.columns[0].startWith
 		assertEquals 4G, delegate.columns[0].incrementBy
 		assertEquals 'No comment', delegate.columns[0].remarks
-		assertEquals 'defaultSequence', delegate.columns[0].defaultValueSequenceNext.value
+		assertFalse delegate.columns[0].descending
 		assertEquals 'before', delegate.columns[0].beforeColumn
 		assertEquals 'after', delegate.columns[0].afterColumn
 		assertEquals 5, delegate.columns[0].position
@@ -343,30 +356,33 @@ class ColumnDelegateTests {
 		def columnDefaultDate = parseSqlTimestamp(defaultDate)
 
 		def delegate = buildColumnDelegate(LoadDataColumnConfig.class) {
-			column(name: 'columnName',
-							computed: true,
-							type: 'varchar(30)',
-							value: 'someValue',
-							valueNumeric: 1,
-							valueBoolean: false,
-							valueDate: dateValue,
-							valueComputed: new DatabaseFunction('databaseValue'),
-							valueSequenceNext: new SequenceNextValueFunction('sequenceNext'),
-							valueSequenceCurrent: new SequenceCurrentValueFunction('sequenceCurrent'),
-							valueBlobFile: 'someBlobFile',
-							valueClobFile: 'someClobFile',
-							defaultValue: 'someDefaultValue',
-							defaultValueNumeric: 2,
-							defaultValueDate: defaultDate,
-							defaultValueBoolean: false,
-							defaultValueComputed: new DatabaseFunction("defaultDatabaseValue"),
-							autoIncrement: true, // should be the only true.
-							startWith: 3,
-							incrementBy: 4,
-							remarks: 'No comment',
-							defaultValueSequenceNext: new SequenceNextValueFunction('defaultSequence'),
+			column(
+					name: 'columnName',
+					computed: true,
+					type: 'varchar(30)',
+					value: 'someValue',
+					valueNumeric: 1,
+					valueBoolean: false,
+					valueDate: dateValue,
+					valueComputed: new DatabaseFunction('databaseValue'),
+					valueSequenceNext: new SequenceNextValueFunction('sequenceNext'),
+					valueSequenceCurrent: new SequenceCurrentValueFunction('sequenceCurrent'),
+					valueBlobFile: 'someBlobFile',
+					valueClobFile: 'someClobFile',
+					defaultValue: 'someDefaultValue',
+					defaultValueNumeric: 2,
+					defaultValueDate: defaultDate,
+					defaultValueBoolean: false,
+					defaultValueComputed: new DatabaseFunction("defaultDatabaseValue"),
+					defaultValueSequenceNext: new SequenceNextValueFunction('defaultSequence'),
+					autoIncrement: true, // should be the only true.
+					startWith: 3,
+					incrementBy: 4,
+					remarks: 'No comment',
+					descending: false,
 			        header: 'columnHeader',
-			        index: 5)
+			        index: 5
+			)
 		}
 
 		assertNull delegate.whereClause
@@ -389,11 +405,12 @@ class ColumnDelegateTests {
 		assertEquals columnDefaultDate, delegate.columns[0].defaultValueDate
 		assertFalse delegate.columns[0].defaultValueBoolean
 		assertEquals 'defaultDatabaseValue', delegate.columns[0].defaultValueComputed.value
+		assertEquals 'defaultSequence', delegate.columns[0].defaultValueSequenceNext.value
 		assertTrue delegate.columns[0].autoIncrement
 		assertEquals 3G, delegate.columns[0].startWith
 		assertEquals 4G, delegate.columns[0].incrementBy
 		assertEquals 'No comment', delegate.columns[0].remarks
-		assertEquals 'defaultSequence', delegate.columns[0].defaultValueSequenceNext.value
+		assertFalse delegate.columns[0].descending
 		assertEquals 'columnHeader', delegate.columns[0].header
 		assertEquals 5, delegate.columns[0].index
 		assertNull delegate.columns[0].constraints
@@ -468,10 +485,12 @@ class ColumnDelegateTests {
   private def buildColumnDelegate(Class columnConfigClass, Closure closure) {
       def changelog = new DatabaseChangeLog()
       changelog.changeLogParameters = new ChangeLogParameters()
-	    def columnDelegate = new ColumnDelegate(columnConfigClass: columnConfigClass,
-					                                    databaseChangeLog: changelog,
-					                                    changeSetId: 'test-change-set',
-					                                    changeName: 'create-table')
+	  def columnDelegate = new ColumnDelegate(
+			  columnConfigClass: columnConfigClass,
+			  databaseChangeLog: changelog,
+			  changeSetId: 'test-change-set',
+			  changeName: 'create-table'
+	  )
       closure.delegate = columnDelegate
       closure.resolveStrategy = Closure.DELEGATE_FIRST
       closure.call()

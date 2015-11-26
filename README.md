@@ -87,6 +87,10 @@ with a couple of the gaping holes in Liquibase's documentation of the XML.
   has been removed.
 
 ##### Additions to the XML format:
+* In general, boolean attributes can be specified as either strings or booleans.
+  For example, ```changeSet(runAlways: 'true')``` can also be written as
+  ```changeSet(runAlways: true)```.
+  
 * The Groovy DSL supports a simplified means of passing arguments to the
   ```executeCommand change```.  Instead of:
 
@@ -177,7 +181,7 @@ sql { """
       set to true, but did you know that you can also control the starting
       number and the increment interval with the ```startWith``` and
       ```incrementBy``` attributes?
-* The ```constraints``` elementt also has some hidden gems:
+* The ```constraints``` element also has some hidden gems:
     - Some databases automatically create indexes for primary keys. The
       ```primaryKeyTablespace``` can be used to control the tablespace.
     - A foreign key can be made by using the ```references``` attribute like
@@ -188,11 +192,34 @@ sql { """
       useful for defining a check constraint, but I could not determine the
       proper syntax for it yet.  For now, it may be best to stick to custom
       ```sql``` changes to define check constraints.
+* The ```createSequence``` change has an ```cacheSize``` attribute that sets
+  how many numbers of the sequence will be fetched into memory for each query
+  that accesses the sequence.
 * The documentation for version 3.1.1 of Liquibase mentions the new
   ```beforeColumn```, ```afterColumn```, and ```position``` attributes that you
   can put on a ```column``` statement to control where a new column is placed in
   an existing table.  What the documentation leaves out is that these attributes
   don't work :-)
+* Version 3.4.0 of Liquibase introduced two new attributes to the 
+  ```includeAll``` element of a databaseChangeLog, both of which are
+  undocumented.  The first one is the ```errorIfMissingOrEmpty``` attribute.
+  It defaults to ```true```, but if it is set to ```false```, Liquibase will
+  ignore errors caused by invalid or empty directories and move on.  The second
+  one is the ```resourceFilter``` attribute.  A resourceFilter is the name of a
+  class that implements ```liquibase.changelog.IncludeAllFilter``` interface, 
+  which allows developers to implement sophisticated logic to decide what files
+  from a directory should be included (in addition to the *.groovy filter that
+  the Groovy DSL imposes). 
+* Liquibase 3.4.0 added the undocumented ```forIndexCatalogName```,
+  ```forIndexSchemaName```, and ```forIndexName``` attributes to the 
+  ```addPrimaryKey``` and ```addUniqueConstraint``` changes.  These attributes
+  allow you to specify the index that will be used to implement the primary key
+   and unique constraint, respectively.
+* Liquibase 3.4.0 added the undocumented ```cacheSize``` and ```willCycle``` 
+  attributes to the ```alterSeqence```  change. ```cacheSize``` sets how many 
+  numbers of the sequence will be fetched into memory for each query that 
+  accesses the sequence.  ```willCycle``` determines if the sequence should 
+  start over when it reaches its maximum value.
 
 ## License
 This code is released under the Apache Public License 2.0, just like Liquibase 2.0.

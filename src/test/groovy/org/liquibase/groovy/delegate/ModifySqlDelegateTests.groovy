@@ -16,8 +16,6 @@
 
 package org.liquibase.groovy.delegate
 
-import liquibase.change.ColumnConfig
-import liquibase.change.core.LoadDataColumnConfig
 import liquibase.changelog.ChangeLogParameters
 import liquibase.changelog.ChangeSet
 import liquibase.changelog.DatabaseChangeLog
@@ -26,15 +24,12 @@ import liquibase.sql.visitor.AppendSqlVisitor
 import liquibase.sql.visitor.PrependSqlVisitor
 import liquibase.sql.visitor.RegExpReplaceSqlVisitor
 import liquibase.sql.visitor.ReplaceSqlVisitor
-import liquibase.statement.DatabaseFunction
-import liquibase.statement.SequenceCurrentValueFunction
-import liquibase.statement.SequenceNextValueFunction
 import org.junit.Test
 
-import java.sql.Timestamp
-import java.text.SimpleDateFormat
-
-import static org.junit.Assert.*
+import static org.junit.Assert.assertEquals
+import static org.junit.Assert.assertFalse
+import static org.junit.Assert.assertNull
+import static org.junit.Assert.assertTrue
 
 /**
  * Test class for the {@link ModifySqlDelegate}.  As usual, we're only verifying
@@ -72,53 +67,6 @@ class ModifySqlDelegateTests {
 		buildDelegate(null) {
 			makeUpSql(value: "select * from monkey")
 		}
-	}
-
-	/**
-	 * Test the prepend element with no attributes. Validate the default
-	 * "applyToRollback" value of false.
-	 */
-	@Test
-	void prependEmpty() {
-		def sqlVisitors = buildDelegate([:]) {
-			prepend([:])
-		}
-		assertEquals 1, sqlVisitors.size()
-		assertTrue sqlVisitors[0] instanceof PrependSqlVisitor
-    assertNull sqlVisitors[0].value
-		assertNull sqlVisitors[0].applicableDbms
-		assertNull sqlVisitors[0].contexts
-		assertNull sqlVisitors[0].labels
-		assertFalse sqlVisitors[0].applyToRollback
-
-	}
-
-	/**
-	 * Test a prepend with an invalid attribute.
-	 */
-	@Test(expected = ChangeLogParseException)
-	void prependInvalidAttribute() {
-		buildDelegate([:]) {
-			prepend(prefix: 'exec')
-		}
-	}
-
-	/**
-	 * Test the prepend element with all supported attributes.  For this test,
-	 * we will also set a dbms.
-	 */
-	@Test
-	void prependFull() {
-		def sqlVisitors = buildDelegate(dbms: 'mysql') {
-			prepend(value: 'exec')
-		}
-		assertEquals 1, sqlVisitors.size()
-		assertTrue sqlVisitors[0] instanceof PrependSqlVisitor
-		assertEquals 'exec', sqlVisitors[0].value
-		assertEquals 'mysql', sqlVisitors[0].applicableDbms.toArray()[0]
-		assertNull sqlVisitors[0].contexts
-		assertNull sqlVisitors[0].labels
-		assertFalse sqlVisitors[0].applyToRollback
 	}
 
 	/**
@@ -165,6 +113,53 @@ class ModifySqlDelegateTests {
 		assertNull sqlVisitors[0].applicableDbms
 		assertEquals 'test', sqlVisitors[0].contexts.contexts.toArray()[0]
 		assertEquals 'test_label', sqlVisitors[0].labels.toString()
+		assertFalse sqlVisitors[0].applyToRollback
+	}
+
+	/**
+	 * Test the prepend element with no attributes. Validate the default
+	 * "applyToRollback" value of false.
+	 */
+	@Test
+	void prependEmpty() {
+		def sqlVisitors = buildDelegate([:]) {
+			prepend([:])
+		}
+		assertEquals 1, sqlVisitors.size()
+		assertTrue sqlVisitors[0] instanceof PrependSqlVisitor
+        assertNull sqlVisitors[0].value
+		assertNull sqlVisitors[0].applicableDbms
+		assertNull sqlVisitors[0].contexts
+		assertNull sqlVisitors[0].labels
+		assertFalse sqlVisitors[0].applyToRollback
+
+	}
+
+	/**
+	 * Test a prepend with an invalid attribute.
+	 */
+	@Test(expected = ChangeLogParseException)
+	void prependInvalidAttribute() {
+		buildDelegate([:]) {
+			prepend(prefix: 'exec')
+		}
+	}
+
+	/**
+	 * Test the prepend element with all supported attributes.  For this test,
+	 * we will also set a dbms.
+	 */
+	@Test
+	void prependFull() {
+		def sqlVisitors = buildDelegate(dbms: 'mysql') {
+			prepend(value: 'exec')
+		}
+		assertEquals 1, sqlVisitors.size()
+		assertTrue sqlVisitors[0] instanceof PrependSqlVisitor
+		assertEquals 'exec', sqlVisitors[0].value
+		assertEquals 'mysql', sqlVisitors[0].applicableDbms.toArray()[0]
+		assertNull sqlVisitors[0].contexts
+		assertNull sqlVisitors[0].labels
 		assertFalse sqlVisitors[0].applyToRollback
 	}
 

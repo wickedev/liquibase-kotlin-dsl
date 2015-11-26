@@ -16,21 +16,27 @@
 
 package org.liquibase.groovy.delegate
 
-import liquibase.change.core.OutputChange
-import liquibase.exception.ChangeLogParseException
-import org.junit.Test
-import static org.junit.Assert.*
-
-import liquibase.change.core.InsertDataChange
 import liquibase.change.ColumnConfig
+import liquibase.change.core.DeleteDataChange
+import liquibase.change.core.InsertDataChange
 import liquibase.change.core.LoadDataChange
 import liquibase.change.core.LoadDataColumnConfig
 import liquibase.change.core.LoadUpdateDataChange
-import liquibase.change.core.UpdateDataChange
-import liquibase.change.core.TagDatabaseChange
+import liquibase.change.core.OutputChange
+import liquibase.change.core.SetColumnRemarksChange
+import liquibase.change.core.SetTableRemarksChange
 import liquibase.change.core.StopChange
+import liquibase.change.core.TagDatabaseChange
+import liquibase.change.core.UpdateDataChange
+import liquibase.exception.ChangeLogParseException
 import liquibase.resource.FileSystemResourceAccessor
-import liquibase.change.core.DeleteDataChange
+import org.junit.Test
+
+import static org.junit.Assert.assertEquals
+import static org.junit.Assert.assertFalse
+import static org.junit.Assert.assertNotNull
+import static org.junit.Assert.assertNull
+import static org.junit.Assert.assertTrue
 
 /**
  * This is one of several classes that test the creation of refactoring changes
@@ -72,6 +78,97 @@ import liquibase.change.core.DeleteDataChange
 class NonRefactoringTransformationTests extends ChangeSetTests {
 
 	/**
+	 * Test parsing a delete change with no attributes and no where clause.  This
+	 * just makes sure the DSL doesn't introduce any unexpected defaults.
+	 */
+	@Test
+	void deleteDataEmpty() {
+		buildChangeSet {
+			delete([:]) { }
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof DeleteDataChange
+		assertNull changes[0].catalogName
+		assertNull changes[0].schemaName
+		assertNull changes[0].tableName
+		assertNull changes[0].where
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a delete change when we have all attributes and a where clause
+	 */
+	@Test
+	void deleteDataFull() {
+		buildChangeSet {
+			delete(catalogName: 'catalog', schemaName: 'schema', tableName: 'monkey') {
+				where "emotion='angry' AND active=true"
+			}
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof DeleteDataChange
+		assertEquals 'catalog', changes[0].catalogName
+		assertEquals 'schema', changes[0].schemaName
+		assertEquals 'monkey', changes[0].tableName
+		assertEquals "emotion='angry' AND active=true", changes[0].where
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a delete change without a closure. This just means we have
+	 * no "where" clause, and should be supported.
+	 */
+	@Test
+	void deleteDataNoWhereClause() {
+		buildChangeSet {
+			delete(catalogName: 'catalog', schemaName: 'schema', tableName: 'monkey')
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof DeleteDataChange
+		assertEquals 'catalog', changes[0].catalogName
+		assertEquals 'schema', changes[0].schemaName
+		assertEquals 'monkey', changes[0].tableName
+		assertNull changes[0].where
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a delete change when we have columns in the closure.  This is
+	 * not allowed and should be caught by the parser.
+	 */
+	@Test(expected = ChangeLogParseException)
+	void deleteDataWithColumns() {
+		buildChangeSet {
+			delete(catalogName: 'catalog', schemaName: 'schema', tableName: 'monkey') {
+				column(name: 'emotion')
+			}
+		}
+	}
+
+	/**
+	 * Process the "empty" change.  This doesn't do anything more than verify
+	 * that we can have one without blowing up.  Note that
+	 */
+	@Test
+	void emptyChange() {
+		buildChangeSet {
+			empty()
+		}
+	}
+
+	/**
 	 * Test parsing an insert change with no attributes and no columns to make
 	 * sure the DSL doesn't introduce any unexpected defaults.
 	 */
@@ -89,9 +186,9 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		assertNull changes[0].schemaName
 		assertNull changes[0].tableName
 		assertNull changes[0].dbms
+		assertEquals 0, changes[0].columns.size
 		assertNoOutput()
 	}
-
 	/**
 	 * Test parsing an insert when we have all supported attributes and some
 	 * columns.  We don't need to worry about columns without attributes or
@@ -103,8 +200,8 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		def sqlNow = parseSqlTimestamp(now)
 		buildChangeSet {
 			insert(catalogName: 'catalog',
-						 schemaName: 'schema',
-						 tableName: 'monkey',
+				   schemaName: 'schema',
+				   tableName: 'monkey',
 			       dbms: 'oracle, db2') {
 				column(name: 'id', valueNumeric: 502)
 				column(name: 'emotion', value: 'angry')
@@ -187,10 +284,11 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 
 	/**
 	 * Test parsing a loadDataChange with all supported attributes and a few
-	 * columns.  We're not too concerned with the column contents, just make sure
-	 * we get them.  For this test, we want a separator and quotchar that is
-	 * different from the Liquibase defaults, so we'll go with  semi-colon
-	 * separated and single quoted
+	 * columns.  We're not too concerned with the column contents, just make
+	 * sure we get them, including the extra attributes that are supported for
+	 * columns in a loadData change.  For this test, we want a separator and
+	 * quotchar that is different from the Liquibase defaults, so we'll go with
+	 * semi-colon separated and single quoted
 	 */
 	@Test
 	void loadDataFull() {
@@ -198,15 +296,15 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 
 		buildChangeSet {
 			loadData(catalogName: 'catalog',
-							 schemaName: 'schema',
-							 tableName: 'monkey',
-							 file: 'data.csv',
-							 relativeToChangelogFile: true,
-							 encoding: 'UTF-8',
-							 separator: ';',
-							 quotchar: "'") {
-				column(name: 'id')
-				column(name: 'emotion')
+					 schemaName: 'schema',
+					 tableName: 'monkey',
+					 file: 'data.csv',
+					 relativeToChangelogFile: true,
+					 encoding: 'UTF-8',
+					 separator: ';',
+					 quotchar: "'") {
+				column(name: 'id', index: 1, header: 'id_header')
+				column(name: 'emotion', index: 2, header: 'emotion_header')
 			}
 		}
 
@@ -229,7 +327,11 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		assertTrue columns.every { column -> column instanceof LoadDataColumnConfig }
 		assertEquals 2, columns.size()
 		assertEquals 'id', columns[0].name
+		assertEquals 1, columns[0].index
+		assertEquals 'id_header', columns[0].header
 		assertEquals 'emotion', columns[1].name
+		assertEquals 2, columns[1].index
+		assertEquals 'emotion_header', columns[1].header
 		assertNoOutput()
 	}
 
@@ -243,12 +345,12 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 	void loadDataFullWithFile() {
 		buildChangeSet {
 			loadData(catalogName: 'catalog',
-							 schemaName: 'schema',
-							 tableName: 'monkey',
-							 file: new File('data.csv'),
-							 encoding: 'UTF-8',
-							 separator: ';',
-							 quotchar: '"') {
+					 schemaName: 'schema',
+					 tableName: 'monkey',
+					 file: new File('data.csv'),
+					 encoding: 'UTF-8',
+					 separator: ';',
+					 quotchar: '"') {
 				column(name: 'id')
 				column(name: 'emotion')
 			}
@@ -265,12 +367,12 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 
 		buildChangeSet {
 			loadData(catalogName: 'catalog',
-							schemaName: 'schema',
-							tableName: 'monkey',
-							file: 'data.csv',
-							encoding: 'UTF-8',
-							separator: ';',
-							quotchar: "'") {
+					 schemaName: 'schema',
+					 tableName: 'monkey',
+					 file: 'data.csv',
+					 encoding: 'UTF-8',
+					 separator: ';',
+					 quotchar: "'") {
 				where "invalid"
 			}
 		}
@@ -303,6 +405,8 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		assertNull changes[0].encoding
 		assertEquals ",", changes[0].separator
 		assertEquals '"', changes[0].quotchar
+		assertNull changes[0].primaryKey
+		assertFalse changes[0].onlyUpdate // False is the Lioquibase default
 		assertNotNull 'LoadDataChange.resourceAccessor should not be null', changes[0].resourceAccessor
 		def columns = changes[0].columns
 		assertNotNull columns
@@ -323,13 +427,15 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 
 		buildChangeSet {
 			loadUpdateData(catalogName: 'catalog',
-							schemaName: 'schema',
-							tableName: 'monkey',
-							file: 'data.csv',
-							relativeToChangelogFile: true,
-							encoding: 'UTF-8',
-							separator: ';',
-							quotchar: "'") {
+					       schemaName: 'schema',
+					       tableName: 'monkey',
+					       file: 'data.csv',
+					       relativeToChangelogFile: true,
+					       encoding: 'UTF-8',
+					       separator: ';',
+					       quotchar: "'",
+			               primaryKey: 'id',
+			               onlyUpdate: true) {
 				column(name: 'id')
 				column(name: 'emotion')
 			}
@@ -348,6 +454,8 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		assertEquals 'UTF-8', changes[0].encoding
 		assertEquals ';', changes[0].separator
 		assertEquals "'", changes[0].quotchar
+		assertEquals 'id', changes[0].primaryKey
+		assertTrue changes[0].onlyUpdate
 		assertNotNull 'LoadDataChange.resourceAccessor should not be null', changes[0].resourceAccessor
 		def columns = changes[0].columns
 		assertNotNull columns
@@ -368,12 +476,12 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 	void loadUpdateDataFullWithFile() {
 		buildChangeSet {
 			loadUpdateData(catalogName: 'catalog',
-							schemaName: 'schema',
-							tableName: 'monkey',
-							file: new File('data.csv'),
-							encoding: 'UTF-8',
-							separator: ';',
-							quotchar: '"') {
+					       schemaName: 'schema',
+					       tableName: 'monkey',
+					       file: new File('data.csv'),
+					       encoding: 'UTF-8',
+					       separator: ';',
+					       quotchar: '"') {
 				column(name: 'id')
 				column(name: 'emotion')
 			}
@@ -390,249 +498,115 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 
 		buildChangeSet {
 			loadUpdateData(catalogName: 'catalog',
-							schemaName: 'schema',
-							tableName: 'monkey',
-							file: 'data.csv',
-							encoding: 'UTF-8',
-							separator: ';',
-							quotchar: "'") {
+					       schemaName: 'schema',
+					       tableName: 'monkey',
+					       file: 'data.csv',
+					       encoding: 'UTF-8',
+					       separator: ';',
+					       quotchar: "'") {
 				where "invalid"
 			}
 		}
 	}
 
 	/**
-	 * test parsing an updateData change with no attributes and no closure to
-	 * make sure the DSL is not adding any unintended defaults.
+	 * Test an empty output change
 	 */
-  // empty
 	@Test
-	void updateDataEmpty() {
+	void outputEmpty() {
 		buildChangeSet {
-			update([:]) {	}
+			output([:])
 		}
 
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof UpdateDataChange
-		assertNull changes[0].catalogName
-		assertNull changes[0].schemaName
-		assertNull changes[0].tableName
-		assertNull changes[0].whereClause
-		def columns = changes[0].columns
-		assertNotNull columns
-		assertEquals 0, columns.size()
+		assertEquals 1, changeSet.changes.size()
+		assertTrue changeSet.changes[0] instanceof OutputChange
+		assertNull changeSet.changes[0].message
+		assertEquals "", changeSet.changes[0].target
 		assertNoOutput()
 	}
 
 	/**
-	 * Test parsing an updateData change when we have all supported attributes,
-	 * and a couple of columns, but no where clause.  This should not cause an
-	 * issue, since it is legal to update all rows in a table. As always, we don't
-	 * care about the contents of the columns.
+	 * Test an output change with all supported properties
 	 */
 	@Test
-	void updateDataNoWhere() {
+	void outputFull() {
 		buildChangeSet {
-			update(catalogName: 'catalog',  schemaName: 'schema', tableName: 'monkey') {
-				column(name: 'rfid_tag')
-				column(name: 'emotion')
-				column(name: 'last_updated')
-				column(name: 'active')
-			}
+			output([message: 'some helpful message',
+			        target: 'STDOUT'])
 		}
 
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof UpdateDataChange
-		assertEquals 'catalog', changes[0].catalogName
-		assertEquals 'schema', changes[0].schemaName
-		assertEquals 'monkey', changes[0].tableName
-		assertNull changes[0].whereClause
-		def columns = changes[0].columns
-		assertNotNull columns
-		assertTrue columns.every { column -> column instanceof ColumnConfig }
-		assertEquals 4, columns.size()
-		assertEquals 'rfid_tag', columns[0].name
-		assertEquals 'emotion', columns[1].name
-		assertEquals 'last_updated', columns[2].name
-		assertEquals 'active', columns[3].name
+		assertEquals 1, changeSet.changes.size()
+		assertTrue changeSet.changes[0] instanceof OutputChange
+		assertEquals 'some helpful message', changeSet.changes[0].message
+		assertEquals 'STDOUT', changeSet.changes[0].target
 		assertNoOutput()
 	}
 
 	/**
-	 * Test parsing an updateData change when we have attributes, columns and
-	 * a where clause.  We won't test a where and no columns because that change
-	 * doesn't make sense, and will be rejected by Liquibase itself.
+	 * Test an empty setColumnRemarks change
 	 */
 	@Test
-	void updateDataFull() {
+	void setColumnRemarksEmpty() {
 		buildChangeSet {
-			update(catalogName: 'catalog',  schemaName: 'schema', tableName: 'monkey') {
-				column(name: 'rfid_tag')
-				column(name: 'emotion')
-				column(name: 'last_updated')
-				column(name: 'active')
-				where "id=882"
-			}
+			setColumnRemarks([:])
+		}
+	}
+
+	/**
+	 * Test an output change with all supported properties
+	 */
+	@Test
+	void setColumnRemarksFull() {
+		buildChangeSet {
+			setColumnRemarks(
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					tableName: 'monkey',
+					columnName: 'emotion',
+					remarks: 'some helpful message'
+			)
 		}
 
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof UpdateDataChange
-		assertEquals 'catalog', changes[0].catalogName
-		assertEquals 'schema', changes[0].schemaName
-		assertEquals 'monkey', changes[0].tableName
-		assertEquals 'id=882', changes[0].whereClause
-		def columns = changes[0].columns
-		assertNotNull columns
-		assertTrue columns.every { column -> column instanceof ColumnConfig }
-		assertEquals 4, columns.size()
-		assertEquals 'rfid_tag', columns[0].name
-		assertEquals 'emotion', columns[1].name
-		assertEquals 'last_updated', columns[2].name
-		assertEquals 'active', columns[3].name
+		assertEquals 1, changeSet.changes.size()
+		assertTrue changeSet.changes[0] instanceof SetColumnRemarksChange
+		assertEquals 'catalog', changeSet.changes[0].catalogName
+		assertEquals 'schema', changeSet.changes[0].schemaName
+		assertEquals 'monkey', changeSet.changes[0].tableName
+		assertEquals 'emotion', changeSet.changes[0].columnName
+		assertEquals 'some helpful message', changeSet.changes[0].remarks
 		assertNoOutput()
 	}
 
 	/**
-	 * Test parsing a delete change with no attributes and no where clause.  This
-	 * just makes sure the DSL doesn't introduce any unexpected defaults.
+	 * Test an empty setColumnRemarks change
 	 */
 	@Test
-	void deleteDataEmpty() {
+	void setTableRemarksEmpty() {
 		buildChangeSet {
-			delete([:]) { }
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof DeleteDataChange
-		assertNull changes[0].catalogName
-		assertNull changes[0].schemaName
-		assertNull changes[0].tableName
-		assertNull changes[0].whereClause
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing a delete change when we have all attributes and a where clause
-	 */
-	@Test
-	void deleteDataFull() {
-		buildChangeSet {
-			delete(catalogName: 'catalog', schemaName: 'schema', tableName: 'monkey') {
-				where "emotion='angry' AND active=true"
-			}
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof DeleteDataChange
-		assertEquals 'catalog', changes[0].catalogName
-		assertEquals 'schema', changes[0].schemaName
-		assertEquals 'monkey', changes[0].tableName
-		assertEquals "emotion='angry' AND active=true", changes[0].whereClause
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing a delete change without a closure. This just means we have
-	 * no "where" clause, and should be supported.
-	 */
-	@Test
-	void deleteDataNoWhereClause() {
-		buildChangeSet {
-			delete(catalogName: 'catalog', schemaName: 'schema', tableName: 'monkey')
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof DeleteDataChange
-		assertEquals 'catalog', changes[0].catalogName
-		assertEquals 'schema', changes[0].schemaName
-		assertEquals 'monkey', changes[0].tableName
-		assertNull changes[0].whereClause
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing a delete change when we have columns in the closure.  This is
-	 * not allowed and should be caught by the parser.
-	 */
-	@Test(expected = ChangeLogParseException)
-	void deleteDataWithColumns() {
-		buildChangeSet {
-			delete(catalogName: 'catalog', schemaName: 'schema', tableName: 'monkey') {
-				column(name: 'emotion')
-			}
+			setTableRemarks([:])
 		}
 	}
 
 	/**
-	 * Test parsing a tagDatabase change when we have no attributes to make sure
-	 * the DSL doesn't introduce any defaults.
+	 * Test an output change with all supported properties
 	 */
 	@Test
-	void tagDatabaseEmpty() {
+	void setTableRemarksFull() {
 		buildChangeSet {
-			tagDatabase([:])
+			setTableRemarks(
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					tableName: 'monkey',
+					remarks: 'some helpful message'
+			)
 		}
 
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof TagDatabaseChange
-		assertNull changes[0].tag
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing a tagDatabase change when we have all supported attributes.
-	 */
-	@Test
-	void tagDatabaseNameInAttributes() {
-		buildChangeSet {
-			tagDatabase(tag: 'monkey')
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof TagDatabaseChange
-		assertEquals 'monkey', changes[0].tag
-		assertNoOutput()
-	}
-
-	/**
-	 * Test parsing a tagDatabase change when the name is not in an attribute.
-	 */
-	@Test
-	void tagDatabaseNameIsArgument() {
-		buildChangeSet {
-			tagDatabase 'monkey'
-		}
-
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof TagDatabaseChange
-		assertEquals 'monkey', changes[0].tag
+		assertEquals 1, changeSet.changes.size()
+		assertTrue changeSet.changes[0] instanceof SetTableRemarksChange
+		assertEquals 'catalog', changeSet.changes[0].catalogName
+		assertEquals 'schema', changeSet.changes[0].schemaName
+		assertEquals 'monkey', changeSet.changes[0].tableName
+		assertEquals 'some helpful message', changeSet.changes[0].remarks
 		assertNoOutput()
 	}
 
@@ -692,46 +666,156 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 	}
 
 	/**
-	 * Process the "empty" change.  This doesn't do anything more than verify
-	 * that we can have one without blowing up.  Note that
+	 * Test parsing a tagDatabase change when we have no attributes to make sure
+	 * the DSL doesn't introduce any defaults.
 	 */
 	@Test
-	void emptyChange() {
+	void tagDatabaseEmpty() {
 		buildChangeSet {
-			empty()
-		}
-	}
-
-	/**
-	 * Test an empty output change
-	 */
-	@Test
-	void outputEmpty() {
-		buildChangeSet {
-			output([:])
+			tagDatabase([:])
 		}
 
-		assertEquals 1, changeSet.changes.size()
-		assertTrue changeSet.changes[0] instanceof OutputChange
-		assertNull changeSet.changes[0].message
-		assertEquals "", changeSet.changes[0].target
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof TagDatabaseChange
+		assertNull changes[0].tag
 		assertNoOutput()
 	}
 
 	/**
-	 * Test an output change with all supported properties
+	 * Test parsing a tagDatabase change when we have all supported attributes.
 	 */
 	@Test
-	void outputFull() {
+	void tagDatabaseNameInAttributes() {
 		buildChangeSet {
-			output([message: 'some helpful message',
-			        target: 'STDOUT'])
+			tagDatabase(tag: 'monkey')
 		}
 
-		assertEquals 1, changeSet.changes.size()
-		assertTrue changeSet.changes[0] instanceof OutputChange
-		assertEquals 'some helpful message', changeSet.changes[0].message
-		assertEquals 'STDOUT', changeSet.changes[0].target
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof TagDatabaseChange
+		assertEquals 'monkey', changes[0].tag
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a tagDatabase change when the name is not in an attribute.
+	 */
+	@Test
+	void tagDatabaseNameIsArgument() {
+		buildChangeSet {
+			tagDatabase 'monkey'
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof TagDatabaseChange
+		assertEquals 'monkey', changes[0].tag
+		assertNoOutput()
+	}
+
+	/**
+	 * test parsing an updateData change with no attributes and no closure to
+	 * make sure the DSL is not adding any unintended defaults.
+	 */
+	@Test
+	void updateDataEmpty() {
+		buildChangeSet {
+			update([:]) {	}
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof UpdateDataChange
+		assertNull changes[0].catalogName
+		assertNull changes[0].schemaName
+		assertNull changes[0].tableName
+		assertNull changes[0].where
+		def columns = changes[0].columns
+		assertNotNull columns
+		assertEquals 0, columns.size()
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing an updateData change when we have all supported attributes,
+	 * and a couple of columns, but no where clause.  This should not cause an
+	 * issue, since it is legal to update all rows in a table. As always, we don't
+	 * care about the contents of the columns.
+	 */
+	@Test
+	void updateDataNoWhere() {
+		buildChangeSet {
+			update(catalogName: 'catalog',  schemaName: 'schema', tableName: 'monkey') {
+				column(name: 'rfid_tag')
+				column(name: 'emotion')
+				column(name: 'last_updated')
+				column(name: 'active')
+			}
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof UpdateDataChange
+		assertEquals 'catalog', changes[0].catalogName
+		assertEquals 'schema', changes[0].schemaName
+		assertEquals 'monkey', changes[0].tableName
+		assertNull changes[0].where
+		def columns = changes[0].columns
+		assertNotNull columns
+		assertTrue columns.every { column -> column instanceof ColumnConfig }
+		assertEquals 4, columns.size()
+		assertEquals 'rfid_tag', columns[0].name
+		assertEquals 'emotion', columns[1].name
+		assertEquals 'last_updated', columns[2].name
+		assertEquals 'active', columns[3].name
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing an updateData change when we have attributes, columns and
+	 * a where clause.  We won't test a where and no columns because that change
+	 * doesn't make sense, and will be rejected by Liquibase itself.
+	 */
+	@Test
+	void updateDataFull() {
+		buildChangeSet {
+			update(catalogName: 'catalog',  schemaName: 'schema', tableName: 'monkey') {
+				column(name: 'rfid_tag')
+				column(name: 'emotion')
+				column(name: 'last_updated')
+				column(name: 'active')
+				where "id=882"
+			}
+		}
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof UpdateDataChange
+		assertEquals 'catalog', changes[0].catalogName
+		assertEquals 'schema', changes[0].schemaName
+		assertEquals 'monkey', changes[0].tableName
+		assertEquals 'id=882', changes[0].where
+		def columns = changes[0].columns
+		assertNotNull columns
+		assertTrue columns.every { column -> column instanceof ColumnConfig }
+		assertEquals 4, columns.size()
+		assertEquals 'rfid_tag', columns[0].name
+		assertEquals 'emotion', columns[1].name
+		assertEquals 'last_updated', columns[2].name
+		assertEquals 'active', columns[3].name
 		assertNoOutput()
 	}
 }

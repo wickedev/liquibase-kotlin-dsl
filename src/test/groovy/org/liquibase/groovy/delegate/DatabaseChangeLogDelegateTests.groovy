@@ -18,6 +18,7 @@ package org.liquibase.groovy.delegate
 
 import liquibase.changelog.ChangeLogParameters
 import liquibase.changelog.DatabaseChangeLog
+import liquibase.database.ObjectQuotingStrategy
 import liquibase.exception.ChangeLogParseException
 import liquibase.parser.ChangeLogParser
 import liquibase.parser.ChangeLogParserFactory
@@ -33,7 +34,11 @@ import org.junit.Test
 
 import java.lang.reflect.Field
 
-import static org.junit.Assert.*
+import static org.junit.Assert.assertEquals
+import static org.junit.Assert.assertFalse
+import static org.junit.Assert.assertNotNull
+import static org.junit.Assert.assertNull
+import static org.junit.Assert.assertTrue
 
 /**
  * Test class for the {@link DatabaseChangeLogDelegate}
@@ -181,19 +186,21 @@ databaseChangeLog()
 	void changeSetFull() {
 		def changeLog = buildChangeLog {
 			changeSet(id: 'monkey-change',
-					      author: 'stevesaliman',
-							  dbms: 'mysql',
-							  runAlways: true,
-							  runOnChange: true,
-							  context: 'testing',
-							  labels: 'test_label',
-							  runInTransaction: false,
-							  failOnError: true,
-							  onValidationFail: "MARK_RAN") {
+					  author: 'stevesaliman',
+					  dbms: 'mysql',
+					  runAlways: true,
+					  runOnChange: true,
+					  context: 'testing',
+					  labels: 'test_label',
+					  runInTransaction: false,
+					  failOnError: true,
+					  onValidationFail: "MARK_RAN",
+					  objectQuotingStrategy: "QUOTE_ONLY_RESERVED_WORDS") {
 			  dropTable(tableName: 'monkey')
 			}
 		}
 
+		ObjectQuotingStrategy o = ObjectQuotingStrategy.valueOf("LEGACY")
 		assertNotNull changeLog.changeSets
 		assertEquals 1, changeLog.changeSets.size()
 		assertEquals 'monkey-change', changeLog.changeSets[0].id
@@ -207,6 +214,7 @@ databaseChangeLog()
 		assertFalse changeLog.changeSets[0].runInTransaction
 		assertTrue changeLog.changeSets[0].failOnError
 		assertEquals "MARK_RAN", changeLog.changeSets[0].onValidationFail.toString()
+		assertEquals ObjectQuotingStrategy.QUOTE_ONLY_RESERVED_WORDS, changeLog.changeSets[0].objectQuotingStrategy
 	}
 
 	/**
@@ -216,16 +224,38 @@ databaseChangeLog()
 	void changeSetInvalidAttribute() {
 		buildChangeLog {
 			changeSet(id: 'monkey-change',
-							author: 'stevesaliman',
-							dbms: 'mysql',
-							runAlways: false,
-							runOnChange: true,
-							context: 'testing',
-							labels: 'test_label',
-							runInTransaction: false,
-							failOnError: true,
-							onValidationFail: "MARK_RAN",
-			        invalidAttribute: 'invalid') {
+					  author: 'stevesaliman',
+					  dbms: 'mysql',
+					  runAlways: false,
+					  runOnChange: true,
+					  context: 'testing',
+					  labels: 'test_label',
+					  runInTransaction: false,
+					  failOnError: true,
+					  onValidationFail: "MARK_RAN",
+			          invalidAttribute: 'invalid') {
+				dropTable(tableName: 'monkey')
+			}
+		}
+	}
+
+	/**
+	 * Test creating a changeSet with an unsupported Object quoting strategy.
+	 */
+	@Test(expected = ChangeLogParseException)
+	void changeSetInvalidQuotingStrategy() {
+		buildChangeLog {
+			changeSet(id: 'monkey-change',
+					author: 'stevesaliman',
+					dbms: 'mysql',
+					runAlways: false,
+					runOnChange: true,
+					context: 'testing',
+					labels: 'test_label',
+					runInTransaction: false,
+					failOnError: true,
+					onValidationFail: "MARK_RAN",
+					objectQuotingStrategy: "MONKEY_QUOTING") {
 				dropTable(tableName: 'monkey')
 			}
 		}
@@ -442,6 +472,71 @@ databaseChangeLog {
 	}
 
 	/**
+	 * Try including all files in a directory, but with a resourceFilter.
+	 * For this test, we'll repeat want 2 files, but with a filter that
+	 * excludes one of them. Test may fail because of unclean directories.
+	 * Fix the other tests first.
+	 */
+	@Test
+	void includeAllValidWithFilter() {
+		def includedChangeLogFile = createFileFrom(TMP_INCLUDE_DIR, 'first', '.groovy', """
+databaseChangeLog {
+  preConditions {
+    runningAs(username: 'tlberglund')
+  }
+
+  changeSet(author: 'tlberglund', id: 'included-change-set-1') {
+    renameTable(oldTableName: 'prosaic_table_name', newTableName: 'monkey')
+  }
+}
+""")
+		// This file should be excluded by the resource filter.
+		includedChangeLogFile = createFileFrom(TMP_INCLUDE_DIR, 'second', '-2.groovy', """
+databaseChangeLog {
+  changeSet(author: 'tlberglund', id: 'included-change-set-2') {
+    addColumn(tableName: 'monkey') {
+      column(name: 'emotion', type: 'varchar(30)')
+    }
+  }
+}
+""")
+
+		includedChangeLogFile = includedChangeLogFile.parentFile.canonicalPath
+		includedChangeLogFile = includedChangeLogFile.replaceAll("\\\\", "/")
+
+		def rootChangeLogFile = createFileFrom(TMP_CHANGELOG_DIR, '.groovy', """
+databaseChangeLog {
+  preConditions {
+    dbms(type: 'mysql')
+  }
+  includeAll(path: '${includedChangeLogFile}',
+             resourceFilter: 'org.liquibase.groovy.helper.IncludeAllFirstOnlyFilter')
+  changeSet(author: 'tlberglund', id: 'root-change-set') {
+    addColumn(tableName: 'monkey') {
+      column(name: 'emotion', type: 'varchar(50)')
+    }
+  }
+}
+""")
+
+		def parser = parserFactory.getParser(rootChangeLogFile.absolutePath, resourceAccessor)
+		def rootChangeLog = parser.parse(rootChangeLogFile.absolutePath, new ChangeLogParameters(), resourceAccessor)
+
+		assertNotNull rootChangeLog
+		def changeSets = rootChangeLog.changeSets
+		assertNotNull changeSets
+		assertEquals 2, changeSets.size()  // from the first file, and the changelog itself.
+		assertEquals 'included-change-set-1', changeSets[0].id
+		assertEquals 'root-change-set', changeSets[1].id
+
+		def preconditions = rootChangeLog.preconditionContainer?.nestedPreconditions
+		assertNotNull preconditions
+		assertEquals 2, preconditions.size()
+		assertTrue preconditions[0] instanceof DBMSPrecondition
+		assertTrue preconditions[1] instanceof RunningAsPrecondition
+	}
+
+	/**
 	 * Try including all files in a directory relative to the changelog.
 	 */
 	@Test
@@ -487,6 +582,138 @@ databaseChangeLog {
 		assertEquals 2, preconditions.size()
 		assertTrue preconditions[0] instanceof DBMSPrecondition
 		assertTrue preconditions[1] instanceof RunningAsPrecondition
+	}
+
+	/**
+	 * Try including all when the path doesn't exist is invalid.  Expect an error.
+	 */
+	@Test(expected = ChangeLogParseException)
+	void includeAllInvalidPath() {
+		buildChangeLog {
+			includeAll(path: 'invalid')
+		}
+	}
+
+	/**
+	 * Try including all when the path doesn't exist is invalid, but we've
+	 * set the errorIfMissingOrEmpty property to false.  For this test, we'll
+	 * use a string to represent falseness.
+	 */
+	@Test
+	void includeAllInvalidPathIgnoreError() {
+		def changeLog = buildChangeLog {
+			includeAll(path: 'invalid', errorIfMissingOrEmpty: false)
+		}
+		assertNotNull changeLog
+		def changeSets = changeLog.changeSets
+		assertNotNull changeSets
+		assertEquals 0, changeSets.size()
+	}
+
+	/**
+	 * Try including all when the path is valid, but there are no usable files
+	 * in the directory.  We'll test this by using the filter to eliminate the
+	 * one change set we'll create to make sure we do the test after the filter.
+	 */
+	@Test(expected = ChangeLogParseException)
+	void includeAllEmptyPath() {
+		// This file should be excluded by the resource filter.
+		def includedChangeLogFile = createFileFrom(TMP_INCLUDE_DIR, 'second', '-2.groovy', """
+databaseChangeLog {
+  changeSet(author: 'tlberglund', id: 'included-change-set-2') {
+    addColumn(tableName: 'monkey') {
+      column(name: 'emotion', type: 'varchar(30)')
+    }
+  }
+}
+""")
+
+		includedChangeLogFile = includedChangeLogFile.parentFile.canonicalPath
+		includedChangeLogFile = includedChangeLogFile.replaceAll("\\\\", "/")
+
+		def rootChangeLogFile = createFileFrom(TMP_CHANGELOG_DIR, '.groovy', """
+databaseChangeLog {
+  preConditions {
+    dbms(type: 'mysql')
+  }
+  includeAll(path: '${includedChangeLogFile}',
+             resourceFilter: 'org.liquibase.groovy.helper.IncludeAllFirstOnlyFilter')
+  changeSet(author: 'tlberglund', id: 'root-change-set') {
+    addColumn(tableName: 'monkey') {
+      column(name: 'emotion', type: 'varchar(50)')
+    }
+  }
+}
+""")
+
+		def parser = parserFactory.getParser(rootChangeLogFile.absolutePath, resourceAccessor)
+		def rootChangeLog = parser.parse(rootChangeLogFile.absolutePath, new ChangeLogParameters(), resourceAccessor)
+
+		assertNotNull rootChangeLog
+		def changeSets = rootChangeLog.changeSets
+		assertNotNull changeSets
+		assertEquals 2, changeSets.size()  // from the first file, and the changelog itself.
+		assertEquals 'included-change-set-1', changeSets[0].id
+		assertEquals 'root-change-set', changeSets[1].id
+
+		def preconditions = rootChangeLog.preconditionContainer?.nestedPreconditions
+		assertNotNull preconditions
+		assertEquals 2, preconditions.size()
+		assertTrue preconditions[0] instanceof DBMSPrecondition
+		assertTrue preconditions[1] instanceof RunningAsPrecondition
+	}
+
+	/**
+	 * Try including all when the path is valid, but there are no usable files
+	 * in the directory.  This time, we'll set the errorIfMissingOrEmpty
+	 * property to false.  For this test, we'll use a boolean to represent
+	 * falseness.  We should get ignore the error about the empty directory,
+	 * and get the root change set from the parent file.
+	 */
+	@Test
+	void includeAllEmptyPathIgnoreError() {
+		// This file should be excluded by the resource filter.
+		def includedChangeLogFile = createFileFrom(TMP_INCLUDE_DIR, 'second', '-2.groovy', """
+databaseChangeLog {
+  changeSet(author: 'tlberglund', id: 'included-change-set-2') {
+    addColumn(tableName: 'monkey') {
+      column(name: 'emotion', type: 'varchar(30)')
+    }
+  }
+}
+""")
+
+		includedChangeLogFile = includedChangeLogFile.parentFile.canonicalPath
+		includedChangeLogFile = includedChangeLogFile.replaceAll("\\\\", "/")
+
+		def rootChangeLogFile = createFileFrom(TMP_CHANGELOG_DIR, '.groovy', """
+databaseChangeLog {
+  preConditions {
+    dbms(type: 'mysql')
+  }
+  includeAll(path: '${includedChangeLogFile}', errorIfMissingOrEmpty: false,
+             resourceFilter: 'org.liquibase.groovy.helper.IncludeAllFirstOnlyFilter')
+  changeSet(author: 'tlberglund', id: 'root-change-set') {
+    addColumn(tableName: 'monkey') {
+      column(name: 'emotion', type: 'varchar(50)')
+    }
+  }
+}
+""")
+
+		def parser = parserFactory.getParser(rootChangeLogFile.absolutePath, resourceAccessor)
+		def rootChangeLog = parser.parse(rootChangeLogFile.absolutePath, new ChangeLogParameters(), resourceAccessor)
+
+		assertNotNull rootChangeLog
+		def changeSets = rootChangeLog.changeSets
+		assertNotNull changeSets
+		assertEquals 1, changeSets.size()  // from the changelog itself.
+		assertEquals 'root-change-set', changeSets[0].id
+
+		def preconditions = rootChangeLog.preconditionContainer?.nestedPreconditions
+		assertNotNull preconditions
+		assertEquals 1, preconditions.size()
+		assertTrue preconditions[0] instanceof DBMSPrecondition
 	}
 
 	/**

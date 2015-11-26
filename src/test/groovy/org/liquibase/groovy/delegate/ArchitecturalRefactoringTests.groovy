@@ -68,7 +68,7 @@ class ArchitecturalRefactoringTests extends ChangeSetTests {
 	@Test
 	void createIndexEmpty() {
 		buildChangeSet {
-			createIndex([:]) { }
+			createIndex([:]) {}
 		}
 
 		assertEquals 0, changeSet.rollback.changes.size()
@@ -76,9 +76,9 @@ class ArchitecturalRefactoringTests extends ChangeSetTests {
 		assertNotNull changes
 		assertEquals 1, changes.size()
 		assertTrue changes[0] instanceof CreateIndexChange
-		assertNull changes[0].tableName
 		assertNull changes[0].catalogName
 		assertNull changes[0].schemaName
+		assertNull changes[0].tableName
 		assertNull changes[0].tablespace
 		assertNull changes[0].indexName
 		assertNull changes[0].unique
@@ -98,14 +98,15 @@ class ArchitecturalRefactoringTests extends ChangeSetTests {
 	@Test
 	void createIndexFullOneColumn() {
 		buildChangeSet {
-			createIndex(catalogName: 'catalog',
-							    schemaName: 'schema',
-							    tableName: 'monkey',
-							    tablespace: 'tablespace',
-							    indexName: 'ndx_monkeys',
-							    unique: true,
-							    clustered: false,
-			            associatedWith: 'foreignKey') {
+			createIndex(
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					tableName: 'monkey',
+					tablespace: 'tablespace',
+					indexName: 'ndx_monkeys',
+					unique: true,
+					clustered: false,
+					associatedWith: 'foreignKey') {
 				column(name: 'name')
 			}
 		}
@@ -115,9 +116,9 @@ class ArchitecturalRefactoringTests extends ChangeSetTests {
 		assertNotNull changes
 		assertEquals 1, changes.size()
 		assertTrue changes[0] instanceof CreateIndexChange
-		assertEquals 'monkey', changes[0].tableName
 		assertEquals 'catalog', changes[0].catalogName
 		assertEquals 'schema', changes[0].schemaName
+		assertEquals 'monkey', changes[0].tableName
 		assertEquals 'tablespace', changes[0].tablespace
 		assertEquals 'ndx_monkeys', changes[0].indexName
 		assertEquals 'foreignKey', changes[0].associatedWith
@@ -138,14 +139,15 @@ class ArchitecturalRefactoringTests extends ChangeSetTests {
 	@Test
 	void createIndexMultipleColumns() {
 		buildChangeSet {
-			createIndex(catalogName: 'catalog',
-							    schemaName: 'schema',
-							    tableName: 'monkey',
-							    tablespace: 'tablespace',
-							    indexName: 'ndx_monkeys',
-							    unique: false,
-							    clustered: true,
-							    associatedWith: 'foreignKey') {
+			createIndex(
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					tableName: 'monkey',
+					tablespace: 'tablespace',
+					indexName: 'ndx_monkeys',
+					unique: false,
+					clustered: true,
+					associatedWith: 'foreignKey') {
 				column(name: 'species')
 				column(name: 'name')
 			}
@@ -156,9 +158,9 @@ class ArchitecturalRefactoringTests extends ChangeSetTests {
 		assertNotNull changes
 		assertEquals 1, changes.size()
 		assertTrue changes[0] instanceof CreateIndexChange
-		assertEquals 'monkey', changes[0].tableName
 		assertEquals 'catalog', changes[0].catalogName
 		assertEquals 'schema', changes[0].schemaName
+		assertEquals 'monkey', changes[0].tableName
 		assertEquals 'tablespace', changes[0].tablespace
 		assertEquals 'ndx_monkeys', changes[0].indexName
 		assertEquals 'foreignKey', changes[0].associatedWith
@@ -181,14 +183,15 @@ class ArchitecturalRefactoringTests extends ChangeSetTests {
 	@Test(expected = ChangeLogParseException)
 	void createIndexWithWhereClause() {
 		buildChangeSet {
-			createIndex(catalogName: 'catalog',
-							schemaName: 'schema',
-							tableName: 'monkey',
-							tablespace: 'tablespace',
-							indexName: 'ndx_monkeys',
-							unique: true,
-							clustered: false,
-							associatedWith: 'foreignKey') {
+			createIndex(
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					tableName: 'monkey',
+					tablespace: 'tablespace',
+					indexName: 'ndx_monkeys',
+					unique: true,
+					clustered: false,
+					associatedWith: 'foreignKey') {
 				where "it doesn't matter"
 			}
 		}
@@ -222,11 +225,13 @@ class ArchitecturalRefactoringTests extends ChangeSetTests {
 	@Test
 	void dropIndexFull() {
 		buildChangeSet {
-			dropIndex(catalogName: 'catalog',
-							  schemaName: 'schema',
-							  tableName: 'monkey',
-							  indexName: 'ndx_monkeys',
-			          associatedWith: 'foreignKey')
+			dropIndex(
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					tableName: 'monkey',
+					indexName: 'ndx_monkeys',
+					associatedWith: 'foreignKey'
+			)
 		}
 
 		assertEquals 0, changeSet.rollback.changes.size()
