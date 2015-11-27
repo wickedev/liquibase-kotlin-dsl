@@ -1,7 +1,7 @@
 Changes for 1.2.0
 ================
-- Updated the DSL to support Liquibase 3.4.2 (Issues 4 and 6 from the Gradle
-  plugin repository)
+- Updated the DSL to support most of Liquibase 3.4.2 (Issues 4 and 6 from the 
+  Gradle plugin repository)
 
 Changes for 1.1.1
 =================

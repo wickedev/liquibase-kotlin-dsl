@@ -22,7 +22,8 @@ latest releases.  As part of that move, the artifact name has changed from
 ```net.saliman:groovy-liquibase-dsl``` to
 ```org.liquibase:liquibase-groovy-dsl``` to be consistent with the rest of the
 Liquibase artifacts.  A special thank you to Nathan Voxland for his help and 
-support in bringing the Liquibase project and the Groovy DSL into one home.
+support in bringing the Liquibase project and the Groovy DSL together into one 
+home.
  
 ###March 9, 2015
 The Liquibase Groovy DSL now supports Liquibase 3.3.2, and is built with Groovy
@@ -69,9 +70,9 @@ with a couple of the gaping holes in Liquibase's documentation of the XML.
 
 ##### Deprecated and Unsupported Items
 * Liquibase has a ```whereParam``` element for changes like the ```update``` 
-  change.  It isn't documented in the Liquibase documentation, and I just don't
-   see the any benefits of using it value of it over the simpler ```where``` 
-   element, so it has been left out of the Groovy DSL.
+  change.  It isn't documented in the Liquibase documentation, and I don't see 
+  any benefits of using it over the simpler ```where``` element, so it has been
+  left out of the Groovy DSL.
 * In the Liquibase XML, you can set a ```sql``` attribute in a ```sqlFile```
   change, but that doesn't make a lot sense, so this has been disabled in the
   Groovy DSL.
@@ -97,7 +98,6 @@ with a couple of the gaping holes in Liquibase's documentation of the XML.
 * In general, boolean attributes can be specified as either strings or booleans.
   For example, ```changeSet(runAlways: 'true')``` can also be written as
   ```changeSet(runAlways: true)```.
-  
 * The Groovy DSL supports a simplified means of passing arguments to the
   ```executeCommand change```.  Instead of:
 
@@ -112,7 +112,6 @@ execute {
   arg 'somevalue'
 }
 ```
-
 * The ```sql``` change does not require a closure for the actual SQL.  You can
   just pass the string like this: ```sql 'select some_stuff from some_table'```
   If you want to use the ```comments``` element of a ```sql``` change, you need
@@ -121,7 +120,7 @@ execute {
 
   ```groovy
 sql {
-  comment('we should not have deleted this...')
+  comment('we should not have added this...')
   'delete from my_table'
 }
 ```
@@ -223,7 +222,7 @@ sql { """
   allow you to specify the index that will be used to implement the primary key
    and unique constraint, respectively.
 * Liquibase 3.4.0 added the undocumented ```cacheSize``` and ```willCycle``` 
-  attributes to the ```alterSeqence```  change. ```cacheSize``` sets how many 
+  attributes to the ```alterSequence```  change. ```cacheSize``` sets how many 
   numbers of the sequence will be fetched into memory for each query that 
   accesses the sequence.  ```willCycle``` determines if the sequence should 
   start over when it reaches its maximum value.
