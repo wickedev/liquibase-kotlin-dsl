@@ -75,7 +75,9 @@ class CustomRefactoringTests extends ChangeSetTests {
 		assertNotNull changes
 		assertEquals 1, changes.size()
 		assertTrue changes[0] instanceof CustomChangeWrapper
+		CustomChangeWrapper wrapper = changes[0]
 		assertEquals 'org.liquibase.change.custom.MonkeyChange', changes[0].className
+		assertNotNull wrapper.customChange
 		assertNoOutput()
 	}
 
