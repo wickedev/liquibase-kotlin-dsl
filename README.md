@@ -28,7 +28,7 @@ home.
 ###March 9, 2015
 The Liquibase Groovy DSL now supports Liquibase 3.3.2, and is built with Groovy
 2.4.1.  Version 1.0.2 fixes a bug with version 1.0.1 that prevented it from
-working with Java 7 or earler.
+working with Java 7 or earlier.
 
 **IMPORTANT NOTE FOR USERS UPGRADING FROM A PRE 1.0.0 RELEASE OF THE GROOVY DSL:**
 
