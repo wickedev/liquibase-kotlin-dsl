@@ -157,42 +157,74 @@ class DatabaseChangeLogDelegate {
 			throw new ChangeLogParseException("DatabaseChangeLog:  '${unsupportedKeys.toArray()[0]}' is not a supported attribute of the 'includeAll' element.")
 		}
 
-		def physicalChangeLogLocation = databaseChangeLog.physicalFilePath.replace(System.getProperty("user.dir").toString() + "/", "")
 		def relativeToChangelogFile = DelegateUtil.parseTruth(params.relativeToChangelogFile, false)
 		def errorIfMissingOrEmpty = DelegateUtil.parseTruth(params.errorIfMissingOrEmpty, true)
-
-		if (relativeToChangelogFile && (physicalChangeLogLocation.contains("/") || physicalChangeLogLocation.contains("\\\\"))) {
-			params.path = physicalChangeLogLocation.replaceFirst("/[^/]*\$", "") + "/" + params.path
-		}
 
 		IncludeAllFilter resourceFilter = null
 		if ( params.resourceFilter ) {
 			resourceFilter = (IncludeAllFilter) Class.forName(params.resourceFilter).newInstance();
 		}
 
-		def files = []
+		loadIncludedChangeSets(params.path, relativeToChangelogFile, resourceFilter,
+				errorIfMissingOrEmpty,	getStandardChangeLogComparator());
+	}
 
+	/**
+	 * Helper method to load all the groovy changesets in a directory.
+	 * @param dirName the name of the directory whose change sets we want.
+	 * @param isRelativeToChangelogFile whether or not the dirName is relative
+	 *        to the original change log.
+	 * @param resourceFilter a filter through which to run each file name.  This
+	 *        filter can decide whether or not a given file should be processed.
+	 * @param errorIfMissingOrEmpty whether or not we should stop parsing if
+	 *        the given directory is empty.
+	 * @param resourceComparator a comparator to use for sorting filenames.
+	 */
+	private def loadIncludedChangeSets(dirName, isRelativeToChangelogFile, resourceFilter,
+	                                   errorIfMissingOrEmpty,
+	                                   resourceComparator) {
 		try {
-			new File(params.path).eachFileMatch(~/.*.groovy/) { file ->
-				if (resourceFilter == null || resourceFilter.include(file.path)) {
-					files << file.path
+			dirName = dirName.replace('\\', '/');
+
+			if (!(dirName.endsWith("/"))) {
+				dirName = dirName + '/';
+			}
+
+			String relativeTo = null;
+			if ( isRelativeToChangelogFile ) {
+				def parent = new File(databaseChangeLog.physicalFilePath).parent
+				if ( parent != null ) {
+					relativeTo = parent + '/' + dirName
 				}
 			}
 
-			// if files is empty, and errIfMissing, error.
-			if ( files.size() < 1 && errorIfMissingOrEmpty ) {
-				throw new ChangeLogParseException("DatabaseChangeLog: includeAll path '${params.path} does not exist, or has no files that match the filter.")
+			Set<String> unsortedResources = null;
+			try {
+				unsortedResources = resourceAccessor.list(relativeTo, dirName, true, false, true);
+			} catch (FileNotFoundException e) {
+				if (errorIfMissingOrEmpty){
+					throw new ChangeLogParseException("DatabaseChangeLog: includeAll path '${dirName} does not exist, or has no files that match the filter.")
+				}
 			}
-			files.sort().each { filename ->
-				includeChangeLog(filename)
+			def resources = new TreeSet<String>(resourceComparator);
+			if ( unsortedResources != null ) {
+				unsortedResources.each { resource ->
+					if (resourceFilter == null || resourceFilter.include(resource)) {
+						resources.add(resource);
+					}
+				}
 			}
-		} catch (FileNotFoundException fne) {
-			// unless we've set the errorIfMissingOrEmpty  property to false,
-			// we want to throw an exception.  If we had set it to false, eat
-			// the exception.
-			if ( errorIfMissingOrEmpty ) {
-				throw new ChangeLogParseException("DatabaseChangeLog: includeAll path '${params.path} does not exist, or has no files that match the filter.")
+
+			if (resources.size() == 0 && errorIfMissingOrEmpty) {
+				throw new ChangeLogParseException("DatabaseChangeLog: includeAll path '${dirName} does not exist, or has no files that match the filter.")
 			}
+
+			// Filter the list to just the groovy files and include each one.
+			resources.findAll({it.endsWith('.groovy')}).each {
+				includeChangeLog(it);
+			}
+		} catch (Exception e) {
+			throw new ChangeLogParseException("DatabaseChangeLog: error processing includeAll path '${dirName}.", e);
 		}
 	}
 
@@ -209,6 +241,15 @@ class DatabaseChangeLogDelegate {
 		includedChangeLog?.preconditionContainer?.nestedPreconditions.each { precondition ->
 			databaseChangeLog.preconditionContainer.addNestedPrecondition(precondition)
 		}
+	}
+
+	private Comparator<String> getStandardChangeLogComparator() {
+		return new Comparator<String>() {
+			@Override
+			public int compare(String o1, String o2) {
+				return o1. compareTo(o2);
+			}
+		};
 	}
 
 	/**
