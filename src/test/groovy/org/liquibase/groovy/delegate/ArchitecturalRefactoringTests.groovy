@@ -16,12 +16,12 @@
 
 package org.liquibase.groovy.delegate
 
-import liquibase.exception.ChangeLogParseException
+import liquibase.exception.ParseException
 import org.junit.Test
 import static org.junit.Assert.*
-import liquibase.change.ColumnConfig
-import liquibase.change.core.CreateIndexChange
-import liquibase.change.core.DropIndexChange
+import liquibase.item.core.Column
+import liquibase.action.core.CreateIndexesAction
+import liquibase.action.core.DropIndexesAction
 
 /**
  * This is one of several classes that test the creation of refactoring changes
@@ -75,16 +75,17 @@ class ArchitecturalRefactoringTests extends ChangeSetTests {
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof CreateIndexChange
-		assertNull changes[0].catalogName
-		assertNull changes[0].schemaName
-		assertNull changes[0].tableName
-		assertNull changes[0].tablespace
-		assertNull changes[0].indexName
-		assertNull changes[0].unique
-		assertNull changes[0].clustered
-		assertNull changes[0].associatedWith
-		def columns = changes[0].columns
+		assertTrue changes[0] instanceof CreateIndexesAction
+		def index = chages[0].indexes[0]
+		assertNull index.catalogName
+		assertNull index.schemaName
+		assertNull index.tableName
+		assertNull index.tablespace
+		assertNull index.indexName
+		assertNull index.unique
+		assertNull index.clustered
+		assertNull index.associatedWith
+		def columns = index.columns
 		assertNotNull columns
 		assertEquals 0, columns.size()
 		assertNoOutput()
@@ -115,18 +116,19 @@ class ArchitecturalRefactoringTests extends ChangeSetTests {
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof CreateIndexChange
-		assertEquals 'catalog', changes[0].catalogName
-		assertEquals 'schema', changes[0].schemaName
-		assertEquals 'monkey', changes[0].tableName
-		assertEquals 'tablespace', changes[0].tablespace
-		assertEquals 'ndx_monkeys', changes[0].indexName
-		assertEquals 'foreignKey', changes[0].associatedWith
-		assertTrue changes[0].unique
-		assertFalse changes[0].clustered
-		def columns = changes[0].columns
+		assertTrue changes[0] instanceof CreateIndexesAction
+		def index = chages[0].indexes[0]
+		assertEquals 'catalog', index.catalogName
+		assertEquals 'schema', index.schemaName
+		assertEquals 'monkey', index.tableName
+		assertEquals 'tablespace', index.tablespace
+		assertEquals 'ndx_monkeys', index.indexName
+		assertEquals 'foreignKey', index.associatedWith
+		assertTrue index.unique
+		assertFalse index.clustered
+		def columns = index.columns
 		assertNotNull columns
-		assertTrue columns.every { column -> column instanceof ColumnConfig }
+		assertTrue columns.every { column -> column instanceof Column }
 		assertEquals 1, columns.size()
 		assertEquals 'name', columns[0].name
 		assertNoOutput()
@@ -157,18 +159,19 @@ class ArchitecturalRefactoringTests extends ChangeSetTests {
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof CreateIndexChange
-		assertEquals 'catalog', changes[0].catalogName
-		assertEquals 'schema', changes[0].schemaName
-		assertEquals 'monkey', changes[0].tableName
-		assertEquals 'tablespace', changes[0].tablespace
-		assertEquals 'ndx_monkeys', changes[0].indexName
-		assertEquals 'foreignKey', changes[0].associatedWith
-		assertFalse changes[0].unique
-		assertTrue changes[0].clustered
-		def columns = changes[0].columns
+		assertTrue changes[0] instanceof CreateIndexesAction
+		def index = chages[0].indexes[0]
+		assertEquals 'catalog', index.catalogName
+		assertEquals 'schema', index.schemaName
+		assertEquals 'monkey', index.tableName
+		assertEquals 'tablespace', index.tablespace
+		assertEquals 'ndx_monkeys', index.indexName
+		assertEquals 'foreignKey', index.associatedWith
+		assertFalse index.unique
+		assertTrue index.clustered
+		def columns = index.columns
 		assertNotNull columns
-		assertTrue columns.every { column -> column instanceof ColumnConfig }
+		assertTrue columns.every { column -> column instanceof Column }
 		assertEquals 2, columns.size()
 		assertEquals 'species', columns[0].name
 		assertEquals 'name', columns[1].name
@@ -180,7 +183,7 @@ class ArchitecturalRefactoringTests extends ChangeSetTests {
 	 * Test parsing a createIndex change with a where clause to make sure it gets
 	 * rejected.
 	 */
-	@Test(expected = ChangeLogParseException)
+	@Test(expected = ParseException)
 	void createIndexWithWhereClause() {
 		buildChangeSet {
 			createIndex(
@@ -211,11 +214,12 @@ class ArchitecturalRefactoringTests extends ChangeSetTests {
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof DropIndexChange
-		assertNull changes[0].catalogName
-		assertNull changes[0].schemaName
-		assertNull changes[0].tableName
-		assertNull changes[0].indexName
+		assertTrue changes[0] instanceof DropIndexesAction
+		def index = chages[0].indexes[0]
+		assertNull index.catalogName
+		assertNull index.schemaName
+		assertNull index.tableName
+		assertNull index.indexName
 		assertNoOutput()
 	}
 
@@ -238,12 +242,13 @@ class ArchitecturalRefactoringTests extends ChangeSetTests {
 		def changes = changeSet.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof DropIndexChange
-		assertEquals 'catalog', changes[0].catalogName
-		assertEquals 'schema', changes[0].schemaName
-		assertEquals 'monkey', changes[0].tableName
-		assertEquals 'ndx_monkeys', changes[0].indexName
-		assertEquals 'foreignKey', changes[0].associatedWith
+		assertTrue changes[0] instanceof DropIndexesAction
+		def index = chages[0].indexes[0]
+		assertEquals 'catalog', index.catalogName
+		assertEquals 'schema', index.schemaName
+		assertEquals 'monkey', index.tableName
+		assertEquals 'ndx_monkeys', index.indexName
+		assertEquals 'foreignKey', index.associatedWith
 		assertNoOutput()
 	}
 }

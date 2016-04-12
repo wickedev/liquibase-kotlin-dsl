@@ -16,7 +16,7 @@
 
 package org.liquibase.groovy.delegate
 
-import liquibase.exception.ChangeLogParseException
+import liquibase.exception.ParseException
 import org.junit.Test
 
 import static org.junit.Assert.assertEquals
@@ -72,7 +72,7 @@ class CommentDelegateTests {
 	 * Try calling an invalid method in the closure.  Make sure we get our
 	 * ChangeLogParseException and not Groovy's standard MethodMissingException.
 	 */
-	@Test(expected = ChangeLogParseException)
+	@Test(expected = ParseException)
 	void invalidClosure() {
 		buildComments(null) {
 			invalid "this is an invalid method"

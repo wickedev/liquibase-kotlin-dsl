@@ -16,10 +16,7 @@
 
 package org.liquibase.groovy.delegate
 
-import liquibase.change.ConstraintsConfig
-import liquibase.changelog.ChangeLogParameters
-import liquibase.changelog.DatabaseChangeLog
-import liquibase.exception.ChangeLogParseException
+import liquibase.exception.ParseException
 import org.junit.Test
 
 import static org.junit.Assert.*
@@ -125,7 +122,7 @@ class ArgumentDelegateTests {
 	 * Try calling an invalid method in the closure.  Make sure we get our
 	 * ChangeLogParseException and not Groovy's standard MethodMissingException.
 	 */
-	@Test(expected = ChangeLogParseException)
+	@Test(expected = ParseException)
 	void invalidClosure() {
 		buildArguments {
 			invalid "this is an invalid method"
@@ -136,7 +133,7 @@ class ArgumentDelegateTests {
 	 * Try creating a map based argument with an invalid attribute to make sure
 	 * we get our ChangeLogParseException and not something more generic.
 	 */
-	@Test(expected = ChangeLogParseException)
+	@Test(expected = ParseException)
 	void invalidAttribute() {
 		buildArguments {
 			arg(argument: 'invalid')

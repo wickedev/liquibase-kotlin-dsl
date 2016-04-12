@@ -16,14 +16,11 @@
 
 package org.liquibase.groovy.delegate
 
-import liquibase.change.CheckSum
-import liquibase.change.core.AddColumnChange
-import liquibase.change.core.DeleteDataChange
-import liquibase.change.core.DropColumnChange
-import liquibase.change.core.RawSQLChange
-import liquibase.change.core.UpdateDataChange
-import liquibase.exception.ChangeLogParseException
-import liquibase.exception.RollbackImpossibleException
+import liquibase.action.core.AddColumnsAction
+import liquibase.action.core.DeleteDataAction
+import liquibase.action.core.DropColumnsAction
+import liquibase.action.core.UpdateDataAction
+import liquibase.exception.ParseException
 import org.junit.Test
 import org.junit.Ignore
 import static org.junit.Assert.*
@@ -76,6 +73,7 @@ class ChangeSetMethodTests extends ChangeSetTests {
 	 * Test a rollback with a single statement passed as a string.
 	 */
 	@Test
+	@Ignore("waiting to see what LB4 does with sql changes")
 	void rollbackString() {
 		def rollbackSql = 'DROP TABLE monkey'
 		buildChangeSet {
@@ -86,7 +84,7 @@ class ChangeSetMethodTests extends ChangeSetTests {
 		def changes = changeSet.rollback.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
-		assertEquals(new RawSQLChange("DROP TABLE monkey").sql, changes[0].sql)
+//		assertEquals(new RawSQLAction("DROP TABLE monkey").sql, changes[0].sql)
 		assertNoOutput()
 	}
 
@@ -95,6 +93,7 @@ class ChangeSetMethodTests extends ChangeSetTests {
 	 * Test rollback with two statements passed as strings.
 	 */
 	@Test
+	@Ignore("waiting to see what LB4 does with sql changes")
 	void rollbackTwoStrings() {
 		def rollbackSql = """UPDATE monkey_table SET emotion='angry' WHERE status='PENDING';
 ALTER TABLE monkey_table DROP COLUMN angry;"""
@@ -105,15 +104,16 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 		def changes = changeSet.rollback.changes
 		assertNotNull changes
 		assertEquals 2, changes.size()
-		assertEquals(new RawSQLChange("UPDATE monkey_table SET emotion='angry' WHERE status='PENDING'").sql, changes[0].sql)
-		assertEquals(new RawSQLChange("ALTER TABLE monkey_table DROP COLUMN angry").sql, changes[1].sql)
-		assertNoOutput()
+//		assertEquals(new RawSQLChange("UPDATE monkey_table SET emotion='angry' WHERE status='PENDING'").sql, changes[0].sql)
+//		assertEquals(new RawSQLChange("ALTER TABLE monkey_table DROP COLUMN angry").sql, changes[1].sql)
+//		assertNoOutput()
 	}
 
 	/**
 	 * Rollback one statement given in a closure
 	 */
 	@Test
+	@Ignore("waiting to see what LB4 does with sql changes")
 	void rollbackOneStatementInClosure() {
 		buildChangeSet {
 			rollback {
@@ -125,7 +125,7 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 		def changes = changeSet.rollback.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
-		assertEquals(new RawSQLChange("UPDATE monkey_table SET emotion='angry' WHERE status='PENDING'").sql, changes[0].sql)
+//		assertEquals(new RawSQLChange("UPDATE monkey_table SET emotion='angry' WHERE status='PENDING'").sql, changes[0].sql)
 		assertNoOutput()
 	}
 
@@ -133,6 +133,7 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 	 * Rollback two statements given in a closure
 	 */
 	@Test
+	@Ignore("waiting to see what LB4 does with sql changes")
 	void rollbackTwoStatementInClosure() {
 		buildChangeSet {
 			rollback {
@@ -145,8 +146,8 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 		def changes = changeSet.rollback.changes
 		assertNotNull changes
 		assertEquals 2, changes.size()
-		assertEquals(new RawSQLChange("UPDATE monkey_table SET emotion='angry' WHERE status='PENDING'").sql, changes[0].sql)
-		assertEquals(new RawSQLChange("ALTER TABLE monkey_table DROP COLUMN angry").sql, changes[1].sql)
+//		assertEquals(new RawSQLChange("UPDATE monkey_table SET emotion='angry' WHERE status='PENDING'").sql, changes[0].sql)
+//		assertEquals(new RawSQLChange("ALTER TABLE monkey_table DROP COLUMN angry").sql, changes[1].sql)
 		assertNoOutput()
 	}
 
@@ -165,7 +166,7 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 		def changes = changeSet.rollback.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof DeleteDataChange
+		assertTrue changes[0] instanceof DeleteDataAction
 		assertEquals 'monkey', changes[0].tableName
 		assertNoOutput()
 	}
@@ -190,11 +191,12 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 		def changes = changeSet.rollback.changes
 		assertNotNull changes
 		assertEquals 2, changes.size()
-		assertTrue changes[0] instanceof UpdateDataChange
+		assertTrue changes[0] instanceof UpdateDataAction
 		assertEquals 'monkey', changes[0].tableName
-		assertTrue changes[1] instanceof DropColumnChange
-		assertEquals 'monkey', changes[1].tableName
-		assertEquals 'emotion', changes[1].columnName
+		assertTrue changes[1] instanceof DropColumnsAction
+		def column = changes[1].columns[0]
+		assertEquals 'monkey', column.tableName
+		assertEquals 'emotion', column.columnName
 		assertNoOutput()
 	}
 
@@ -203,6 +205,7 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 	 * I don't know wha the XML parser does, but the Groovy parser
 	 */
 	@Test
+	@Ignore("waiting to see what LB4 does with sql changes")
 	void rollbackCombineRefactoringWithSql() {
 		buildChangeSet {
 			rollback {
@@ -217,9 +220,9 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 		def changes = changeSet.rollback.changes
 		assertNotNull changes
 		assertEquals 2, changes.size()
-		assertTrue changes[0] instanceof UpdateDataChange
+		assertTrue changes[0] instanceof UpdateDataAction
 		assertEquals 'monkey', changes[0].tableName
-		assertEquals(new RawSQLChange("ALTER TABLE monkey_table DROP COLUMN angry").sql, changes[1].sql)
+//		assertEquals(new RawSQLChange("ALTER TABLE monkey_table DROP COLUMN angry").sql, changes[1].sql)
 		assertNoOutput()
 	}
 
@@ -227,7 +230,8 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 	 * Process a map based rollback that is missing the changeSetId.  Expect an
 	 * error.
 	 */
-	@Test(expected = RollbackImpossibleException)
+	@Ignore("waiting to see what LB4 does with sql changes")
+//	@Test(expected = RollbackImpossibleException)
 	void rollbackMissingId() {
 		buildChangeSet {
 			rollback(changeSetAuthor: 'darwin')
@@ -237,7 +241,8 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 	/**
 	 * Process a map based rollback when the referenced change cannot be found.
 	 */
-	@Test(expected = RollbackImpossibleException)
+//	@Test(expected = RollbackImpossibleException)
+	@Ignore("waiting to see what LB4 does with sql changes")
 	void rollbackInvalidChange() {
 		buildChangeSet {
 			rollback(changeSetId: 'big-bang', changeSetAuthor: CHANGESET_AUTHOR)
@@ -266,8 +271,9 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 		def changes = changeSet.rollback.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof AddColumnChange
-		assertEquals 'monkey', changes[0].tableName
+		assertTrue changes[0] instanceof AddColumnsAction
+		def column = changes[0].columns[0]
+		assertEquals 'monkey', column.tableName
 		assertNoOutput()
 	}
 
@@ -291,8 +297,9 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 		def changes = changeSet.rollback.changes
 		assertNotNull changes
 		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof AddColumnChange
-		assertEquals 'monkey', changes[0].tableName
+		assertTrue changes[0] instanceof AddColumnsAction
+		def column = changes[0].columns[0]
+		assertEquals 'monkey', column.tableName
 		assertNoOutput()
 	}
 
@@ -300,7 +307,7 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 	 * Test a map based rollback with the deprecated "id" attribute to make sure
 	 * we get a parse exception.
 	 */
-	@Test(expected = ChangeLogParseException)
+	@Test(expected = ParseException)
 	void rollbackWithDeprecatedId() {
 		buildChangeSet {
 			addColumn(tableName: 'monkey') {
@@ -315,7 +322,7 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 	 * Test a map based rollback with the deprecated "id" attribute to make sure
 	 * we get a parse exception.
 	 */
-	@Test(expected = ChangeLogParseException)
+	@Test(expected = ParseException)
 	void rollbackWithDeprecatedAuthor() {
 		buildChangeSet {
 			addColumn(tableName: 'monkey') {
@@ -329,7 +336,7 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 	 * Test a map based rollback with the deprecated "id" attribute to make sure
 	 * we get a parse exception.
 	 */
-	@Test(expected = ChangeLogParseException)
+	@Test(expected = ParseException)
 	void rollbackWithInvalidAttribute() {
 		buildChangeSet {
 			addColumn(tableName: 'monkey') {
@@ -347,7 +354,7 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 	 * set the cascadeToConstraints attribute instead of cascadeConstraints.  This
 	 * should result in an exception being thrown.
 	 */
-	@Test(expected = ChangeLogParseException)
+	@Test(expected = ParseException)
 	void processChangeWithInvalidAttribute() {
 		buildChangeSet {
 			dropTable(catalogName: 'catalog',
@@ -358,7 +365,7 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 	}
 
 	// invalid method, such as createLink
-	@Test(expected = ChangeLogParseException)
+	@Test(expected = ParseException)
 	void processInvalidChange() {
 		buildChangeSet {
 			createLink(name: 'myLink')

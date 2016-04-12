@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2015 Tim Berglund and Steven C. Saliman
+ * Copyright 2011-2016 Tim Berglund and Steven C. Saliman
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package org.liquibase.groovy.delegate
 
-import liquibase.exception.ChangeLogParseException
+import liquibase.exception.ParseException
 
 /**
  * This class processes the {@code arg} closure that can be present in an
@@ -52,7 +52,7 @@ class ArgumentDelegate {
 			if ( key == "value") {
 				args << valueMap.value
 			} else {
-				throw new ChangeLogParseException("ChangeSet '${changeSetId}': '${key}' is not a valid argument atrribute of ${changeName} changes")
+				throw new ParseException("ChangeSet '${changeSetId}': '${key}' is not a valid argument atrribute of ${changeName} changes")
 			}
 		}
 	}
@@ -64,7 +64,7 @@ class ArgumentDelegate {
 	 * @param args the original arguments to that method.
 	 */
 	def methodMissing(String name, args) {
-		throw new ChangeLogParseException("ChangeSet '${changeSetId}': '${name}' is not a valid child element of ${changeName} changes")
+		throw new ParseException("ChangeSet '${changeSetId}': '${name}' is not a valid child element of ${changeName} changes")
 	}
 
 }

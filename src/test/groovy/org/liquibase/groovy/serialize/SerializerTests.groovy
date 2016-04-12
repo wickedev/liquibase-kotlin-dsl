@@ -17,7 +17,7 @@
 package org.liquibase.groovy.serialize
 
 import liquibase.resource.FileSystemResourceAccessor
-import liquibase.serializer.ChangeLogSerializerFactory
+//import liquibase.serializer.ChangeLogSerializerFactory
 
 import org.junit.Before
 import liquibase.serializer.ext.GroovyChangeLogSerializer

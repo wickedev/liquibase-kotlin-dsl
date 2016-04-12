@@ -15,9 +15,9 @@
  */
 package org.liquibase.groovy.change
 
-import liquibase.change.AbstractChange
-import liquibase.statement.SqlStatement
-import liquibase.database.Database
+//import liquibase.change.AbstractChange
+//import liquibase.statement.SqlStatement
+//import liquibase.database.Database
 
 /**
  * <p></p>
@@ -25,22 +25,23 @@ import liquibase.database.Database
  * @author Tim Berglund
  * @author Steven C. Saliman
  */
-class GroovyChange extends AbstractChange {
-  def groovyChangeClosure
-
-  
-  GroovyChange(groovyChangeClosure) {
-    super()
-    this.groovyChangeClosure = groovyChangeClosure
-  }
-
-  
-  String getConfirmationMessage() {
-    "Custom Groovy change executed"
-  }
-
-  
-  SqlStatement[] generateStatements(Database database) {
-    return new SqlStatement[0];  //To change body of implemented methods use File | Settings | File Templates.
-  }
+//class GroovyChange extends AbstractChange {
+class GroovyChange {
+//  def groovyChangeClosure
+//
+//
+//  GroovyChange(groovyChangeClosure) {
+//    super()
+//    this.groovyChangeClosure = groovyChangeClosure
+//  }
+//
+//
+//  String getConfirmationMessage() {
+//    "Custom Groovy change executed"
+//  }
+//
+//
+//  SqlStatement[] generateStatements(Database database) {
+//    return new SqlStatement[0];  //To change body of implemented methods use File | Settings | File Templates.
+//  }
 }

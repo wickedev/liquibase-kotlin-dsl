@@ -16,7 +16,7 @@
 
 package org.liquibase.groovy.delegate
 
-import liquibase.exception.ChangeLogParseException
+import liquibase.exception.ParseException
 
 /**
  * A general-purpose delegate class to provide key/value support in a builder.
@@ -51,13 +51,13 @@ class KeyValueDelegate {
 			} else if ( key == "value" ) {
 				mapValue = value
 			} else {
-				throw new ChangeLogParseException("ChangeSet '${changeSetId}': '${key}' is an invalid property for 'customPrecondition' parameters.")
+				throw new ParseException("ChangeSet '${changeSetId}': '${key}' is an invalid property for 'customPrecondition' parameters.")
 			}
 		}
 
 		// we don't need a value, but we do need a key
 		if ( mapKey == null ) {
-			throw new ChangeLogParseException("ChangeSet '${changeSetId}': 'customPrecondition' parameters need at least a name.")
+			throw new ParseException("ChangeSet '${changeSetId}': 'customPrecondition' parameters need at least a name.")
 		}
 		map[mapKey] = mapValue
 	}

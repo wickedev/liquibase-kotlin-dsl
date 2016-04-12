@@ -16,11 +16,12 @@
 
 package liquibase.parser.ext
 
-import liquibase.parser.ChangeLogParser
-import liquibase.changelog.DatabaseChangeLog
-import liquibase.changelog.ChangeLogParameters
+import liquibase.Scope
+import liquibase.parser.AbstractParser
+import liquibase.parser.ParsedNode
+import liquibase.resource.InputStreamList
 import liquibase.resource.ResourceAccessor
-import liquibase.exception.ChangeLogParseException
+import liquibase.exception.ParseException
 
 import org.liquibase.groovy.delegate.DatabaseChangeLogDelegate
 import org.codehaus.groovy.control.CompilerConfiguration
@@ -33,107 +34,117 @@ import org.codehaus.groovy.control.CompilerConfiguration
  * @author Tim Berglund
  * @author Steven C. Saliman
  */
-class GroovyLiquibaseChangeLogParser
-  implements ChangeLogParser {
+class GroovyLiquibaseChangeLogParser extends AbstractParser {
 
 
-  DatabaseChangeLog parse(String physicalChangeLogLocation,
-                          ChangeLogParameters changeLogParameters,
-                          ResourceAccessor resourceAccessor) {
+	@Override
+	public int getPriority(String path, Scope scope) {
+		if ( path.toLowerCase().endsWith(".groovy") && scope.getResourceAccessor() != null ) {
+			return PRIORITY_DEFAULT;
+		}
+		return PRIORITY_NOT_APPLICABLE;
+	}
 
-    physicalChangeLogLocation = physicalChangeLogLocation.replaceAll('\\\\', '/')
-    def inputStreams = resourceAccessor.getResourcesAsStream(physicalChangeLogLocation)
-    if ( !inputStreams || inputStreams.size() < 1 ) {
-      throw new ChangeLogParseException(physicalChangeLogLocation + " does not exist")
-    }
-	  def inputStream = inputStreams.toArray()[0]
+	@Override
+	ParsedNode parse(String physicalChangeLogLocation,
+	                 Scope scope) {
 
-    try {
-      def changeLog = new DatabaseChangeLog(physicalChangeLogLocation)
-      changeLog.setChangeLogParameters(changeLogParameters)
+		physicalChangeLogLocation = physicalChangeLogLocation.replaceAll('\\\\', '/')
 
-      def binding = new Binding()
-      def shell = new GroovyShell(binding)
+		def inputStreams
+		try {
+			inputStreams = scope.resourceAccessor.openStreams(physicalChangeLogLocation as String)
 
-      // Parse the script, give it the local changeLog instance, give it access
-      // to root-level method delegates, and call.
-      def script = shell.parse(new InputStreamReader(inputStream, "UTF8"))
-      script.metaClass.getDatabaseChangeLog = { -> changeLog }
-      script.metaClass.getResourceAccessor = { -> resourceAccessor }
-      script.metaClass.methodMissing = changeLogMethodMissing
-      script.run()
+		} catch (Exception e) {
+			throw new ParseException(e);
+		}
 
-      // The changeLog will have been populated by the script
-      return changeLog
-    }
-    finally {
-      try {
-        inputStream.close()
-      }
-      catch(Exception e) {
-        // Can't do much more than hope for the best here
-      }
-    }
-  }
+		if ( inputStreams == null || inputStreams.size() == 0 ) {
+			throw new ParseException("${physicalChangeLogLocation} does not exist")
+		} else if ( inputStreams.size() > 1 ) {
+			throw new ParseException("Found ${inputStreams.size()} files that match ${path}");
+		}
+
+		def inputStream = inputStreams.toArray()[0]
+
+		try {
+//			def binding = new Binding()
+//			def shell = new GroovyShell(binding)
+			def cc = new CompilerConfiguration()
+			cc.setScriptBaseClass(DelegatingScript.class.getName())
+			GroovyShell shell = new GroovyShell(new Binding(), cc)
+
+			// Parse the script, give it the local changeLog instance, give it access
+			// to root-level method delegates, and call.
+
+			DelegatingScript script = (DelegatingScript) shell.parse(new InputStreamReader(inputStream, "UTF8"))
+			DatabaseChangeLogDelegate delegate = new DatabaseChangeLogDelegate(null)
+			script.setDelegate(delegate);
+			script.run();
+			def rootNode = delegate.parentNode
+			rootNode.addChild("physicalPath").setValue(physicalChangeLogLocation)
+
+			// The rootNode will have been populated by the script
+			return rootNode
+		}
+		finally {
+			try {
+				inputStream.close()
+			}
+			catch (Exception e) {
+				// Can't do much more than hope for the best here
+			}
+		}
+	}
 
 
-  boolean supports(String changeLogFile, ResourceAccessor resourceAccessor) {
-    changeLogFile.endsWith('.groovy')
-  }
+	def getChangeLogMethodMissing() {
+		{ name, args ->
+			if ( name == 'databaseChangeLog' ) {
+				processDatabaseChangeLogRootElement(databaseChangeLog, resourceAccessor, args)
+			} else {
+				throw new ParseException("Unrecognized root element ${name}")
+			}
+		}
+	}
 
+	private
+	def processDatabaseChangeLogRootElement(databaseChangeLog, resourceAccessor, args) {
+		def delegate;
+		def closure;
 
-  int getPriority() {
-    PRIORITY_DEFAULT
-  }
+		switch ( args.size() ) {
+			case 0:
+				throw new ParseException("databaseChangeLog element cannot be empty")
 
+			case 1:
+				closure = args[0]
+				if ( !(closure instanceof Closure) ) {
+					throw new ParseException("databaseChangeLog element must be followed by a closure (databaseChangeLog { ... })")
+				}
+				delegate = new DatabaseChangeLogDelegate(databaseChangeLog)
+				break
 
-  def getChangeLogMethodMissing() {
-    { name, args ->
-      if(name == 'databaseChangeLog') {
-        processDatabaseChangeLogRootElement(databaseChangeLog, resourceAccessor, args)
-      }
-      else {
-        throw new ChangeLogParseException("Unrecognized root element ${name}")
-      }
-    }
-  }
+			case 2:
+				def params = args[0]
+				closure = args[1]
+				if ( !(params instanceof Map) ) {
+					throw new ParseException("databaseChangeLog element must take parameters followed by a closure (databaseChangeLog(key: value) { ... })")
+				}
+				if ( !(closure instanceof Closure) ) {
+					throw new ParseException("databaseChangeLog element must take parameters followed by a closure (databaseChangeLog(key: value) { ... })")
+				}
+				delegate = new DatabaseChangeLogDelegate(params, databaseChangeLog)
+				break
 
-  private def processDatabaseChangeLogRootElement(databaseChangeLog, resourceAccessor, args) {
-    def delegate;
-    def closure;
+			default:
+				throw new ParseException("databaseChangeLog element has too many parameters: ${args}")
+		}
 
-    switch(args.size()) {
-      case 0:
-        throw new ChangeLogParseException("databaseChangeLog element cannot be empty")
-
-      case 1:
-        closure = args[0]
-        if(!(closure instanceof Closure)) {
-          throw new ChangeLogParseException("databaseChangeLog element must be followed by a closure (databaseChangeLog { ... })")
-        }
-        delegate = new DatabaseChangeLogDelegate(databaseChangeLog)
-        break
-
-      case 2:
-        def params = args[0]
-        closure = args[1]
-        if(!(params instanceof Map)) {
-          throw new ChangeLogParseException("databaseChangeLog element must take parameters followed by a closure (databaseChangeLog(key: value) { ... })")
-        }
-        if(!(closure instanceof Closure)) {
-          throw new ChangeLogParseException("databaseChangeLog element must take parameters followed by a closure (databaseChangeLog(key: value) { ... })")
-        }
-        delegate = new DatabaseChangeLogDelegate(params, databaseChangeLog)
-        break
-
-      default:
-        throw new ChangeLogParseException("databaseChangeLog element has too many parameters: ${args}")
-    }
-
-    delegate.resourceAccessor = resourceAccessor
-    closure.delegate = delegate
-    closure.resolveStrategy = Closure.OWNER_FIRST
-    closure.call()
-  }
+		delegate.resourceAccessor = resourceAccessor
+		closure.delegate = delegate
+		closure.resolveStrategy = Closure.OWNER_FIRST
+		closure.call()
+	}
 }
 

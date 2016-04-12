@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2015 Tim Berglund and Steven C. Saliman
+ * Copyright 2011-2016 Tim Berglund and Steven C. Saliman
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,53 +16,53 @@
 
 package org.liquibase.groovy.delegate
 
-import liquibase.change.ConstraintsConfig
-import liquibase.exception.ChangeLogParseException
+//import liquibase.change.ConstraintsConfig
+import liquibase.exception.ParseException
 import liquibase.util.PatchedObjectUtil;
 
 
 class ConstraintDelegate {
-  def constraint
-  def databaseChangeLog
-	def changeSetId = '<unknown>' // used for error messages
-	def changeName = '<unknown>' // used for error messages
-
-
-  ConstraintDelegate() {
-    constraint = new ConstraintsConfig()
-  }
-
-
-  def constraints(Map params = [:]) {
-    params.each { key, value ->
-      try {
-	      PatchedObjectUtil.setProperty(constraint, key, DelegateUtil.expandExpressions(value, databaseChangeLog))
-      } catch(RuntimeException e) {
-	      // Rethrow as an ChangeLogParseException with a more helpful message
-	      // than you'll get from the Liquibase helper.
-	      throw new ChangeLogParseException("ChangeSet '${changeSetId}': '${key}' is not a valid constraint attribute for '${changeName}' changes.", e)
-      }
-    }
-  }
-
-	/**
-	 * This method is only here to provide a sane error message during a
-	 * transition period, and will be removed in a future release.
-	 * @param closure
-	 */
-	@Deprecated
-  def constraints(Closure closure) {
-		// this is not how the XML works, and we don't do this anywhere else so
-		// deprecate it.
-		throw new ChangeLogParseException("Error: ChangeSet '${changeSetId}', ${changeName} change: Setting constraint attributes in nested closures is no longer supported. Use an attribute map instead.")
-  }
-
-
-  def methodMissing(String name, params) {
-    if ( constraint.hasProperty(name) ) {
-	    PatchedObjectUtil.setProperty(constraint, name, DelegateUtil.expandExpressions(params[0], databaseChangeLog))
-    } else {
-	    throw new ChangeLogParseException("ChangeSet '${changeSetId}': '${name}' is not a valid child element of constraint closures in ${changeName} changes")
-    }
-  }
+//  def constraint
+//  def databaseChangeLog
+//	def changeSetId = '<unknown>' // used for error messages
+//	def changeName = '<unknown>' // used for error messages
+//
+//
+//  ConstraintDelegate() {
+//    constraint = new ConstraintsConfig()
+//  }
+//
+//
+//  def constraints(Map params = [:]) {
+//    params.each { key, value ->
+//      try {
+//	      PatchedObjectUtil.setProperty(constraint, key, DelegateUtil.expandExpressions(value, databaseChangeLog))
+//      } catch(RuntimeException e) {
+//	      // Rethrow as an ChangeLogParseException with a more helpful message
+//	      // than you'll get from the Liquibase helper.
+//	      throw new ChangeLogParseException("ChangeSet '${changeSetId}': '${key}' is not a valid constraint attribute for '${changeName}' changes.", e)
+//      }
+//    }
+//  }
+//
+//	/**
+//	 * This method is only here to provide a sane error message during a
+//	 * transition period, and will be removed in a future release.
+//	 * @param closure
+//	 */
+//	@Deprecated
+//  def constraints(Closure closure) {
+//		// this is not how the XML works, and we don't do this anywhere else so
+//		// deprecate it.
+//		throw new ChangeLogParseException("Error: ChangeSet '${changeSetId}', ${changeName} change: Setting constraint attributes in nested closures is no longer supported. Use an attribute map instead.")
+//  }
+//
+//
+//  def methodMissing(String name, params) {
+//    if ( constraint.hasProperty(name) ) {
+//	    PatchedObjectUtil.setProperty(constraint, name, DelegateUtil.expandExpressions(params[0], databaseChangeLog))
+//    } else {
+//	    throw new ChangeLogParseException("ChangeSet '${changeSetId}': '${name}' is not a valid child element of constraint closures in ${changeName} changes")
+//    }
+//  }
 }

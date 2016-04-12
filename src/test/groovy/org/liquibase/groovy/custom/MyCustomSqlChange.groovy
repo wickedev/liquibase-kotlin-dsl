@@ -15,12 +15,12 @@
  */
 package org.liquibase.groovy.custom
 
-import liquibase.change.custom.CustomSqlChange
-import liquibase.database.Database
-import liquibase.exception.ValidationErrors
-import liquibase.resource.ResourceAccessor
-import liquibase.statement.SqlStatement
-import liquibase.statement.core.RawSqlStatement
+//import liquibase.change.custom.CustomSqlChange
+//import liquibase.database.Database
+//import liquibase.exception.ValidationErrors
+//import liquibase.resource.ResourceAccessor
+//import liquibase.statement.SqlStatement
+//import liquibase.statement.core.RawSqlStatement
 
 /**
  * A trivial liquibase CustomSqlChange that will be added to the DSL 
@@ -29,27 +29,27 @@ import liquibase.statement.core.RawSqlStatement
  * @see groovy.runtime.metaclass.org.liquibase.groovy.delegate.ChangeSetDelegateMetaClass
  * @author Jason Clawson
  */
-class MyCustomSqlChange 
-  implements CustomSqlChange {
-
-  String getConfirmationMessage() {
-    return 'confirmation message here'
-  }
-
-  void setUp() {
-    ;
-  }
-
-  public void setFileOpener(ResourceAccessor resourceAccessor) {
-    ;
-  }
-
-  ValidationErrors validate(Database database) {
-    new ValidationErrors()
-  }
-
-  SqlStatement[] generateStatements(Database database) {
-    [ new RawSqlStatement("SELECT * FROM monkey") ]
-  }
+//class MyCustomSqlChange implements CustomSqlChange {
+class MyCustomSqlChange {
+//
+//  String getConfirmationMessage() {
+//    return 'confirmation message here'
+//  }
+//
+//  void setUp() {
+//    ;
+//  }
+//
+//  public void setFileOpener(ResourceAccessor resourceAccessor) {
+//    ;
+//  }
+//
+//  ValidationErrors validate(Database database) {
+//    new ValidationErrors()
+//  }
+//
+//  SqlStatement[] generateStatements(Database database) {
+//    [ new RawSqlStatement("SELECT * FROM monkey") ]
+//  }
 
 }

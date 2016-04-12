@@ -16,14 +16,15 @@
 
 package org.liquibase.precondition
 
-import liquibase.precondition.CustomPrecondition
-import liquibase.database.Database
-import liquibase.exception.CustomPreconditionFailedException
+//import liquibase.precondition.CustomPrecondition
+//import liquibase.database.Database
+//import liquibase.exception.CustomPreconditionFailedException
 
 
-class MonkeyFailPrecondition implements CustomPrecondition {
-
-  void check(Database database) {
-    throw new CustomPreconditionFailedException('Stub precondition failed')
-  }
+//class MonkeyFailPrecondition implements CustomPrecondition {
+class MonkeyFailPrecondition {
+//
+//  void check(Database database) {
+//    throw new CustomPreconditionFailedException('Stub precondition failed')
+//  }
 }

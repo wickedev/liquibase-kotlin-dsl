@@ -16,13 +16,14 @@
 
 package org.liquibase.precondition
 
-import liquibase.precondition.CustomPrecondition
-import liquibase.database.Database
+//import liquibase.precondition.CustomPrecondition
+//import liquibase.database.Database
 
 
-class MonkeyWinPrecondition implements CustomPrecondition {
+//class MonkeyWinPrecondition implements CustomPrecondition {
+class MonkeyWinPrecondition {
 
-  void check(Database database) {
-    // Do nothing, and the precondition passes
-  }
+//  void check(Database database) {
+//    // Do nothing, and the precondition passes
+//  }
 }

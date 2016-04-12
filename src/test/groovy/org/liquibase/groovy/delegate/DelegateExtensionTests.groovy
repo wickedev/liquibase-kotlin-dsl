@@ -16,13 +16,13 @@
 
 package org.liquibase.groovy.delegate
 
-import static org.junit.Assert.*
-import liquibase.change.core.RawSQLChange
-
-import org.junit.Test
-
-import org.liquibase.groovy.change.CustomProgrammaticChangeWrapper
-import org.liquibase.groovy.custom.MyCustomSqlChange
+//import static org.junit.Assert.*
+//import liquibase.change.core.RawSQLChange
+//
+//import org.junit.Test
+//
+//import org.liquibase.groovy.change.CustomProgrammaticChangeWrapper
+//import org.liquibase.groovy.custom.MyCustomSqlChange
 
 
 /**
@@ -31,21 +31,21 @@ import org.liquibase.groovy.custom.MyCustomSqlChange
  * @author Jason Clawson
  */
 class DelegateExtensionTests extends ChangeSetTests {
-
-  @Test
-  void testMyCustomSqlChange() {
-    buildChangeSet {
-      myCustomSqlChange()
-    }
-
-    def changes = changeSet.changes
-
-    assertNotNull changes
-    assertEquals 1, changes.size()
-    assertTrue changes[0] instanceof CustomProgrammaticChangeWrapper
-    assertTrue changes[0].customChange instanceof MyCustomSqlChange
-    assertEquals(new RawSQLChange("SELECT * FROM monkey").sql,
-                 changes[0].customChange.generateStatements(null)[0].sql);
-	  assertNoOutput()
-  }
+//
+//  @Test
+//  void testMyCustomSqlChange() {
+//    buildChangeSet {
+//      myCustomSqlChange()
+//    }
+//
+//    def changes = changeSet.changes
+//
+//    assertNotNull changes
+//    assertEquals 1, changes.size()
+//    assertTrue changes[0] instanceof CustomProgrammaticChangeWrapper
+//    assertTrue changes[0].customChange instanceof MyCustomSqlChange
+//    assertEquals(new RawSQLChange("SELECT * FROM monkey").sql,
+//                 changes[0].customChange.generateStatements(null)[0].sql);
+//	  assertNoOutput()
+//  }
 }

@@ -16,13 +16,13 @@
 
 package org.liquibase.groovy
 
-import liquibase.resource.FileSystemResourceAccessor
-import liquibase.serializer.ChangeLogSerializerFactory
-import liquibase.serializer.ext.GroovyChangeLogSerializer
-
-import org.junit.Test
-import org.junit.Before
-import static org.junit.Assert.*
+//import liquibase.resource.FileSystemResourceAccessor
+//import liquibase.serializer.ChangeLogSerializerFactory
+//import liquibase.serializer.ext.GroovyChangeLogSerializer
+//
+//import org.junit.Test
+//import org.junit.Before
+//import static org.junit.Assert.*
 
 
 /**
@@ -31,23 +31,23 @@ import static org.junit.Assert.*
  * @author Tim Berglund
  */
 class GroovySerializerTests {
-  def resourceAccessor
-  def serializerFactory
-
-
-  @Before
-  void registerSerializer() {
-	  resourceAccessor = new FileSystemResourceAccessor(baseDirectory: new File('.'))
-    serializerFactory = ChangeLogSerializerFactory.instance
-    ChangeLogSerializerFactory.getInstance().register(new GroovyChangeLogSerializer())
-  }
-
-
-  @Test
-  void onlyGroovyFilesAreSupported() {
-    def serializer = new GroovyChangeLogSerializer()
-    assertArrayEquals(['groovy'] as String[], serializer.validFileExtensions)
-  }
-
+//  def resourceAccessor
+//  def serializerFactory
+//
+//
+//  @Before
+//  void registerSerializer() {
+//	  resourceAccessor = new FileSystemResourceAccessor(baseDirectory: new File('.'))
+//    serializerFactory = ChangeLogSerializerFactory.instance
+//    ChangeLogSerializerFactory.getInstance().register(new GroovyChangeLogSerializer())
+//  }
+//
+//
+//  @Test
+//  void onlyGroovyFilesAreSupported() {
+//    def serializer = new GroovyChangeLogSerializer()
+//    assertArrayEquals(['groovy'] as String[], serializer.validFileExtensions)
+//  }
+//
 
 }

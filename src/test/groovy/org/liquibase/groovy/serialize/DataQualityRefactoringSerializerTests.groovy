@@ -19,7 +19,7 @@ package org.liquibase.groovy.serialize
 import org.junit.Test
 import static org.junit.Assert.*
 
-import liquibase.change.core.AddDefaultValueChange
+//import liquibase.change.core.AddDefaultValueChange
 
 
 /**
@@ -28,20 +28,20 @@ import liquibase.change.core.AddDefaultValueChange
  * @author Steven C. Saliman
  */
 class DataQualityRefactoringSerializerTests extends SerializerTests {
-
-  @Test
-  void addDefaultValueBoolean() {
-    def change = [
-      tableName: 'monkey',
-      schemaName: 'schema',
-      columnName: 'emotion',
-      defaultValueBoolean: true
-    ] as AddDefaultValueChange
-
-    def serializedText = serializer.serialize(change, true)
-    def expectedText = "addDefaultValue(columnName: 'emotion', defaultValueBoolean: true, schemaName: 'schema', tableName: 'monkey')"
-    assertEquals expectedText, serializedText
-  }
-
+//
+//  @Test
+//  void addDefaultValueBoolean() {
+//    def change = [
+//      tableName: 'monkey',
+//      schemaName: 'schema',
+//      columnName: 'emotion',
+//      defaultValueBoolean: true
+//    ] as AddDefaultValueChange
+//
+//    def serializedText = serializer.serialize(change, true)
+//    def expectedText = "addDefaultValue(columnName: 'emotion', defaultValueBoolean: true, schemaName: 'schema', tableName: 'monkey')"
+//    assertEquals expectedText, serializedText
+//  }
+//
 }
 

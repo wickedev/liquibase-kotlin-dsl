@@ -18,7 +18,7 @@ package org.liquibase.groovy.serialize
 
 import org.junit.Test
 import static org.junit.Assert.*
-import liquibase.sql.visitor.ReplaceSqlVisitor
+//import liquibase.sql.visitor.ReplaceSqlVisitor
 
 /**
  * <p></p>
@@ -26,12 +26,12 @@ import liquibase.sql.visitor.ReplaceSqlVisitor
  * @author Steven C. Saliman
  */
 class SqlVisitorSerializerTests extends SerializerTests {
-
-  @Test
-  void testReplaceSqlVisitorSerialize() {
-    def visitor = [
-       
-    ] as ReplaceSqlVisitor
-  }
+//
+//  @Test
+//  void testReplaceSqlVisitorSerialize() {
+//    def visitor = [
+//
+//    ] as ReplaceSqlVisitor
+//  }
 }
 

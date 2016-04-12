@@ -16,10 +16,10 @@
 package liquibase.util;
 
 import liquibase.exception.UnexpectedLiquibaseException;
-import liquibase.statement.DatabaseFunction;
-import liquibase.statement.SequenceCurrentValueFunction;
-import liquibase.statement.SequenceNextValueFunction
-import liquibase.structure.core.ForeignKeyConstraintType;
+//import liquibase.statement.DatabaseFunction;
+//import liquibase.statement.SequenceCurrentValueFunction;
+//import liquibase.statement.SequenceNextValueFunction
+//import liquibase.structure.core.ForeignKeyConstraintType;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -80,14 +80,14 @@ class PatchedObjectUtil {
             finalValue = Long.valueOf(propertyValue);
         } else if (parameterType.equals(BigInteger.class)) {
             finalValue = new BigInteger(propertyValue);
-        } else if (parameterType.equals(DatabaseFunction.class)) {
-            finalValue = new DatabaseFunction(propertyValue);
-        } else if (parameterType.equals(SequenceNextValueFunction.class)) {
-            finalValue = new SequenceNextValueFunction(propertyValue);
-        } else if (parameterType.equals(SequenceCurrentValueFunction.class)) {
-            finalValue = new SequenceCurrentValueFunction(propertyValue);
-        } else if (Enum.class.isAssignableFrom(parameterType)) {
-            finalValue = Enum.valueOf((Class<Enum>) parameterType, propertyValue);
+//        } else if (parameterType.equals(DatabaseFunction.class)) {
+//            finalValue = new DatabaseFunction(propertyValue);
+//        } else if (parameterType.equals(SequenceNextValueFunction.class)) {
+//            finalValue = new SequenceNextValueFunction(propertyValue);
+//        } else if (parameterType.equals(SequenceCurrentValueFunction.class)) {
+//            finalValue = new SequenceCurrentValueFunction(propertyValue);
+//        } else if (Enum.class.isAssignableFrom(parameterType)) {
+//            finalValue = Enum.valueOf((Class<Enum>) parameterType, propertyValue);
         }
         try {
             method.invoke(object, finalValue);
@@ -136,11 +136,11 @@ class PatchedObjectUtil {
 					            c.equals(Integer.class) ||
 					            c.equals(Long.class) ||
 					            c.equals(BigInteger.class) ||
-					            c.equals(DatabaseFunction.class) ||
-					            c.equals(SequenceNextValueFunction.class) ||
-					            c.equals(SequenceCurrentValueFunction.class) ||
-					            c.equals(String.class) ||
-					            (Enum.class.isAssignableFrom(c)) && !c.equals(ForeignKeyConstraintType.class)) {
+//					            c.equals(DatabaseFunction.class) ||
+//					            c.equals(SequenceNextValueFunction.class) ||
+//					            c.equals(SequenceCurrentValueFunction.class) ||
+					            c.equals(String.class) ) {
+//					            (Enum.class.isAssignableFrom(c)) && !c.equals(ForeignKeyConstraintType.class)) {
 		              return method;
 	            }
             }

@@ -15,7 +15,7 @@
  */
 package org.liquibase.groovy.helper
 
-import liquibase.changelog.IncludeAllFilter
+//import liquibase.changelog.IncludeAllFilter
 
 /**
  * This class is a helper for the {@code DatabaseChangeLogDelegateTests} class.
@@ -25,9 +25,10 @@ import liquibase.changelog.IncludeAllFilter
  * @author Steven C. Saliman
  */
 @SuppressWarnings("unused") // It's used via reflection.
-class IncludeAllFirstOnlyFilter implements IncludeAllFilter {
-	@Override
-	boolean include(String changeLogPath) {
-		return changeLogPath.contains("first")
-	}
+//class IncludeAllFirstOnlyFilter implements IncludeAllFilter {
+class IncludeAllFirstOnlyFilter {
+//	@Override
+//	boolean include(String changeLogPath) {
+//		return changeLogPath.contains("first")
+//	}
 }
