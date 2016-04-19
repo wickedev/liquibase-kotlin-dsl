@@ -389,8 +389,12 @@ class StructuralRefactoringTests extends ChangeSetTests {
 	 */
 	@Test
 	void createTableEmpty() {
-		buildChangeSet ('changeSet', ChangeSet.class) {
-			createTable([:]) {}
+		buildChangeSet {
+			databaseChangeLog {
+				changeSet(id: 'test', author: 'steve') {
+					createTable([:]) {}
+				}
+			}
 		}
 
 		assertEquals 0, changeSet.rollback.changes.size()
@@ -416,15 +420,19 @@ class StructuralRefactoringTests extends ChangeSetTests {
 	 */
 	@Test
 	void createTableFull() {
-		buildChangeSet ('changeSet', ChangeSet.class) {
-			createTable(
-					catalogName: 'catalog',
-					schemaName: 'schema',
-					tablespace: 'oracle_tablespace',
-					tableName: 'monkey',
-					remarks: 'angry') {
-				column(name: 'status', type: 'varchar(100)')
-				column(name: 'id', type: 'int')
+		buildChangeSet {
+			databaseChangeLog {
+				changeSet(id: 'test', author: 'steve') {
+					createTable(
+							catalogName: 'catalog',
+							schemaName: 'schema',
+							tablespace: 'oracle_tablespace',
+							tableName: 'monkey',
+							remarks: 'angry') {
+						column(name: 'status', type: 'varchar(100)')
+						column(name: 'id', type: 'int')
+					}
+				}
 			}
 		}
 
@@ -457,9 +465,13 @@ class StructuralRefactoringTests extends ChangeSetTests {
 	 */
 	@Test(expected = ParseException)
 	void createTableWithWhereClause() {
-		buildChangeSet ('changeSet', ChangeSet.class) {
-			createTable(catalogName: 'zoo', schemaName: 'animal', tableName: 'monkey') {
-				where "invalid"
+		buildChangeSet {
+			databaseChangeLog {
+				changeSet (id: 'test', author: 'steve') {
+					createTable(catalogName: 'zoo', schemaName: 'animal', tableName: 'monkey') {
+						where "invalid"
+					}
+				}
 			}
 		}
 	}

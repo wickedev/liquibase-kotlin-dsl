@@ -18,12 +18,19 @@ package org.liquibase.groovy.delegate
 
 import liquibase.Scope
 import liquibase.changelog.ChangeLog
+import liquibase.changelog.ChangeSet
 import liquibase.database.DatabaseFactory
 import liquibase.parser.ParsedNode
 import liquibase.parser.mapping.ParsedNodeMappingFactory
+import liquibase.parser.postprocessor.MappingPostprocessor
+import liquibase.parser.postprocessor.MappingPostprocessorFactory
+import liquibase.parser.preprocessor.ParsedNodePreprocessor
+import liquibase.parser.preprocessor.ParsedNodePreprocessorFactory
+import liquibase.util.LogUtil
 import org.junit.After
 import org.junit.Before
 import org.liquibase.groovy.helper.JUnitResourceAccessor
+import org.slf4j.MDC
 
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
@@ -76,26 +83,56 @@ class ChangeSetTests {
 	/**
 	 * Helper method that builds a changeSet from the given closure.  Tests will
 	 * use this to test parsing the various closures that make up the Groovy DSL.
+	 *
+	 * We always need a full changelog because liquibase preprocessors don't
+	 * work otherwise....
 	 * @param closure the closure containing changes to parse.
 	 * @return the changeSet, with parsed changes from the closure added.
 	 */
-	def buildChangeSet(parentNodeName, returnType, Closure closure) {
-		def parentNode
-		if ( parentNodeName != null ) {
-			parentNode = ParsedNode.createRootNode(parentNodeName)
-		}
+	def buildChangeLog(Closure closure) {
 //		changelog.changeLogParameters = new ChangeLogParameters()
 //		changelog.changeLogParameters.set('database.typeName', 'mysql')
 
-		closure.delegate = new DatabaseChangeLogDelegate(parentNode)
+		def delegate = new DatabaseChangeLogDelegate(null)
+		closure.delegate = delegate
 		closure.call()
-		parentNode = closure.delegate.parentNode
+		def parentNode = delegate.parentNode
+
+		// We have the parsedNodes that the parser gave us, now apply the same
+		// preprocessors that Liquibase would apply, then convert to an Action
+		// class.
 		def url = new File(System.getProperty("java.io.tmpdir")).toURI().toURL()
 		def urls = [url] as URL[]
 		Scope scope = new Scope(new JUnitResourceAccessor(urls), [:])
-		scope.getSingleton(ParsedNodeMappingFactory.class).toObject(parentNode, returnType, null, null, scope);
 
+		for ( ParsedNodePreprocessor preprocessor : scope.getSingleton(ParsedNodePreprocessorFactory.class).getPreprocessors() ) {
+			MDC.put(LogUtil.MDC_PREPROCESSOR, preprocessor.getClass().getName());
+			try {
+				preprocessor.process(parentNode, scope);
+			} finally {
+				MDC.remove(LogUtil.MDC_PREPROCESSOR);
+			}
+		}
 
+		def returnObject = scope.getSingleton(ParsedNodeMappingFactory.class).toObject(parentNode, ChangeLog.class, null, null, scope);
+
+		for ( MappingPostprocessor postprocessor : scope.getSingleton(MappingPostprocessorFactory.class).getPostprocessors() ) {
+			postprocessor.process(returnObject, scope);
+		}
+
+		return returnObject
+	}
+
+	// Wrap a changeset action...
+	def buildChangeSet(Closure closure) {
+		def changeLog = buildChangeLog {
+			databaseChangeLog {
+				changeSet (id: 'test', author: 'steve') {
+					closure
+				}
+			}
+		}
+		changeSet = changeLog.changeSets[0]
 	}
 
 	/**
@@ -116,7 +153,7 @@ class ChangeSetTests {
 	def assertPrinted(message) {
 		String testOutput = bufStr.toString()
 		assertTrue "'${message}' was not found in:\n '${testOutput}'",
-						testOutput.contains(message)
+				testOutput.contains(message)
 	}
 
 	/**
@@ -126,7 +163,7 @@ class ChangeSetTests {
 	def assertNoOutput() {
 		String testOutput = bufStr.toString()
 		assertTrue "Did not expect to have output, but got:\n '${testOutput}",
-						testOutput.length() < 1
+				testOutput.length() < 1
 	}
 }
 

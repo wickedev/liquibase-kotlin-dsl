@@ -56,9 +56,7 @@ class DatabaseChangeLogDelegate {
 		}
 
 		if ( args != null ) {
-			def x = args[0]
 			args.each { arg ->
-//				println("arg = ${arg}")
 				if ( arg instanceof Map ) {
 					arg.each { key, value ->
 						node.addChild(key).setValue(value)

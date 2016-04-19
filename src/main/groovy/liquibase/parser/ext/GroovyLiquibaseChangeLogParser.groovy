@@ -97,6 +97,10 @@ class GroovyLiquibaseChangeLogParser extends AbstractParser {
 		}
 	}
 
+	@Override
+	String describeOriginal(ParsedNode parsedNode) {
+		return null
+	}
 
 	def getChangeLogMethodMissing() {
 		{ name, args ->
