@@ -39,21 +39,27 @@ import org.slf4j.MDC
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 
-import static org.junit.Assert.assertTrue
+import static org.junit.Assert.assertNotNull
+import static org.junit.Assert.*
 
 /**
- * This is the base class for all of the change set related tests.  It mostly
- * contains utility methods to help with testing.
+ * This is the base class for all of the integration tests.  It contains the
+ * code that does the heavy lifting of talking to Liquibase and returning the
+ * desired objects so that individual tests can focus only on the parts that
+ * are being examined by the test in question.
+ * <p>
+ * With the new ParsedNode structure in Liquibase, there is not much to test
+ * at a unit test level, so the bulk of the tests in the Groovy DSL are
+ * integration tests to make sure that we get the expected Liquibase objects
+ * when we parse any given part of the DSL.
  *
  * @author Steven C. Saliman
  */
-class ChangeSetTests {
+class IntegrationTest {
 	def CHANGESET_ID = 'generic-changeset-id'
 	def CHANGESET_AUTHOR = 'ssaliman'
 	def CHANGESET_FILEPATH = '/filePath'
 	def sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-	def changeSet
-	def resourceAccessor
 	def oldStdOut = System.out;
 	def bufStr = new ByteArrayOutputStream()
 
@@ -85,73 +91,64 @@ class ChangeSetTests {
 	}
 
 	/**
-	 * Helper method that builds a changeSet from the given closure.  Tests will
-	 * use this to test parsing the various closures that make up the Groovy DSL.
-	 *
-	 * We always need a full changelog because liquibase preprocessors don't
-	 * work otherwise....
-	 * @param closure the closure containing changes to parse.
-	 * @return the changeSet, with parsed changes from the closure added.
+	 * Parse the given changeLog and return a Liquibase ChangeLog object.
+	 * @param changeLogString the string representation of the groovy changeLog
+	 * closure to parse.
+	 * @return The Liquibase ChangeLog object created when Liquibase uses the
+	 * Groovy parser to parse the given ChangeLog.
 	 */
-	def buildChangeLog(Closure closure) {
-//		changelog.changeLogParameters = new ChangeLogParameters()
-//		changelog.changeLogParameters.set('database.typeName', 'mysql')
-
-		def delegate = new DatabaseChangeLogDelegate('junit.groovy', null)
-		closure.delegate = delegate
-		closure.call()
-		def parentNode = delegate.parentNode
-
-		// We have the parsedNodes that the parser gave us, now apply the same
-		// preprocessors that Liquibase would apply, then convert to an Action
-		// class.
-		def url = new File(System.getProperty("java.io.tmpdir")).toURI().toURL()
-		def urls = [url] as URL[]
-		Scope scope = new Scope(new JUnitResourceAccessor(urls), [:])
-
-		for ( ParsedNodePreprocessor preprocessor : scope.getSingleton(ParsedNodePreprocessorFactory.class).getPreprocessors() ) {
-			MDC.put(LogUtil.MDC_PREPROCESSOR, preprocessor.getClass().getName());
-			try {
-				preprocessor.process(parentNode, scope);
-			} finally {
-				MDC.remove(LogUtil.MDC_PREPROCESSOR);
-			}
-		}
-
-		def returnObject = scope.getSingleton(ParsedNodeMappingFactory.class).toObject(parentNode, ChangeLog.class, null, null, scope);
-
-		for ( MappingPostprocessor postprocessor : scope.getSingleton(MappingPostprocessorFactory.class).getPostprocessors() ) {
-			postprocessor.process(returnObject, scope);
-		}
-
-		return returnObject
-	}
-
-	// Wrap a changeset action...
-	def buildChangeSet(Closure closure) {
-		def changeLog = buildChangeLog {
-			databaseChangeLog {
-				changeSet (id: 'test', author: 'steve') {
-					closure
-				}
-			}
-		}
-		changeSet = changeLog.changeSets[0]
-	}
-
 	def parseChangeLog(changeLogString) {
-		def path = "test-change.groovy"
+		def path = "test-changelog.groovy"
 		def mockAccessor = new MockResourceAccessor()
 		mockAccessor.addData(path, changeLogString)
 
 		def scope = JUnitScope.instance.child(Scope.Attr.resourceAccessor, mockAccessor)
 		def changeLog = scope.getSingleton(ParserFactory.class).parse(path, ChangeLog.class, scope);
-//		def parser = new GroovyLiquibaseChangeLogParser()
-//		def rootNode = parser.parse(path, scope)
-//		return rootNode
+		assertNotNull changeLog
 		return changeLog
 	}
 
+	/**
+	 * Parse the given changeSet and return a liquibase ChangeSet object.
+	 * <p>
+	 * This method will wrap the given ChangeSet string in a valid
+	 * databaseChangeLog element and have Liquibase parse the whole thing.  The
+	 * first ChangeSet found in the resulting parse run will be returned.
+	 * @param changeLogString the string representation of the groovy changeSet
+	 * closure to parse.
+	 * @return the first ChangeSet created by Liquibase when it uses the Groovy
+	 * parser to parse the changeLog containing our changeSet.
+	 */
+	def parseChangeSet(changeSetString) {
+		def changeLogString = "databaseChangeLog {\n ${changeSetString}\n}"
+		def changeLog = parseChangeLog(changeLogString)
+		assertNotNull changeLog
+		assertNotNull changeLog.changeSets
+		assertEquals 1, changeLog.changeSets.size()
+		// TODO: Should we look for rollback = 0 here?
+		return changeLog.changeSets[0]
+	}
+
+	/**
+	 * Parse the given action and return a Liquibase Action class.
+	 * <p>
+	 * This method will take the given action closure (createTable, dropIndex,
+	 * etc), and wrap it in a valid changeSet for parsing.  It will have
+	 * Liquibase parse the whole thing and return the first Action class in the
+	 * returned results.
+	 * @param actionString the string representation of the groovy action
+	 * closure to parse.
+	 * @return the first Action created by Liquibase when it uses the Groovy
+	 * parser to parse the changeLog containing our action.
+	 */
+	def parseAction(actionString) {
+		def changeSetString = "changeSet (id: 'test', author: 'steve') {\n${actionString}\n}"
+		def changeSet = parseChangeSet(changeSetString)
+		assertNotNull changeSet
+		assertNotNull changeSet.actions[0]
+		assertEquals 1, changeSet.actions.size()
+		return changeSet.actions[0]
+	}
 
 	/**
 	 * Small helper to parse a string into a Timestamp

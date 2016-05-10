@@ -27,22 +27,22 @@ import java.text.ParseException
  * @author Steven C. Saliman
  */
 class DatabaseChangeLogDelegate {
+	def fileName = null
 	def parentNode = null
 
 
-	DatabaseChangeLogDelegate(parentNode) {
+	DatabaseChangeLogDelegate(fileName, parentNode) {
+		this.fileName = fileName
 		this.parentNode = parentNode
-	}
-
-	def propertyMissing(String name) {
-		println "Missing property $name"
 	}
 
 	/**
 	 * Groovy calls methodMissing when it can't find a matching method to call.
-	 * We use it to tell the user which changeSet had the invalid element.
+	 * We use it to create the appropriate type of ParseNode
 	 * @param name the name of the method Groovy wanted to call.
 	 * @param args the original arguments to that method.
+	 * @return the node created by this method.  Some actions, like
+	 * createProcedure, will require extra handling after basic processing.
 	 */
 	def methodMissing(String name, args) {
 		// start by adding a node for the method itself to the current node
@@ -54,6 +54,7 @@ class DatabaseChangeLogDelegate {
 		} else {
 			node = parentNode.addChild(name)
 		}
+		node.fileName = fileName
 
 		if ( args != null ) {
 			args.each { arg ->
@@ -62,15 +63,22 @@ class DatabaseChangeLogDelegate {
 						node.addChild(key).setValue(value)
 					}
 				} else if ( arg instanceof Closure ) {
-					arg.resolveStrategy = Closure.DELEGATE_FIRST
-					def delegate = new DatabaseChangeLogDelegate(node)
-					arg.delegate = delegate
-					arg.call()
+					// Some actions use the closure as a value instead of a
+					// new child node.
+					if ( closureIsValue(name) ) {
+						node.value = arg.call()
+					} else {
+						arg.resolveStrategy = Closure.DELEGATE_FIRST
+						def delegate = new DatabaseChangeLogDelegate(fileName, node)
+						arg.delegate = delegate
+						arg.call()
+					}
 				} else {
 					node.value = arg
 				}
 			}
 		}
+		return node
 	}
 
 	// sqlFile: disallow the sql attribute
@@ -99,6 +107,19 @@ class DatabaseChangeLogDelegate {
 
 	// Any method in CustomPrecondition -> ParamNode w name and value children
 
-	//
+	/**
+	 * In most cases, closures of an action are used to define child nodes,
+	 * but in some cases, like createProcedure or sql, the closure is used as
+	 * the node value instead of a child node.  This helper method decides which
+	 * is which.
+	 * @param action the action in question.
+	 * @return {@code true} if the given action's closure should be put in the
+	 * value of the ParsedNode instead of a child node.
+	 */
+	private boolean closureIsValue(action) {
+		return ( action == 'createProcedure'
+				|| action == 'createView')
+
+	}
 
 }

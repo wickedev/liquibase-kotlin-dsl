@@ -24,59 +24,55 @@ import liquibase.action.core.CreateIndexesAction
 import liquibase.action.core.DropIndexesAction
 
 /**
- * This is one of several classes that test the creation of refactoring changes
- * for ChangeSets. This particular class tests changes that deal with indexes.
+ * This is one of several classes that test the creation of refactoring actions
+ * of ChangeSets. This particular class tests actions that deal with indexes.
  * <p>
  * Since the Groovy DSL parser is meant to act as a pass-through for Liquibase
  * itself, it doesn't do much in the way of error checking.  For example, we
  * aren't concerned with whether or not required attributes are present - we
- * leave that to Liquibase itself.  In general, each change will have 3 kinds
+ * leave that to Liquibase itself.  In general, each action will have 3 kinds
  * of tests:<br>
  * <ol>
  * <li>A test with an empty parameter map, and if supported, an empty closure.
  * This kind of test will make sure that the Groovy parser doesn't introduce
- * any unintended attribute defaults for a change.</li>
+ * any unintended attribute defaults for an action.</li>
  * <li>A test that sets all the attributes known to be supported by Liquibase
  * at this time.  This makes sure that the Groovy parser will send any given
- * groovy attribute to the correct place in Liquibase.  For changes that allow
+ * groovy attribute to the correct place in Liquibase.  For actions that allow
  * a child closure, this test will include just enough in the closure to make
  * sure it gets processed, and that the right kind of closure is called.</li>
  * <li>Some tests take columns or a where clause in a child closure.  The same
  * closure handles both, but should reject one or the other based on how the
- * closure gets called. These changes will have an additional test with an
+ * closure gets called. These actions will have an additional test with an
  * invalid closure to make sure it sets up the closure properly</li>
  * </ol>
  * <p>
- * Some changes require a little more testing, such as the {@code sql} change
+ * Some actions require a little more testing, such as the {@code sql} action
  * that can receive sql as a string, or as a closure, or the {@code delete}
- * change, which is valid both with and without a child closure.
+ * action, which is valid both with and without a child closure.
  * <p>
  * We don't worry about testing combinations that don't make sense, such as
- * allowing a createIndex change a closure, but no attributes, since it doesn't
- * make sense to have this kind of change without both a table name and at
- * least one column.  If a user tries it, they will get errors from Liquibase
+ * allowing a createIndex action with a closure, but no attributes, since it 
+ * doesn't make sense to have this kind of action without both a table name and
+ * at least one column.  If a user tries it, they will get errors from Liquibase
  * itself.
  *
  * @author Steven C. Saliman
  */
-class ArchitecturalRefactoringTests extends ChangeSetTests {
+class ArchitecturalRefactoringTests extends IntegrationTest {
 
 	/**
-	 * Test parsing a createIndex changeSet with no attributes and an empty
+	 * Test parsing a createIndex action with no attributes and an empty
 	 * closure.
 	 */
 	@Test
 	void createIndexEmpty() {
-		buildChangeSet {
+		def action = parseAction("""
 			createIndex([:]) {}
-		}
+		""")
 
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof CreateIndexesAction
-		def index = chages[0].indexes[0]
+		assertTrue action instanceof CreateIndexesAction
+		def index = action.indexes[0]
 		assertNull index.catalogName
 		assertNull index.schemaName
 		assertNull index.tableName
@@ -92,13 +88,13 @@ class ArchitecturalRefactoringTests extends ChangeSetTests {
 	}
 
 	/**
-	 * Test parsing a createIndex change with all attributes set and one column.
+	 * Test parsing a createIndex action with all attributes set and one column.
 	 * We don't really care too much about the particulars of the column, since
 	 * column parsing is tested in the ColumnDelegate tests.
 	 */
 	@Test
 	void createIndexFullOneColumn() {
-		buildChangeSet {
+		def action = parseAction("""
 			createIndex(
 					catalogName: 'catalog',
 					schemaName: 'schema',
@@ -110,14 +106,10 @@ class ArchitecturalRefactoringTests extends ChangeSetTests {
 					associatedWith: 'foreignKey') {
 				column(name: 'name')
 			}
-		}
+		""")
 
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof CreateIndexesAction
-		def index = chages[0].indexes[0]
+		assertTrue action instanceof CreateIndexesAction
+		def index = action.indexes[0]
 		assertEquals 'catalog', index.catalogName
 		assertEquals 'schema', index.schemaName
 		assertEquals 'monkey', index.tableName
@@ -135,12 +127,12 @@ class ArchitecturalRefactoringTests extends ChangeSetTests {
 	}
 
 	/**
-	 * Test parsing a createIndex change with more than one column to make sure
+	 * Test parsing a createIndex action with more than one column to make sure
 	 * we get them both.  This test also swaps the values of the booleans.
 	 */
 	@Test
 	void createIndexMultipleColumns() {
-		buildChangeSet {
+		def action = parseAction("""
 			createIndex(
 					catalogName: 'catalog',
 					schemaName: 'schema',
@@ -153,14 +145,10 @@ class ArchitecturalRefactoringTests extends ChangeSetTests {
 				column(name: 'species')
 				column(name: 'name')
 			}
-		}
+		""")
 
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof CreateIndexesAction
-		def index = chages[0].indexes[0]
+		assertTrue action instanceof CreateIndexesAction
+		def index = action.indexes[0]
 		assertEquals 'catalog', index.catalogName
 		assertEquals 'schema', index.schemaName
 		assertEquals 'monkey', index.tableName
@@ -179,13 +167,13 @@ class ArchitecturalRefactoringTests extends ChangeSetTests {
 	}
 
 	/**
-	 * The createIndex change can take columns, but a where clause is not valid.
-	 * Test parsing a createIndex change with a where clause to make sure it gets
+	 * The createIndex action can take columns, but a where clause is not valid.
+	 * Test parsing a createIndex action with a where clause to make sure it gets
 	 * rejected.
 	 */
 	@Test(expected = ParseException)
 	void createIndexWithWhereClause() {
-		buildChangeSet {
+		def action = parseAction("""
 			createIndex(
 					catalogName: 'catalog',
 					schemaName: 'schema',
@@ -197,38 +185,31 @@ class ArchitecturalRefactoringTests extends ChangeSetTests {
 					associatedWith: 'foreignKey') {
 				where "it doesn't matter"
 			}
-		}
+		""")
 	}
 
 	/**
-	 * Test parsing a dropIndex change with no attributes to make sure the DSL
+	 * Test parsing a dropIndex action with no attributes to make sure the DSL
 	 * doesn't introduce unexpected defaults.
 	 */
 	@Test
 	void dropIndexEmpty() {
-		buildChangeSet {
+		def action = parseAction("""
 			dropIndex([:])
-		}
+		""")
 
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof DropIndexesAction
-		def index = chages[0].indexes[0]
-		assertNull index.catalogName
-		assertNull index.schemaName
-		assertNull index.tableName
-		assertNull index.indexName
+		assertTrue action instanceof DropIndexesAction
+		assertNotNull action.indexes
+		assertEquals 0, action.indexes.size()
 		assertNoOutput()
 	}
 
 	/**
-	 * Test parsing a dropIndex change with all supported attributes.
+	 * Test parsing a dropIndex action with all supported attributes.
 	 */
 	@Test
 	void dropIndexFull() {
-		buildChangeSet {
+		def action = parseAction("""
 			dropIndex(
 					catalogName: 'catalog',
 					schemaName: 'schema',
@@ -236,19 +217,15 @@ class ArchitecturalRefactoringTests extends ChangeSetTests {
 					indexName: 'ndx_monkeys',
 					associatedWith: 'foreignKey'
 			)
-		}
+		""")
 
-		assertEquals 0, changeSet.rollback.changes.size()
-		def changes = changeSet.changes
-		assertNotNull changes
-		assertEquals 1, changes.size()
-		assertTrue changes[0] instanceof DropIndexesAction
-		def index = chages[0].indexes[0]
-		assertEquals 'catalog', index.catalogName
-		assertEquals 'schema', index.schemaName
-		assertEquals 'monkey', index.tableName
-		assertEquals 'ndx_monkeys', index.indexName
-		assertEquals 'foreignKey', index.associatedWith
+		assertTrue action instanceof DropIndexesAction
+		assertNotNull action.indexes
+		assertEquals 1, action.indexes.size()
+		def index = action.indexes[0]
+		assertEquals 'catalog.schema.monkey', index.container.toString()
+		assertEquals 'ndx_monkeys', index.name
+//		assertEquals 'foreignKey', index.associatedWith
 		assertNoOutput()
 	}
 }

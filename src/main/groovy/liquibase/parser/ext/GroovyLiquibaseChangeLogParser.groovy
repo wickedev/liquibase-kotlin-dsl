@@ -78,7 +78,7 @@ class GroovyLiquibaseChangeLogParser extends AbstractParser {
 			// to root-level method delegates, and call.
 
 			DelegatingScript script = (DelegatingScript) shell.parse(new InputStreamReader(inputStream, "UTF8"))
-			DatabaseChangeLogDelegate delegate = new DatabaseChangeLogDelegate(null)
+			DatabaseChangeLogDelegate delegate = new DatabaseChangeLogDelegate(physicalChangeLogLocation, null)
 			script.setDelegate(delegate);
 			script.run();
 			def rootNode = delegate.parentNode
@@ -99,6 +99,7 @@ class GroovyLiquibaseChangeLogParser extends AbstractParser {
 
 	@Override
 	String describeOriginal(ParsedNode parsedNode) {
+		// TODO: Walk up the parsed node to get the change set name.
 		return null
 	}
 

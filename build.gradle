@@ -48,9 +48,12 @@ repositories {
 dependencies {
   compile 'org.codehaus.groovy:groovy:2.4.1'
   compile 'org.codehaus.groovy:groovy-sql:2.4.1'
-  compile 'org.liquibase:liquibase-all:4.0.0-SNAPSHOT'
+  compile 'org.liquibase:liquibase-core:4.0.0-SNAPSHOT'
+//  testCompile group: 'org.liquibase', name: 'liquibase-all', version:'4.0.0-SNAPSHOT', classifier:'tests'
+  testCompile 'org.liquibase:liquibase-tests:4.0.0-SNAPSHOT'
   testCompile 'junit:junit:4.12'
   testRuntime 'com.h2database:h2:1.4.185'
+  testRuntime 'org.testmd:testmd:0.6-SNAPSHOT'
   archives 'org.apache.maven.wagon:wagon-ssh:2.8'
   archives 'org.apache.maven.wagon:wagon-ssh-external:2.8'
 }
