@@ -31,18 +31,20 @@ import static org.junit.Assert.*
  *
  * @author Steven C. Saliman
  */
-class ChangeSetMethodTests extends ChangeSetTests {
+class ChangeSetMethodTests extends IntegrationTest {
 	@Test
 	void comments() {
-		buildChangeSet {
-			comment "This is a comment"
-		}
-		assertEquals "This is a comment", changeSet.comments
+		def changeSet = parseChangeSet("""
+			changeSet(id: 'test', author: 'steve') {
+				comment "This is a comment"
+			}
+		""")
+		assertEquals "This is a comment", changeSet.comment
 		assertNoOutput()
 	}
 
 	/**
-	 * Test the validChecksuum functionality.  This test needs some explanation.
+	 * Test the validChecksum functionality.  This test needs some explanation.
 	 * Liquibase's {@code isChecksumValid()} method compares the change set's
 	 * current checksum to the hash given to the method. If they don't match, it
 	 * will check the current checksum against checksums that are stored with the
@@ -58,6 +60,12 @@ class ChangeSetMethodTests extends ChangeSetTests {
 	 */
 	@Test
 	void validChecksumTest() {
+		def changeSet = parseChangeSet("""
+			changeSet(id: 'test', author: 'steve') {
+				comment "some comment"
+			}
+		""")
+
 		def checksum = 'd0763edaa9d9bd2a9516280e9044d885'
 		def liquibaseChecksum = CheckSum.parse(checksum)
 		def goodChecksum = changeSet.generateCheckSum().toString()
@@ -332,6 +340,7 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 		}
 
 	}
+
 	/**
 	 * Test a map based rollback with the deprecated "id" attribute to make sure
 	 * we get a parse exception.
@@ -347,29 +356,12 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 
 	}
 
-	/**
-	 * Test a change with an invalid attribute.  Since all changes funnel through
-	 * the same method to process the attributes, we only need to test this once.
-	 * For this test, we've chosen the dropTable change, but we've incorrectly
-	 * set the cascadeToConstraints attribute instead of cascadeConstraints.  This
-	 * should result in an exception being thrown.
-	 */
-	@Test(expected = ParseException)
-	void processChangeWithInvalidAttribute() {
-		buildChangeSet {
-			dropTable(catalogName: 'catalog',
-							schemaName: 'schema',
-							tableName: 'fail_table',
-							cascadeToConstraints: true)
-		}
-	}
-
 	// invalid method, such as createLink
 	@Test(expected = ParseException)
 	void processInvalidChange() {
-		buildChangeSet {
-			createLink(name: 'myLink')
-		}
+		parseAction("""
+				createLink(name: 'myLink')
+        """)
 	}
 }
 

@@ -23,11 +23,13 @@ import static org.junit.Assert.*
 
 /**
  * Tests for {@link ArgumentDelegate}  It makes sure it can be called in all
- * its various permutations.
+ * its various permutations.  It uses the executeCommand action to run the test,
+ * but does not test the executeCommend action itself, that is left to another
+ * class.
  *
  * @author Steven C. Saliman
  */
-class ArgumentDelegateTests {
+class ArgumentDelegateTests extends IntegrationTest {
 
 	/**
 	 * Test what happens when the closure is empty.  This is fine, and we should
@@ -35,8 +37,11 @@ class ArgumentDelegateTests {
 	 */
 	@Test
 	void emptyArguments() {
-		def args = buildArguments {}
+		def action = parseAction("""
+            executeCommand([:]) {}
+        """)
 
+		def args = action.args
 		assertNotNull args
 		assertEquals 0, args.size()
 	}
@@ -46,10 +51,13 @@ class ArgumentDelegateTests {
 	 */
 	@Test
 	void oneStringArgument() {
-		def args = buildArguments {
-			arg 'one'
-		}
+		def action = parseAction("""
+            executeCommand([:]) {
+			    arg 'one'
+		    }
+        """)
 
+		def args = action.args
 		assertNotNull args
 		assertEquals 1, args.size()
 		assertEquals 'one', args[0]
@@ -60,11 +68,14 @@ class ArgumentDelegateTests {
 	 */
 	@Test
 	void twoStringArguments() {
-		def args = buildArguments {
-			arg 'one'
-			arg 'two'
-		}
+		def action = parseAction("""
+            executeCommand([:]) {
+			    arg 'one'
+			    arg 'two'
+		    }
+        """)
 
+		def args = action.args
 		assertNotNull args
 		assertEquals 2, args.size()
 		assertEquals 'one', args[0]
@@ -76,10 +87,13 @@ class ArgumentDelegateTests {
 	 */
 	@Test
 	void oneMapArgument() {
-		def args = buildArguments {
-			arg(value: 'one')
-		}
+		def action = parseAction("""
+            executeCommand([:]) {
+			    arg(value: 'one')
+		    }
+        """)
 
+		def args = action.args
 		assertNotNull args
 		assertEquals 1, args.size()
 		assertEquals 'one', args[0]
@@ -90,11 +104,14 @@ class ArgumentDelegateTests {
 	 */
 	@Test
 	void twoMapArguments() {
-		def args = buildArguments {
-			arg(value: 'one')
-			arg(value: 'two')
-		}
+		def action = parseAction("""
+            executeCommand([:]) {
+				arg(value: 'one')
+				arg(value: 'two')
+			}
+        """)
 
+		def args = action.args
 		assertNotNull args
 		assertEquals 2, args.size()
 		assertEquals 'one', args[0]
@@ -107,11 +124,14 @@ class ArgumentDelegateTests {
 	 */
 	@Test
 	void mismatchedArguments() {
-		def args = buildArguments {
-			arg 'one'
-			arg(value: 'two')
-		}
+		def action = parseAction("""
+            executeCommand([:]) {
+				arg 'one'
+				arg(value: 'two')
+			}
+		""")
 
+		def args = action.args
 		assertNotNull args
 		assertEquals 2, args.size()
 		assertEquals 'one', args[0]
@@ -124,9 +144,11 @@ class ArgumentDelegateTests {
 	 */
 	@Test(expected = ParseException)
 	void invalidClosure() {
-		buildArguments {
-			invalid "this is an invalid method"
-		}
+		parseAction("""
+            executeCommand([:]) {
+				invalid "this is an invalid method"
+			}
+		""")
 	}
 
 	/**
@@ -135,24 +157,10 @@ class ArgumentDelegateTests {
 	 */
 	@Test(expected = ParseException)
 	void invalidAttribute() {
-		buildArguments {
-			arg(argument: 'invalid')
-		}
-	}
-
-	/**
-	 * Helper method to execute an {@link ArgumentDelegate} and return any
-	 * arguments it created.
-	 * @param closure
-	 * @return
-	 */
-	def buildArguments(Closure closure) {
-		def delegate = new ArgumentDelegate(changeSetId: 'test-change-set',
-						                            changeName: 'executeCommand')
-		closure.delegate = delegate
-		closure.resolveStrategy = Closure.DELEGATE_FIRST
-		closure.call()
-
-		return delegate.args
+		parseAction("""
+            executeCommand([:]) {
+				arg(argument: 'invalid')
+			}
+		""")
 	}
 }

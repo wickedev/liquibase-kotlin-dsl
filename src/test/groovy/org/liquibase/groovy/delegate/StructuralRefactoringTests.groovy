@@ -18,6 +18,7 @@ package org.liquibase.groovy.delegate
 
 import liquibase.action.core.AddColumnsAction
 import liquibase.action.core.CreateStoredProceduresAction
+import liquibase.action.core.CreateTableAction
 import liquibase.action.core.CreateViewsAction
 import liquibase.action.core.DropColumnsAction
 import liquibase.action.core.DropStoredProceduresAction
@@ -28,26 +29,15 @@ import liquibase.action.core.ModifyDataTypeAction
 import liquibase.action.core.RenameColumnAction
 import liquibase.action.core.RenameTableAction
 import liquibase.action.core.RenameViewAction
-import liquibase.changelog.ChangeSet
-
-//import liquibase.change.core.AddColumnChange
-//import liquibase.change.core.DropProcedureChange
-//import liquibase.change.core.ModifyDataTypeChange
 import liquibase.exception.ParseException
-import org.junit.Test
-import static org.junit.Assert.*
-
 import liquibase.item.core.Column
-//import liquibase.change.core.RenameColumnChange
-//import liquibase.change.core.DropColumnChange
-import liquibase.action.core.CreateTableAction
-//import liquibase.change.core.RenameTableChange
-//import liquibase.change.core.DropTableChange
-//import liquibase.change.core.CreateViewChange
-//import liquibase.change.core.RenameViewChange
-//import liquibase.change.core.DropViewChange
-//import liquibase.change.core.MergeColumnChange
-//import liquibase.change.core.CreateProcedureChange
+import org.junit.Test
+
+import static org.junit.Assert.assertEquals
+import static org.junit.Assert.assertFalse
+import static org.junit.Assert.assertNotNull
+import static org.junit.Assert.assertNull
+import static org.junit.Assert.assertTrue
 
 /**
  * This is one of several classes that test the creation of refactoring actions
@@ -57,12 +47,17 @@ import liquibase.action.core.CreateTableAction
  * Since the Groovy DSL parser is meant to act as a pass-through for Liquibase
  * itself, it doesn't do much in the way of error checking.  For example, we
  * aren't concerned with whether or not required attributes are present - we
- * leave that to Liquibase itself.  In general, each action will have 3 kinds
+ * leave that to Liquibase itself.  In general, each action will have 4 kinds
  * of tests:<br>
  * <ol>
  * <li>A test with an empty parameter map, and if supported, an empty closure.
  * This kind of test will make sure that the Groovy parser doesn't introduce
  * any unintended attribute defaults for an action.</li>
+ * <li>A test that contains a change that would be valid, except for an extra,
+ * invalid, attribute to prove that Liquibase will reject attributes it doesn't
+ * recognize.  We need to make sure that the action is otherwise valid so we get
+ * the parse exception because of the invalid attribute, and not missing
+ * required attributes.</li>
  * <li>A test that sets all the attributes known to be supported by Liquibase
  * at this time.  This makes sure that the Groovy parser will send any given
  * groovy attribute to the correct place in Liquibase.  For actions that allow
@@ -108,6 +103,32 @@ class StructuralRefactoringTests extends IntegrationTest {
 	}
 
 	/**
+	 * Test adding a column that is valid except for an extra, invalid
+	 * attribute.
+	 */
+	@Test(expected = ParseException)
+	void addColumnInvalid() {
+		parseAction("""
+			addColumn(invalidAttr: 'invalid',
+			          catalogName: 'zoo',
+			          schemaName: 'animal',
+			          tableName: 'monkey') {
+				column(name: 'monkey_status', type: 'varchar(98)')
+			}
+		""");
+
+		assertTrue action instanceof AddColumnsAction
+		def columns = action.columns
+		assertNotNull columns
+		assertEquals 1, columns.size()
+		def column = columns[0]
+		assertEquals 'zoo.animal.monkey', column.relation.toString()
+		assertEquals 'monkey_status', column.name
+		assertEquals 'varchar(98)', column.type.toString()
+		assertNoOutput()
+	}
+
+	/**
 	 * Test adding a column with a full set of attributes, and only one column,
 	 * which does not have any constraints.
 	 */
@@ -140,7 +161,9 @@ class StructuralRefactoringTests extends IntegrationTest {
 	@Test
 	void addColumnFullWithTwoColumns() {
 		def action = parseAction("""
-			addColumn(catalogName: 'zoo', schemaName: 'animal', tableName: 'monkey') {
+			addColumn(catalogName: 'zoo',
+			          schemaName: 'animal',
+			          tableName: 'monkey') {
 				column(name: 'monkey_status', type: 'varchar(98)')
 				column(name: 'monkey_business', type: 'varchar(98)')
 			}
@@ -191,6 +214,28 @@ class StructuralRefactoringTests extends IntegrationTest {
 		assertNull action.dbms
 		assertNull action.replaceIfExists
 		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a createProcedure action that would be valid if it wasn't
+	 * for the extra invalid attribute.
+	 */
+	@Test(expected = ParseException)
+	void createProcedureInvalid() {
+		def sql = """CREATE OR REPLACE PROCEDURE testMonkey IS BEGIN -- do something with the monkey END;"""
+		parseAction("""
+			createProcedure(
+					invalidAttr: 'invalid',
+					// comments: 'someComments',
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					procedureName: 'procedure',
+					dbms: 'mysql',
+					// path: 'mypath',
+					relativeToChangelogFile: false,
+					// encoding: 'utf8',
+					replaceIfExists: true) { \"${sql}\" }
+		""")
 	}
 
 	/**
@@ -311,6 +356,25 @@ class StructuralRefactoringTests extends IntegrationTest {
 	}
 
 	/**
+	 * Test parsing a createTable action with an invalid attribute.
+	 */
+	@Test(expected = ParseException)
+	void createTableInvalid() {
+		parseAction("""
+			createTable(
+					invalidAttr: 'invalid',
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					tablespace: 'oracle_tablespace',
+					tableName: 'monkey',
+					remarks: 'angry') {
+				column(name: 'status', type: 'varchar(100)')
+				column(name: 'id', type: 'int')
+			}
+		""")
+	}
+
+	/**
 	 * Test parsing a createTable action with all supported attributes and a
 	 * couple of columns.
 	 */
@@ -380,6 +444,24 @@ class StructuralRefactoringTests extends IntegrationTest {
 	}
 
 	/**
+	 * Test parsing a createView action with an invalid attribute.
+	 */
+	@Test(expected = ParseException)
+	void createViewInvalid() {
+		def action = parseAction("""
+			createView(
+					invalidAttr: 'invalid',
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					viewName: 'monkey_view',
+					replaceIfExists: true,
+					fullDefinition: false) {
+				"SELECT * FROM monkey WHERE state='angry'"
+			}
+		""")
+	}
+
+	/**
 	 * Test parsing a createView action with all supported attributes and a
 	 * closure.  Since createView actions need to have at least a name and
 	 * query, we don't need to test for sql by itself.
@@ -426,7 +508,24 @@ class StructuralRefactoringTests extends IntegrationTest {
 	}
 
 	/**
-	 * Test parsing a delete action when we have all attributes and a column
+	 * Test parsing a dropColumn action when we have an invalid attribute.
+	 */
+	@Test(expected = ParseException)
+	void dropColumnInvalid() {
+		parseAction("""
+			dropColumn(invalidAttr: 'invalid',
+					   catalogName: 'catalog',
+					   schemaName: 'schema',
+					   tableName: 'monkey',
+					   columnName: 'emotion') {
+				column(name: 'monkey_status')
+				column(name: 'monkey_business')
+			}
+		""")
+	}
+
+	/**
+	 * Test parsing a dropColumn action when we have all attributes and a column
 	 * closure.  This probably wouldn't ever get used, but we will support it.
 	 */
 	@Test
@@ -518,6 +617,21 @@ class StructuralRefactoringTests extends IntegrationTest {
 	}
 
 	/**
+	 * Test the dropProcedure action with an invalid attribute.
+	 */
+	@Test(expected = ParseException)
+	void dropProcedureInvalid() {
+		parseAction("""
+			dropProcedure(
+					invalidAttr: 'invalid',
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					procedureName: 'procedureName'
+			)
+		""")
+	}
+
+	/**
 	 * Test the dropProcedure action with all supported attributes.
 	 */
 	@Test
@@ -552,6 +666,22 @@ class StructuralRefactoringTests extends IntegrationTest {
 		assertNotNull action.tables
 		assertEquals 0, action.tables.size()
 		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a dropTable action with an invalid attribute.
+	 */
+	@Test(expected = ParseException)
+	void dropTableInvalid() {
+		parseAction("""
+			dropTable(
+					invalidAttr: 'invalid',
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					tableName: 'fail_table',
+					cascadeConstraints: true
+			)
+		""")
 	}
 
 	/**
@@ -594,6 +724,21 @@ class StructuralRefactoringTests extends IntegrationTest {
 	}
 
 	/**
+	 * Test parsing a dropView action with an invalid attribute.
+	 */
+	@Test(expected = ParseException)
+	void dropViewInvalid() {
+		parseAction("""
+			dropView(
+					invalidAttr: 'invalid',
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					viewName: 'fail_view'
+			)
+		""")
+	}
+
+	/**
 	 * Test parsing a dropView action with all supported options
 	 */
 	@Test
@@ -632,6 +777,26 @@ class StructuralRefactoringTests extends IntegrationTest {
 		assertNull action.finalColumnType
 		assertNull action.joinString
 		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a mergeColumn action when we have invalid attributes.
+	 */
+	@Test(expected = ParseException)
+	void mergeColumnsInvalid() {
+		parseAction("""
+			mergeColumns(
+					invalidAttr: 'invalid',
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					tableName: 'table',
+					column1Name: 'first_name',
+					column2Name: 'last_name',
+					finalColumnName: 'full_name',
+					finalColumnType: 'varchar(99)',
+					joinString: ' '
+			)
+		""")
 	}
 
 	/**
@@ -679,6 +844,23 @@ class StructuralRefactoringTests extends IntegrationTest {
 	}
 
 	/**
+	 * Test parsing a mergeColumn action when we have invalid attributes.
+	 */
+	@Test(expected = ParseException)
+	void modifyDataTypeInvalid() {
+		parseAction("""
+			modifyDataType(
+					invalidAttr: 'invalid',
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					tableName: 'table',
+					columnName: 'first_name',
+					newDataType: 'varchar(99)'
+			)
+		""")
+	}
+
+	/**
 	 * Test parsing a mergeColumn action when we have all supported attributes.
 	 */
 	@Test
@@ -719,6 +901,25 @@ class StructuralRefactoringTests extends IntegrationTest {
 		assertNull action.columnDefinition
 		assertNull action.remarks
 		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a renameColumn action when we have invalid attributes.
+	 */
+	@Test(expected = ParseException)
+	void renameColumnInvalid() {
+		parseAction("""
+			renameColumn(
+					invalidAttr: 'invalid',
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					tableName: 'monkey',
+					oldColumnName: 'fail',
+					newColumnName: 'win',
+					columnDataType: 'varchar(9001)',
+					remarks: 'just because'
+			)
+		""")
 	}
 
 	/**
@@ -764,6 +965,22 @@ class StructuralRefactoringTests extends IntegrationTest {
 	}
 
 	/**
+	 * Test parsing a renameTable action with invalid attributes.
+	 */
+	@Test(expected = ParseException)
+	void renameTableInvalid() {
+		parseAction("""
+			renameTable(
+					invalidAttr: 'invalid',
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					oldTableName: 'fail_table',
+					newTableName: 'win_table'
+			)
+		""")
+	}
+
+	/**
 	 * Test parsing a renameTable action with all supported attributes.
 	 */
 	@Test
@@ -802,6 +1019,22 @@ class StructuralRefactoringTests extends IntegrationTest {
 	}
 
 	/**
+	 * Test parsing a renameView action with invalid attributes.
+	 */
+	@Test(expected = ParseException)
+	void renameViewInvalid() {
+		parseAction("""
+			renameView(
+					invalidAttr: 'invalid',
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					oldViewName: 'fail_view',
+					newViewName: 'win_view'
+			)
+		""")
+	}
+
+	/**
 	 * Test parsing a renameView action with all the supported attributes.
 	 */
 	@Test
@@ -822,7 +1055,6 @@ class StructuralRefactoringTests extends IntegrationTest {
 //		assertEquals 'win_table', action.newName.name
 		assertNoOutput()
 	}
-
 
 }
 

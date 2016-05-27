@@ -16,32 +16,40 @@
 
 package org.liquibase.groovy.delegate
 
+import liquibase.action.ExecuteSqlAction
+import liquibase.action.QuerySqlAction
+import liquibase.action.core.CustomClassAction
+import liquibase.action.core.ExecuteShellCommandAction
+import liquibase.action.core.ExecuteSqlFileAction
+import liquibase.exception.ParseException
+
 //import liquibase.sql.visitor.PrependSqlVisitor
-//import org.junit.Test
-//import static org.junit.Assert.*
-//import liquibase.change.core.RawSQLChange
-//import liquibase.change.core.SQLFileChange
-//import liquibase.change.core.ExecuteShellCommandChange
-//import liquibase.change.custom.CustomChangeWrapper
-//import liquibase.resource.FileSystemResourceAccessor
+import org.junit.Test
+import org.liquibase.groovy.change.CustomProgrammaticChangeWrapper
+
+import static org.junit.Assert.*
+import liquibase.resource.FileSystemResourceAccessor
 
 /**
- * This is one of several classes that test the creation of refactoring changes
+ * This is one of several classes that test the creation of refactoring actions
  * for ChangeSets. This particular class tests custom changes such as
  * {@code sql} and {@code executeCommand}
  * <p>
  * Since the Groovy DSL parser is meant to act as a pass-through for Liquibase
  * itself, it doesn't do much in the way of error checking.  For example, we
  * aren't concerned with whether or not required attributes are present - we
- * leave that to Liquibase itself.  In general, each change will have 3 kinds
+ * leave that to Liquibase itself.  In general, each action will have 3 kinds
  * of tests:<br>
  * <ol>
  * <li>A test with an empty parameter map, and if supported, an empty closure.
  * This kind of test will make sure that the Groovy parser doesn't introduce
  * any unintended attribute defaults for a change.</li>
+ * <li>A test that uses an action that would valid except for an extra invalid
+ * attribute.  This makes sure that Liquibase will reject unknown attributes
+ * instead of silently ignoring them.</li>
  * <li>A test that sets all the attributes known to be supported by Liquibase
  * at this time.  This makes sure that the Groovy parser will send any given
- * groovy attribute to the correct place in Liquibase.  For changes that allow
+ * groovy attribute to the correct place in Liquibase.  For actions that allow
  * a child closure, this test will include just enough in the closure to make
  * sure it gets processed, and that the right kind of closure is called.</li>
  * <li>Some tests take columns or a where clause in a child closure.  The same
@@ -50,452 +58,474 @@ package org.liquibase.groovy.delegate
  * invalid closure to make sure it sets up the closure properly</li>
  * </ol>
  * <p>
- * Some changes require a little more testing, such as the {@code sql} change
+ * Some actions require a little more testing, such as the {@code sql} action
  * that can receive sql as a string, or as a closure, or the {@code delete}
- * change, which is valid both with and without a child closure.
+ * action, which is valid both with and without a child closure.
  * <p>
  * We don't worry about testing combinations that don't make sense, such as
- * allowing a createIndex change a closure, but no attributes, since it doesn't
- * make sense to have this kind of change without both a table name and at
- * least one column.  If a user tries it, they will get errors from Liquibase
+ * allowing a createIndex action with a closure, but no attributes, since it
+ * doesn't make sense to have this kind of action without both a table name and
+ * at least one column.  If a user tries it, they will get errors from Liquibase
  * itself.
  *
  * @author Steven C. Saliman
  */
-class CustomRefactoringTests extends ChangeSetTests {
-//
-//	@Test
-//	void customRefactoringWithClassAndNoParameters() {
-//		buildChangeSet {
-//			customChange(class: 'org.liquibase.change.custom.MonkeyChange')
-//		}
-//
-//		assertEquals 0, changeSet.rollback.changes.size()
-//		def changes = changeSet.changes
-//		assertNotNull changes
-//		assertEquals 1, changes.size()
-//		assertTrue changes[0] instanceof CustomChangeWrapper
-//		CustomChangeWrapper wrapper = changes[0]
-//		assertEquals 'org.liquibase.change.custom.MonkeyChange', changes[0].className
-//		assertNotNull wrapper.customChange
-//		assertNoOutput()
-//	}
-//
-//
-//	@Test
-//	void customRefactoringWithClassAndParameters() {
-//		buildChangeSet {
-//			customChange(class: 'org.liquibase.change.custom.MonkeyChange') {
-//				emotion('angry')
-//				'rfid-tag'(28763)
-//			}
-//		}
-//
-//		assertEquals 0, changeSet.rollback.changes.size()
-//		def changes = changeSet.changes
-//		assertNotNull changes
-//		assertEquals 1, changes.size()
-//		assertTrue changes[0] instanceof CustomChangeWrapper
-//		assertEquals 'org.liquibase.change.custom.MonkeyChange', changes[0].className
-//		def args = changes[0].paramValues
-//		assertNotNull args
-//		assertEquals 2, args.size()
-//		assertTrue args.containsKey('emotion')
-//		assertTrue args.containsKey('rfid-tag')
-//		assertEquals 'angry', args.emotion
-//		assertEquals '28763', args.'rfid-tag'
-//		assertNoOutput()
-//	}
-//
-//	/**
-//	 * Test parsing an executeCommand with no args and an empty closure to make
-//	 * sure the DSL doesn't introduce any unintended defaults.
-//	 */
-//	@Test
-//	void executeCommandEmptyMapEmptyClosure() {
-//		buildChangeSet {
-//			executeCommand([:]) {}
-//		}
-//
-//		assertEquals 0, changeSet.rollback.changes.size()
-//		def changes = changeSet.changes
-//		assertNotNull changes
-//		assertEquals 1, changes.size()
-//		assertTrue changes[0] instanceof ExecuteShellCommandChange
-//		assertNull changes[0].executable
-//		assertNull changes[0].os
-//		def args = changes[0].args
-//		assertNotNull args
-//		assertEquals 0, args.size()
-//		assertNoOutput()
-//	}
-//
-//	/**
-//	 * Test parsing an executeCommand change when we have no attributes and there
-//	 * is no closure.
-//	 */
-//	@Test
-//	void executeCommandEmptyMapNoClosure() {
-//		buildChangeSet {
-//			executeCommand([:])
-//		}
-//
-//		assertEquals 0, changeSet.rollback.changes.size()
-//		def changes = changeSet.changes
-//		assertNotNull changes
-//		assertEquals 1, changes.size()
-//		assertTrue changes[0] instanceof ExecuteShellCommandChange
-//		assertNull changes[0].executable
-//		assertNull changes[0].os
-//		def args = changes[0].args
-//		assertNotNull args
-//		assertEquals 0, args.size()
-//		assertNoOutput()
-//	}
-//
-//	/**
-//	 * Test parsing executeCommand when we have all supported attributes,but
-//	 * no argument closure.
-//	 */
-//	@Test
-//	void executeCommandWithNoArgs() {
-//		buildChangeSet {
-//			executeCommand(executable: "awk '/monkey/ { count++ } END { print count }'",
-//					os: 'Mac OS X, Linux')
-//		}
-//
-//		assertEquals 0, changeSet.rollback.changes.size()
-//		def changes = changeSet.changes
-//		assertNotNull changes
-//		assertEquals 1, changes.size()
-//		assertTrue changes[0] instanceof ExecuteShellCommandChange
-//		assertEquals "awk '/monkey/ { count++ } END { print count }'", changes[0].executable
-//		assertNotNull changes[0].os
-//		assertEquals 2, changes[0].os.size
-//		assertEquals 'Mac OS X', changes[0].os[0]
-//		assertEquals 'Linux', changes[0].os[1]
-//		def args = changes[0].args
-//		assertNotNull args
-//		assertEquals 0, args.size()
-//		assertNoOutput()
-//	}
-//
-//	/**
-//	 * Test parsing an executeCommand change where the arguments are maps, like
-//	 * the XML would do it.
-//	 */
-//	@Test
-//	void executeCommandWithArgsInMap() {
-//		buildChangeSet {
-//			executeCommand(executable: "awk", os: 'Mac OS X, Linux') {
-//				arg(value: '/monkey/ { count++ } END { print count }')
-//				arg(value: '-f database.log')
-//			}
-//		}
-//
-//		assertEquals 0, changeSet.rollback.changes.size()
-//		def changes = changeSet.changes
-//		assertNotNull changes
-//		assertEquals 1, changes.size()
-//		assertTrue changes[0] instanceof ExecuteShellCommandChange
-//		assertEquals "awk", changes[0].executable
-//		assertNotNull changes[0].os
-//		assertEquals 2, changes[0].os.size
-//		assertEquals 'Mac OS X', changes[0].os[0]
-//		assertEquals 'Linux', changes[0].os[1]
-//		def args = changes[0].args
-//		assertNotNull args
-//		assertEquals 2, args.size()
-//		assertTrue args.every { arg -> arg instanceof String }
-//		assertEquals '/monkey/ { count++ } END { print count }', args[0]
-//		assertEquals '-f database.log', args[1]
-//		assertNoOutput()
-//	}
-//
-//	/**
-//	 * Test parsing an executeCommand change where the arguments are just Strings.
-//	 * This is not the way the XML does it, but it is the way the Groovy DSL has
-//	 * always done it, and it is nice shorthand.
-//	 */
-//	@Test
-//	void executeCommandWithStringArgs() {
-//		buildChangeSet {
-//			executeCommand(executable: "awk", os: 'Mac OS X, Linux') {
-//				arg('/monkey/ { count++ } END { print count }')
-//				arg('-f database.log')
-//			}
-//		}
-//
-//		assertEquals 0, changeSet.rollback.changes.size()
-//		def changes = changeSet.changes
-//		assertNotNull changes
-//		assertEquals 1, changes.size()
-//		assertTrue changes[0] instanceof ExecuteShellCommandChange
-//		assertEquals "awk", changes[0].executable
-//		assertNotNull changes[0].os
-//		assertEquals 2, changes[0].os.size
-//		assertEquals 'Mac OS X', changes[0].os[0]
-//		assertEquals 'Linux', changes[0].os[1]
-//		def args = changes[0].args
-//		assertNotNull args
-//		assertEquals 2, args.size()
-//		assertTrue args.every { arg -> arg instanceof String }
-//		assertEquals '/monkey/ { count++ } END { print count }', args[0]
-//		assertEquals '-f database.log', args[1]
-//		assertNoOutput()
-//	}
-//
-//	/**
-//	 * Make sure modifySql works.  Most of the tests for this are in
-//	 * {@link ModifySqlDelegateTests}, this just needs to make sure that the
-//	 * SqlVisitors that the delegate returns are added to the changeSet.  This
-//	 * one also tests that we can have a modifySql with no attributes of its own.
-//	 */
-//	@Test
-//	void modifySqlValid() {
-//		buildChangeSet {
-//			modifySql {
-//				prepend(value: 'engine INNODB')
-//			}
-//		}
-//
-//		assertEquals 0, changeSet.rollback.changes.size()
-//		def changes = changeSet.changes
-//		assertNotNull changes
-//		assertEquals 0, changes.size()
-//		assertEquals 1, changeSet.sqlVisitors.size()
+class CustomRefactoringTests extends IntegrationTest {
+
+	/**
+	 * Test a customChange with no map or closure.
+	 */
+	@Test
+	void customChangeEmpty() {
+		def action = parseAction("""
+			customChange([:])
+		""")
+
+		assertTrue action instanceof CustomClassAction
+		assertNull action.customClass
+		assertEquals 0, action.parameters.size()
+		assertNoOutput()
+	}
+
+	/**
+	 * Test a customChange with an invalid attribute.
+	 */
+	@Test(expected = ParseException)
+	void customChangeInvalid() {
+		parseAction("""
+			customChange(class: 'org.liquibase.change.custom.MonkeyChange',
+			             invalidAttr: 'invalid')
+		""")
+	}
+
+	/**
+	 * Test a custom with a class name, but on parameters.
+	 */
+	@Test
+	void customChangeWithClassAndNoParameters() {
+		def action = parseAction("""
+			customChange(class: 'org.liquibase.change.custom.MonkeyChange')
+		""")
+
+		assertTrue action instanceof CustomClassAction
+		assertEquals 'org.liquibase.change.custom.MonkeyChange', action.customClass.name
+		assertEquals 0, action.parameters.size()
+		assertNoOutput()
+	}
+
+	/**
+	 * Test a customChange with a class name and 2 parameters.
+	 */
+	@Test
+	void customChangeWithClassAndParameters() {
+		def action = parseAction("""
+			customChange(class: 'org.liquibase.change.custom.MonkeyChange') {
+				emotion('angry')
+				'rfid-tag'(28763)
+			}
+		""")
+
+		assertTrue action instanceof CustomClassAction
+		assertEquals 'org.liquibase.change.custom.MonkeyChange', action.customClass.name
+		def args = action.parameters
+		assertNotNull args
+		assertEquals 2, args.size()
+		assertEquals 'emotion', args[0].name
+		assertEquals 'angry', args[0].value
+		assertEquals 'rfid-tag', args[1].name
+		assertEquals 28763, args[1].value
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing an executeCommand with no args and an empty closure to make
+	 * sure the DSL doesn't introduce any unintended defaults.
+	 */
+	@Test
+	void executeCommandEmptyMapEmptyClosure() {
+		def action = parseAction("""
+			executeCommand([:]) {}
+		""")
+
+		assertTrue action instanceof ExecuteShellCommandAction
+		assertNull action.executable
+		assertNotNull action.osFilters
+		assertEquals 0, action.osFilters.size()
+		def args = action.args
+		assertNotNull args
+		assertEquals 0, args.size()
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing an executeCommand change when we have no attributes and there
+	 * is no closure.
+	 */
+	@Test
+	void executeCommandEmptyMapNoClosure() {
+		def action = parseAction("""
+			executeCommand([:])
+		""")
+
+		assertTrue action instanceof ExecuteShellCommandAction
+		assertNull action.executable
+		assertNotNull action.osFilters
+		assertEquals 0, action.osFilters.size()
+		def args = action.args
+		assertNotNull args
+		assertEquals 0, args.size()
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing executeCommand when we have an invalid attribute.
+	 */
+	@Test(expected = ParseException)
+	void executeCommandInvalidAttribute() {
+		parseAction("""
+			executeCommand(executable: "awk '/monkey/ { count++ } END { print count }'",
+			        invalidAttr: 'invalid',
+					os: 'Mac OS X, Linux')
+		""")
+	}
+
+	/**
+	 * Test parsing executeCommand when we have all supported attributes,but
+	 * no argument closure.
+	 */
+	@Test
+	void executeCommandWithNoArgs() {
+		def action = parseAction("""
+			executeCommand(executable: "awk '/monkey/ { count++ } END { print count }'",
+					os: 'Mac OS X, Linux')
+		""")
+
+		assertTrue action instanceof ExecuteShellCommandAction
+		assertEquals "awk '/monkey/ { count++ } END { print count }'", action.executable
+		assertNotNull action.osFilters
+		assertEquals 1, action.osFilters.size
+		assertEquals '[Mac OS X, Linux]', action.osFilters[0]
+		def args = action.args
+		assertNotNull args
+		assertEquals 0, args.size()
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing an executeCommand change where the arguments are maps, like
+	 * the XML would do it.
+	 */
+	@Test
+	void executeCommandWithArgsInMap() {
+		def action = parseAction("""
+			executeCommand(executable: "awk", os: 'Mac OS X, Linux') {
+				arg(value: '/monkey/ { count++ } END { print count }')
+				arg(value: '-f database.log')
+			}
+		""")
+
+		assertTrue action instanceof ExecuteShellCommandAction
+		assertEquals "awk", action.executable
+		assertNotNull action.osFilters
+		assertEquals 1, action.osFilters.size
+		assertEquals '[Mac OS X, Linux]', action.osFilters[0]
+		def args = action.args
+		assertNotNull args
+		assertEquals 2, args.size()
+		assertTrue args.every { arg -> arg instanceof String }
+		assertEquals '/monkey/ { count++ } END { print count }', args[0]
+		assertEquals '-f database.log', args[1]
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing an executeCommand change where the arguments are just Strings.
+	 * This is not the way the XML does it, but it is the way the Groovy DSL has
+	 * always done it, and it is nice shorthand.
+	 */
+	@Test
+	void executeCommandWithStringArgs() {
+		def action = parseAction("""
+			executeCommand(executable: "awk", os: 'Mac OS X, Linux') {
+				arg '/monkey/ { count++ } END { print count }'
+				arg '-f database.log'
+			}
+		""")
+
+		assertTrue action instanceof ExecuteShellCommandAction
+		assertEquals "awk", action.executable
+		assertNotNull action.osFilters
+		assertEquals 1, action.osFilters.size
+		assertEquals '[Mac OS X, Linux]', action.osFilters[0]
+		def args = action.args
+		assertNotNull args
+		assertEquals 2, args.size()
+		assertTrue args.every { arg -> arg instanceof String }
+		assertEquals '/monkey/ { count++ } END { print count }', args[0]
+		assertEquals '-f database.log', args[1]
+		assertNoOutput()
+	}
+
+	/**
+	 * Make sure modifySql works.  Most of the tests for this are in
+	 * {@link ModifySqlDelegateTests}, this just needs to make sure that the
+	 * SqlVisitors that the delegate returns are added to the changeSet.  This
+	 * one also tests that we can have a modifySql with no attributes of its own.
+	 */
+	@Test
+	void modifySqlValid() {
+		def action = parseAction("""
+			modifySql {
+				prepend(value: 'engine INNODB')
+			}
+		""")
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 0, changes.size()
+		assertEquals 1, changeSet.sqlVisitors.size()
 //		assertTrue changeSet.sqlVisitors[0] instanceof PrependSqlVisitor
-//		assertEquals 'engine INNODB', changeSet.sqlVisitors[0].value
-//		assertNull changeSet.sqlVisitors[0].applicableDbms
-//		assertNull changeSet.sqlVisitors[0].contexts
-//		assertFalse changeSet.sqlVisitors[0].applyToRollback
-//		assertNoOutput()
-//
-//
-//	}
-//
-//	/**
-//	 * Test parsing a sql change when we have an empty attribute map and an
-//	 * empty closure to make sure we don't get any unintended defaults. Also test
-//	 * our assumption that Liquibase will default splitStatements to true and
-//	 * stripComments to false.
-//	 */
-//	@Test
-//	void sqlWithoutAttributesOrClosure() {
-//		buildChangeSet {
-//			sql([:]) {}
-//		}
-//
-//		assertEquals 0, changeSet.rollback.changes.size()
-//		def changes = changeSet.changes
-//		assertNotNull changes
-//		assertEquals 1, changes.size()
-//		assertTrue changes[0] instanceof RawSQLChange
-//		assertNull changes[0].dbms
-//		assertNull changes[0].endDelimiter
-//		assertTrue changes[0].splitStatements
-//		assertFalse changes[0].stripComments
-//		assertNull changes[0].sql
-//		assertNull changes[0].comment
-//		assertNoOutput()
-//	}
-//
-//	/**
-//	 * Test parsing a sql change when we have no attributes or a closure, just
-//	 * a string.
-//	 */
-//	@Test
-//	void sqlIsString() {
-//		buildChangeSet {
-//			sql "UPDATE monkey SET emotion='ANGRY' WHERE id IN (1,2,3,4,5)"
-//		}
-//
-//		assertEquals 0, changeSet.rollback.changes.size()
-//		def changes = changeSet.changes
-//		assertNotNull changes
-//		assertEquals 1, changes.size()
-//		assertTrue changes[0] instanceof RawSQLChange
-//		assertNull changes[0].dbms
-//		assertNull changes[0].endDelimiter
-//		assertTrue changes[0].splitStatements
-//		assertFalse changes[0].stripComments
-//		assertEquals "UPDATE monkey SET emotion='ANGRY' WHERE id IN (1,2,3,4,5)", changes[0].sql
-//		assertNull changes[0].comment
-//		assertNoOutput()
-//	}
-//
-//	/**
-//	 * test parsing a sql change where we only have SQL in a closure.
-//	 */
-//	@Test
-//	void sqlInClosure() {
-//		buildChangeSet {
-//			sql {
-//				"UPDATE monkey SET emotion='ANGRY' WHERE id IN (1,2,3,4,5)"
-//			}
-//		}
-//
-//		assertEquals 0, changeSet.rollback.changes.size()
-//		def changes = changeSet.changes
-//		assertNotNull changes
-//		assertEquals 1, changes.size()
-//		assertNull changes[0].dbms
-//		assertNull changes[0].endDelimiter
-//		assertTrue changes[0].splitStatements
-//		assertFalse changes[0].stripComments
-//		assertEquals "UPDATE monkey SET emotion='ANGRY' WHERE id IN (1,2,3,4,5)", changes[0].sql
-//		assertNull changes[0].comment
-//		assertNoOutput()
-//	}
-//
-//	/**
-//	 * Test parsing a sql change when we have no attributes, but we do have a
-//	 * comment in the closure.
-//	 */
-//	@Test
-//	void sqlCommentInClosure() {
-//		buildChangeSet {
-//			sql {
-//				comment("No comment")
-//				"UPDATE monkey SET emotion='ANGRY' WHERE id IN (1,2,3,4,5)"
-//			}
-//		}
-//
-//		assertEquals 0, changeSet.rollback.changes.size()
-//		def changes = changeSet.changes
-//		assertNotNull changes
-//		assertEquals 1, changes.size()
-//		assertNull changes[0].dbms
-//		assertNull changes[0].endDelimiter
-//		assertTrue changes[0].splitStatements
-//		assertFalse changes[0].stripComments
-//		assertEquals "UPDATE monkey SET emotion='ANGRY' WHERE id IN (1,2,3,4,5)", changes[0].sql
-//		assertEquals "No comment", changes[0].comment
-//		assertNoOutput()
-//	}
-//
-//	/**
-//	 * Test parsing a sql chanve when we have all supported attributes present
-//	 * and no comments in the closure.  For this test set the two booleans to
-//	 * the opposite of the Liquibase defaults.
-//	 */
-//	@Test
-//	void sqlFullWithNoComments() {
-//		buildChangeSet {
-//			sql(dbms: 'oracle',
-//				splitStatements: false,
-//				stripComments: true,
-//				endDelimiter: '!') {
-//				"UPDATE monkey SET emotion='ANGRY' WHERE id IN (1,2,3,4,5)"
-//			}
-//		}
-//
-//		assertEquals 0, changeSet.rollback.changes.size()
-//		def changes = changeSet.changes
-//		assertNotNull changes
-//		assertEquals 1, changes.size()
-//		assertTrue changes[0] instanceof RawSQLChange
-//		assertEquals 'oracle', changes[0].dbms
-//		assertFalse changes[0].splitStatements
-//		assertTrue changes[0].stripComments
-//		assertEquals '!', changes[0].endDelimiter
-//		assertEquals "UPDATE monkey SET emotion='ANGRY' WHERE id IN (1,2,3,4,5)", changes[0].sql
-//		assertNull changes[0].comment
-//		assertNoOutput()
-//	}
-//
-//	/**
-//	 * Test parsing a sql change when we have all attributes and we have a comment
-//	 * in the closure.  For this test we only set splitStatements to true.
-//	 */
-//	@Test
-//	void sqlFullWithComments() {
-//		buildChangeSet {
-//			sql(dbms: 'oracle',
-//				splitStatements: false,
-//				stripComments: true,
-//				endDelimiter: '!') {
-//				comment("No comment")
-//				"UPDATE monkey SET emotion='ANGRY' WHERE id IN (1,2,3,4,5)"
-//			}
-//		}
-//
-//		assertEquals 0, changeSet.rollback.changes.size()
-//		def changes = changeSet.changes
-//		assertNotNull changes
-//		assertEquals 1, changes.size()
-//		assertTrue changes[0] instanceof RawSQLChange
-//		assertEquals 'oracle', changes[0].dbms
-//		assertFalse changes[0].splitStatements
-//		assertTrue changes[0].stripComments
-//		assertEquals '!', changes[0].endDelimiter
-//		assertEquals "UPDATE monkey SET emotion='ANGRY' WHERE id IN (1,2,3,4,5)", changes[0].sql
-//		assertEquals "No comment", changes[0].comment
-//		assertNoOutput()
-//	}
-//
-//	/**
-//	 * Test parsing a sqlFile change with minimal attributes to confirm our
-//	 * assumptions about Liquibase defaults, which we assume to be true for
-//	 * splitStatements and false for stripComments.  We can't test this one with
-//	 * totally empty attributes because a sqlFile change will attempt to open the
-//	 * file immediately to work around a Liquibase bug.  This also means the file
-//	 * in question must exist.
-//	 */
-//	@Test
-//	void sqlFileEmpty() {
-//		resourceAccessor = new FileSystemResourceAccessor()
-//		buildChangeSet {
-//			sqlFile(path: 'src/test/changelog/file.sql')
-//		}
-//
-//		assertEquals 0, changeSet.rollback.changes.size()
-//		def changes = changeSet.changes
-//		assertNotNull changes
-//		assertEquals 1, changes.size()
-//		assertTrue changes[0] instanceof SQLFileChange
-//		assertEquals 'src/test/changelog/file.sql', changes[0].path
-//		assertNull changes[0].relativeToChangelogFile
-//		assertNull changes[0].encoding
-//		assertFalse changes[0].isStripComments()
-//		assertTrue changes[0].isSplitStatements()
-//		assertNull changes[0].endDelimiter
-//		assertNull changes[0].dbms
-//		assertNotNull 'SQLFileChange.resourceAccessor cannot be null', changes[0].resourceAccessor
-//		assertNoOutput()
-//	}
-//
-//	/**
-//	 * Test parsing a sqlFile change when we have all supported options. For this
-//	 * test, we set the two booleans to be the opposite of their default values.
-//	 */
-//	@Test
-//	void sqlFileFull() {
-//		resourceAccessor = new FileSystemResourceAccessor()
-//		buildChangeSet {
-//			sqlFile(path: 'src/test/changelog/file.sql',
-//					relativeToChangelogFile: false,
-//					stripComments: true,
-//					splitStatements: false,
-//					encoding: 'UTF-8',
-//					endDelimiter: '@',
-//					dbms: 'oracle')
-//		}
-//
-//		assertEquals 0, changeSet.rollback.changes.size()
-//		def changes = changeSet.changes
-//		assertNotNull changes
-//		assertEquals 1, changes.size()
-//		assertTrue changes[0] instanceof SQLFileChange
-//		assertEquals 'src/test/changelog/file.sql', changes[0].path
-//		assertFalse changes[0].relativeToChangelogFile
-//		assertEquals 'UTF-8', changes[0].encoding
-//		assertTrue changes[0].isStripComments()
-//		assertFalse changes[0].isSplitStatements()
-//		assertEquals '@', changes[0].endDelimiter
-//		assertEquals 'oracle', changes[0].dbms
-//		assertNotNull 'SQLFileChange.resourceAccessor cannot be null', changes[0].resourceAccessor
-//		assertNoOutput()
-//	}
+		assertEquals 'engine INNODB', changeSet.sqlVisitors[0].value
+		assertNull changeSet.sqlVisitors[0].applicableDbms
+		assertNull changeSet.sqlVisitors[0].contexts
+		assertFalse changeSet.sqlVisitors[0].applyToRollback
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a sql action when we have an empty attribute map and an
+	 * empty closure to make sure we don't get any unintended defaults. Also
+	 * test our assumption that Liquibase will default splitStatements and
+	 * stripComments to null.
+	 */
+	@Test
+	void sqlEmpty() {
+		def action = parseAction("""
+			sql([:]) {}
+		""")
+
+		assertTrue action instanceof ExecuteSqlAction
+		assertNotNull action.dbmsFilters
+		assertEquals 0, action.dbmsFilters.size()
+		assertNull action.endDelimiter
+		assertNull action.splitStatements
+		assertNull action.stripComments
+		assertNull action.sql
+//		assertNull action.comment
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a sql action that has an invalid attribute.
+	 */
+	@Test(expected = ParseException)
+	void sqlInvalid() {
+		parseAction("""
+			sql(dbms: 'oracle',
+				splitStatements: false,
+				stripComments: true,
+				endDelimiter: '!',
+				invalidAttr: 'invalid') {
+				"UPDATE monkey SET emotion='ANGRY' WHERE id IN (1,2,3,4,5)"
+			}
+		""")
+	}
+
+	/**
+	 * Test parsing a sql action when we have no attributes or a closure, just
+	 * a string.
+	 */
+	@Test
+	void sqlIsString() {
+		def action = parseAction("""
+			sql "UPDATE monkey SET emotion='ANGRY' WHERE id IN (1,2,3,4,5)"
+		""")
+
+		assertTrue action instanceof ExecuteSqlAction
+		assertNotNull action.dbmsFilters
+		assertEquals 0, action.dbmsFilters.size()
+		assertNull action.endDelimiter
+		assertNull action.splitStatements
+		assertNull action.stripComments
+		assertEquals "UPDATE monkey SET emotion='ANGRY' WHERE id IN (1,2,3,4,5)", action.sql.toString()
+//		assertNull action.comment
+		assertNoOutput()
+	}
+
+	/**
+	 * test parsing a sql action where we only have SQL in a closure.
+	 */
+	@Test
+	void sqlInClosure() {
+		def action = parseAction("""
+			sql {
+				"UPDATE monkey SET emotion='ANGRY' WHERE id IN (1,2,3,4,5)"
+			}
+		""")
+
+		assertTrue action instanceof ExecuteSqlAction
+		assertNotNull action.dbmsFilters
+		assertEquals 0, action.dbmsFilters.size()
+		assertNull action.endDelimiter
+		assertNull action.splitStatements
+		assertNull action.stripComments
+		assertEquals "UPDATE monkey SET emotion='ANGRY' WHERE id IN (1,2,3,4,5)", action.sql.toString()
+//		assertNull action.comment
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a sql action when we have no attributes, but we do have a
+	 * comment in the closure.
+	 */
+	@Test
+	void sqlCommentInClosure() {
+		def action = parseAction("""
+			sql {
+				comment("No comment")
+				"UPDATE monkey SET emotion='ANGRY' WHERE id IN (1,2,3,4,5)"
+			}
+		""")
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue action instanceof ExecuteSqlAction
+		assertNull action.dbms
+		assertNull action.endDelimiter
+		assertTrue action.splitStatements
+		assertFalse action.stripComments
+		assertEquals "UPDATE monkey SET emotion='ANGRY' WHERE id IN (1,2,3,4,5)", action.sql
+		assertEquals "No comment", action.comment
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a sql action when we have all supported attributes present
+	 * and no comments in the closure.  For this test set the two booleans to
+	 * different values.
+	 */
+	@Test
+	void sqlFullWithNoComments() {
+		def action = parseAction("""
+			sql(dbms: 'oracle',
+				splitStatements: false,
+				stripComments: true,
+				endDelimiter: '!') {
+				"UPDATE monkey SET emotion='ANGRY' WHERE id IN (1,2,3,4,5)"
+			}
+		""")
+
+		assertTrue action instanceof ExecuteSqlAction
+		assertNotNull action.dbmsFilters
+		assertEquals 1, action.dbmsFilters.size()
+		assertEquals '[oracle]', action.dbmsFilters[0]
+		assertFalse action.splitStatements
+		assertTrue action.stripComments
+		assertEquals '!', action.endDelimiter
+		assertEquals "UPDATE monkey SET emotion='ANGRY' WHERE id IN (1,2,3,4,5)", action.sql.toString()
+//		assertNull action.comment
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a sql action when we have all attributes and we have a comment
+	 * in the closure.  For this test we only set splitStatements to true.
+	 */
+	@Test
+	void sqlFullWithComments() {
+		def action = parseAction("""
+			sql(dbms: 'oracle',
+				splitStatements: false,
+				stripComments: true,
+				endDelimiter: '!') {
+				comment("No comment")
+				"UPDATE monkey SET emotion='ANGRY' WHERE id IN (1,2,3,4,5)"
+			}
+		""")
+
+		assertEquals 0, changeSet.rollback.changes.size()
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue action instanceof ExecuteSqlAction
+		assertEquals 'oracle', action.dbms
+		assertFalse action.splitStatements
+		assertTrue action.stripComments
+		assertEquals '!', action.endDelimiter
+		assertEquals "UPDATE monkey SET emotion='ANGRY' WHERE id IN (1,2,3,4,5)", action.sql
+		assertEquals "No comment", action.comment
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a sqlFile change with minimal attributes to confirm our
+	 * assumptions about Liquibase defaults, which we assume to be true for
+	 * splitStatements and false for stripComments.  We can't test this one with
+	 * totally empty attributes because a sqlFile change will attempt to open the
+	 * file immediately to work around a Liquibase bug.  This also means the file
+	 * in question must exist.
+	 */
+	@Test
+	void sqlFileEmpty() {
+		def action = parseAction("""
+			sqlFile(path: 'src/test/changelog/file.sql')
+		""")
+
+		assertTrue action instanceof ExecuteSqlFileAction
+		assertEquals 'src/test/changelog/file.sql', action.path
+//		assertNull action.relativeToChangelogFile
+		assertNull action.encoding
+		assertNull action.stripComments
+		assertNull action.splitStatements
+		assertNull action.endDelimiter
+		assertNull action.dbms
+		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a sqlFile action when we have all an invalid attribute.
+	 */
+	@Test(expected = ParseException)
+	void sqlFileInvalid() {
+		parseAction("""
+			sqlFile(path: 'src/test/changelog/file.sql',
+					relativeToChangelogFile: false,
+					stripComments: true,
+					splitStatements: false,
+					encoding: 'UTF-8',
+					endDelimiter: '@',
+					dbms: 'oracle',
+					invalidAttr: 'invalid')
+		""")
+	}
+	/**
+	 * Test parsing a sqlFile action when we have all supported options. For this
+	 * test, we set the two booleans to be the opposite of their default values.
+	 */
+	@Test
+	void sqlFileFull() {
+		def action = parseAction("""
+			sqlFile(path: 'src/test/changelog/file.sql',
+					relativeToChangelogFile: false,
+					stripComments: true,
+					splitStatements: false,
+					encoding: 'UTF-8',
+					endDelimiter: '@',
+					dbms: 'oracle')
+		""")
+
+		assertTrue action instanceof ExecuteSqlFileAction
+		assertEquals 'src/test/changelog/file.sql', action.path
+//		assertFalse action.relativeToChangelogFile
+		assertEquals 'UTF-8', action.encoding
+		assertTrue action.stripComments
+		assertFalse action.splitStatements
+		assertEquals '@', action.endDelimiter
+		assertEquals 'oracle', action.dbms
+		assertNoOutput()
+	}
 }
 

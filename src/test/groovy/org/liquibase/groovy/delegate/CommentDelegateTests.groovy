@@ -23,8 +23,8 @@ import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNull
 
 /**
- * Tests for {@link CommentDelegate}  It makes sure it can be called in all
- * its various permutations.
+ * Tests that make sure a comment closure can be called in all its various
+ * permutations.
  *
  * @author Steven C. Saliman
  */
@@ -80,8 +80,8 @@ class CommentDelegateTests {
 	}
 
 	/**
-	 * Helper method to execute an {@link ArgumentDelegate} and return any
-	 * arguments it created.
+	 * Helper method to execute an {@link ColumnDelegate} and return any
+	 * comments it created.
 	 * @param closure
 	 * @return
 	 */

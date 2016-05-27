@@ -76,10 +76,6 @@ with a couple of the gaping holes in Liquibase's documentation of the XML.
 * In the Liquibase XML, you can set a ```sql``` attribute in a ```sqlFile```
   change, but that doesn't make a lot sense, so this has been disabled in the
   Groovy DSL.
-* The documentation mentions a ```referencesUniqueColumn``` attribute of the
-  ```addForeignKeyConstraint``` change, but what it doesn't tell you is that it
-  is ignored.  In the code, Liquibase has marked this item as being deprecated,
-  so we've deprecated it as well, and we let you know about it.
 * If you were using the DSL prior to version 1.0.0, a changeSet could have an
   ```alwaysRun``` property.  This is inconsistent with Liquibase and has been
   replaced in 1.0.0 with ```runAlways```
@@ -102,13 +98,13 @@ with a couple of the gaping holes in Liquibase's documentation of the XML.
   ```executeCommand change```.  Instead of:
 
   ```groovy
-execute {
+executeCommand {
   arg(value: 'somevalue')
 }
 ```
   You can use this the simpler form:
 ```groovy
-execute {
+executeCommand {
   arg 'somevalue'
 }
 ```

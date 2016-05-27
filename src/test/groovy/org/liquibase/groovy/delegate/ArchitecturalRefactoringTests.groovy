@@ -16,12 +16,16 @@
 
 package org.liquibase.groovy.delegate
 
-import liquibase.exception.ParseException
-import org.junit.Test
-import static org.junit.Assert.*
-import liquibase.item.core.Column
 import liquibase.action.core.CreateIndexesAction
 import liquibase.action.core.DropIndexesAction
+import liquibase.exception.ParseException
+import liquibase.item.core.Index
+import org.junit.Test
+
+import static org.junit.Assert.assertEquals
+import static org.junit.Assert.assertFalse
+import static org.junit.Assert.assertNotNull
+import static org.junit.Assert.assertTrue
 
 /**
  * This is one of several classes that test the creation of refactoring actions
@@ -30,12 +34,17 @@ import liquibase.action.core.DropIndexesAction
  * Since the Groovy DSL parser is meant to act as a pass-through for Liquibase
  * itself, it doesn't do much in the way of error checking.  For example, we
  * aren't concerned with whether or not required attributes are present - we
- * leave that to Liquibase itself.  In general, each action will have 3 kinds
+ * leave that to Liquibase itself.  In general, each action will have 4 kinds
  * of tests:<br>
  * <ol>
  * <li>A test with an empty parameter map, and if supported, an empty closure.
  * This kind of test will make sure that the Groovy parser doesn't introduce
  * any unintended attribute defaults for an action.</li>
+ * <li>A test that sets enough attributes to be valid, but includes an extra
+ * invalid attribute to prove that Liquibase will reject attributes it doesn't
+ * recognize.  Is important for the rest of the action to be valid so that we
+ * know that the exception is thrown due to the extra attribute, and not some
+ * other problem.
  * <li>A test that sets all the attributes known to be supported by Liquibase
  * at this time.  This makes sure that the Groovy parser will send any given
  * groovy attribute to the correct place in Liquibase.  For actions that allow
@@ -72,19 +81,29 @@ class ArchitecturalRefactoringTests extends IntegrationTest {
 		""")
 
 		assertTrue action instanceof CreateIndexesAction
-		def index = action.indexes[0]
-		assertNull index.catalogName
-		assertNull index.schemaName
-		assertNull index.tableName
-		assertNull index.tablespace
-		assertNull index.indexName
-		assertNull index.unique
-		assertNull index.clustered
-		assertNull index.associatedWith
-		def columns = index.columns
-		assertNotNull columns
-		assertEquals 0, columns.size()
-		assertNoOutput()
+		assertEquals 0, action.indexes.size()
+	}
+
+	/**
+	 * Test parsing a createIndex action that is valid except for one attribute
+	 * name.
+	 */
+	@Test(expected = ParseException)
+	void createIndexInvalid() {
+		parseAction("""
+			createIndex(
+					invalidAttr: 'invalid',
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					tableName: 'monkey',
+					tablespace: 'tablespace',
+					indexName: 'ndx_monkeys',
+					unique: true,
+					clustered: false,
+					associatedWith: 'foreignKey') {
+				column(name: 'name')
+			}
+		""")
 	}
 
 	/**
@@ -110,17 +129,15 @@ class ArchitecturalRefactoringTests extends IntegrationTest {
 
 		assertTrue action instanceof CreateIndexesAction
 		def index = action.indexes[0]
-		assertEquals 'catalog', index.catalogName
-		assertEquals 'schema', index.schemaName
-		assertEquals 'monkey', index.tableName
+		assertEquals 'catalog.schema.monkey', index.relation.toString()
 		assertEquals 'tablespace', index.tablespace
-		assertEquals 'ndx_monkeys', index.indexName
-		assertEquals 'foreignKey', index.associatedWith
+		assertEquals 'ndx_monkeys', index.name
+//		assertEquals 'foreignKey', index.associatedWith
 		assertTrue index.unique
 		assertFalse index.clustered
 		def columns = index.columns
 		assertNotNull columns
-		assertTrue columns.every { column -> column instanceof Column }
+		assertTrue columns.every { column -> column instanceof Index.IndexedColumn }
 		assertEquals 1, columns.size()
 		assertEquals 'name', columns[0].name
 		assertNoOutput()
@@ -149,17 +166,15 @@ class ArchitecturalRefactoringTests extends IntegrationTest {
 
 		assertTrue action instanceof CreateIndexesAction
 		def index = action.indexes[0]
-		assertEquals 'catalog', index.catalogName
-		assertEquals 'schema', index.schemaName
-		assertEquals 'monkey', index.tableName
+		assertEquals 'catalog.schema.monkey', index.relation.toString()
 		assertEquals 'tablespace', index.tablespace
-		assertEquals 'ndx_monkeys', index.indexName
-		assertEquals 'foreignKey', index.associatedWith
+		assertEquals 'ndx_monkeys', index.name
+//		assertEquals 'foreignKey', index.associatedWith
 		assertFalse index.unique
 		assertTrue index.clustered
 		def columns = index.columns
 		assertNotNull columns
-		assertTrue columns.every { column -> column instanceof Column }
+		assertTrue columns.every { column -> column instanceof Index.IndexedColumn }
 		assertEquals 2, columns.size()
 		assertEquals 'species', columns[0].name
 		assertEquals 'name', columns[1].name
@@ -202,6 +217,24 @@ class ArchitecturalRefactoringTests extends IntegrationTest {
 		assertNotNull action.indexes
 		assertEquals 0, action.indexes.size()
 		assertNoOutput()
+	}
+
+	/**
+	 * Test parsing a dropIndex action that is valid except for an extra invalid
+	 * attribute.
+	 */
+	@Test(expected = ParseException)
+	void dropIndexInvalid() {
+		parseAction("""
+			dropIndex(
+					invalidAttr: 'invalid',
+					catalogName: 'catalog',
+					schemaName: 'schema',
+					tableName: 'monkey',
+					indexName: 'ndx_monkeys',
+					associatedWith: 'foreignKey'
+			)
+		""")
 	}
 
 	/**

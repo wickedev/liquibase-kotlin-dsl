@@ -81,6 +81,34 @@ class DatabaseChangeLogDelegate {
 		return node
 	}
 
+	/**
+	 * A {@code customChange} action doesn't fit the standard rules.  It's
+	 * closure has a series of parameters that need to be passed into the
+	 * custom change class, which need to be processed with a different
+	 * delegate.
+	 * @param params the parameter map with the class name.
+	 * @param closure the closure containing the parameters to the custom
+	 * class.
+	 * @return the ParsedNode created by this action.
+	 */
+	def customChange(Map attributes, Closure closure = null) {
+		def node = parentNode.addChild('customChange')
+		attributes.each { key, value ->
+			node.addChild(key).setValue(value)
+		}
+		if ( closure ) {
+			def delegate = new KeyValueDelegate()
+			closure.delegate = delegate
+			closure.resolveStrategy = Closure.DELEGATE_FIRST
+			closure.call()
+			delegate.map.each { key, value ->
+				def paramNode = node.addChild('param')
+				paramNode.addChild('name').setValue(key)
+				paramNode.addChild('value').setValue(value)
+			}
+		}
+		return node
+	}
 	// sqlFile: disallow the sql attribute
 
 	// addForeignKeyConstraint: referencesUniqueColumn is deprecated - stop checking
@@ -118,7 +146,8 @@ class DatabaseChangeLogDelegate {
 	 */
 	private boolean closureIsValue(action) {
 		return ( action == 'createProcedure'
-				|| action == 'createView')
+				|| action == 'createView'
+				|| action == 'sql')
 
 	}
 

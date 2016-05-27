@@ -16,6 +16,12 @@
 
 package org.liquibase.groovy.delegate
 
+import org.junit.Test
+
+import static org.junit.Assert.assertEquals
+import static org.junit.Assert.assertNotNull
+import static org.junit.Assert.assertNotNull
+
 //import liquibase.exception.ChangeLogParseException
 //import liquibase.precondition.core.NotPrecondition;
 //import org.junit.Test
@@ -50,6 +56,26 @@ package org.liquibase.groovy.delegate
  * @author Steven C. Saliman
  */
 class PreconditionDelegateTests {
+
+	@Test
+	void testPreconditionWithoutParams() {
+		buildChangeSet {
+			preConditions {
+				dbms(type: 'mysql')
+			}
+			addColumn(tableName: 'animal') {
+				column(name: 'monkey_status', type: 'varchar(98)')
+			}
+		}
+
+		def changes = changeSet.changes
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		def preconditions = changeSet.preconditions?.nestedPreconditions
+		assertNotNull preconditions
+		assertNoOutput()
+	}
+
 //
 //	/**
 //	 * Try creating a dbms precondition
