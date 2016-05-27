@@ -14,16 +14,29 @@
  *  limitations under the License.
  */
 
-package org.liquibase.groovy
+package liquibase.parser.groovy
 
-import liquibase.parser.groovy.GroovyParser
 
-ChangeLogParserFactory.getInstance().register(new GroovyParser())
+abstract class ParserScript extends Script {
 
-//changeLogFile = 'src/test/changelog/basic-changelog.groovy'
-//resourceAccessor = new FileSystemResourceAccessor(baseDirectory: '.')
-//parser = ChangeLogParserFactory.getInstance().getParser(changeLogFile, resourceAccessor)
-//
-//def changeLog = parser.parse(changeLogFile, null, resourceAccessor)
-//
-//println changeLog.changeSets
+  @Override
+  void setProperty(String name, value) {
+    if ("databaseChangeLog" == name) {
+      changeLogParser.processDatabaseChangeLogRootElement(changeLog, resourceAccessor, [value])
+    }
+    else {
+      super.setProperty(name, value)
+    }
+  }
+
+  @Override
+  Object invokeMethod(String name, Object args) {
+    if ("databaseChangeLog" == name) {
+      changeLogParser.processDatabaseChangeLogRootElement(changeLog, resourceAccessor, args)
+    }
+    else {
+      return super.invokeMethod(name, args)
+    }
+  }
+
+}

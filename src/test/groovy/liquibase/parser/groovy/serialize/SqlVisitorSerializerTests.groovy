@@ -14,16 +14,21 @@
  *  limitations under the License.
  */
 
-package org.liquibase.groovy
+package liquibase.parser.groovy.serialize
+//import liquibase.sql.visitor.ReplaceSqlVisitor
 
-import liquibase.parser.groovy.GroovyParser
-
-ChangeLogParserFactory.getInstance().register(new GroovyParser())
-
-//changeLogFile = 'src/test/changelog/basic-changelog.groovy'
-//resourceAccessor = new FileSystemResourceAccessor(baseDirectory: '.')
-//parser = ChangeLogParserFactory.getInstance().getParser(changeLogFile, resourceAccessor)
+/**
+ * <p></p>
+ * 
+ * @author Steven C. Saliman
+ */
+class SqlVisitorSerializerTests extends SerializerTests {
 //
-//def changeLog = parser.parse(changeLogFile, null, resourceAccessor)
+//  @Test
+//  void testReplaceSqlVisitorSerialize() {
+//    def visitor = [
 //
-//println changeLog.changeSets
+//    ] as ReplaceSqlVisitor
+//  }
+}
+
