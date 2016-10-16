@@ -202,26 +202,29 @@ sql { """
   can put on a ```column``` statement to control where a new column is placed in
   an existing table.  What the documentation leaves out is that these attributes
   don't work :-)
-* Version 3.4.0 of Liquibase introduced two new attributes to the 
-  ```includeAll``` element of a databaseChangeLog, both of which are
-  undocumented.  The first one is the ```errorIfMissingOrEmpty``` attribute.
+* The ```includeAll``` element of a databaseChangeLog has three undocumented
+  attributes.  The first one is the ```errorIfMissingOrEmpty``` attribute.
   It defaults to ```true```, but if it is set to ```false```, Liquibase will
   ignore errors caused by invalid or empty directories and move on.  The second
-  one is the ```resourceFilter``` attribute.  A resourceFilter is the name of a
-  class that implements ```liquibase.changelog.IncludeAllFilter``` interface, 
-  which allows developers to implement sophisticated logic to decide what files
-  from a directory should be included (in addition to the *.groovy filter that
-  the Groovy DSL imposes). 
-* Liquibase 3.4.0 added the undocumented ```forIndexCatalogName```,
-  ```forIndexSchemaName```, and ```forIndexName``` attributes to the 
-  ```addPrimaryKey``` and ```addUniqueConstraint``` changes.  These attributes
-  allow you to specify the index that will be used to implement the primary key
-   and unique constraint, respectively.
-* Liquibase 3.4.0 added the undocumented ```cacheSize``` and ```willCycle``` 
-  attributes to the ```alterSequence```  change. ```cacheSize``` sets how many 
-  numbers of the sequence will be fetched into memory for each query that 
-  accesses the sequence.  ```willCycle``` determines if the sequence should 
-  start over when it reaches its maximum value.
+  one is the ```filter``` attribute.  A filter is the name of a class that 
+  implements ```liquibase.changelog.IncludeAllFilter``` interface, which allows
+  developers to implement sophisticated logic to decide what files from a 
+  directory should be included (in addition to the *.groovy filter that the 
+  Groovy DSL imposes).  The third is the ```resourceComparator``` element that
+  can be used to hold the name of a class that sorts files to your liking 
+  before including them.
+* The ```addPrimaryKey``` and ```addUniqueConstraint``` elements have 
+ ```forIndexCatalogName```, ```forIndexSchemaName```, and ```forIndexName```
+  attributes.  These attributes allow you to specify the index that will be used
+  to implement the primary key and unique constraint, respectively.
+* The ```alterSequence``` element has the undocumented ```cacheSize``` and
+  ```cycle``` attributes. ```cacheSize``` sets how many numbers of the sequence
+  will be fetched into memory for each query that accesses the sequence.  
+  ```cycle``` determines if the sequence should start over when it reaches its
+  maximum value.
+* The ```dropPrimaryKey``` element has a ```dropIndex``` attribute that can be
+  used to control whether or not the index associated with the primary key
+  should be dropped when the primary key is dropped.
 
 ## License
 This code is released under the Apache Public License 2.0, just like Liquibase 2.0.

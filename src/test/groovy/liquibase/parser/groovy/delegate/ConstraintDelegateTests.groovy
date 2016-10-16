@@ -80,6 +80,8 @@ class ConstraintDelegateTests extends IntegrationTest {
 		assertNull constraint.primaryKeyTablespace
 		assertNull constraint.foreignKeyName
 		assertNull constraint.references
+		assertNull constraint.referencedTableCatalogName
+		assertNull constraint.referencedTableSchemaName
 		assertNull constraint.referencedTableName
 		assertNull constraint.referencedColumnNames
 		assertNull constraint.unique
@@ -144,6 +146,8 @@ class ConstraintDelegateTests extends IntegrationTest {
 		assertEquals 'myPrimaryTablespace', constraint.primaryKeyTablespace
 		assertEquals 'fk_monkey', constraint.foreignKeyName
 		assertEquals 'monkey(id)', constraint.references
+		assertEquals 'catalog', constraint.referencedTableCatalogName
+		assertEquals 'schema', constraint.referencedTableSchemaName
 		assertEquals 'monkey', constraint.referencedTableName
 		assertEquals 'id', constraint.referencedColumnNames
 		assertTrue constraint.unique

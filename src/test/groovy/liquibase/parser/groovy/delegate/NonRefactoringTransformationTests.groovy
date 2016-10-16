@@ -277,6 +277,7 @@ class NonRefactoringTransformationTests extends IntegrationTest {
 		assertNull action.relativeToChangelogFile
 		assertNull action.encoding
 		assertEquals ",", action.separator
+		assertEquals "#", action.commentLineStartsWith // default value?
 		assertEquals '"', action.quotchar
 		assertNotNull 'LoadDataChange.resourceAccessor should not be null', action.resourceAccessor
 		def columns = action.columns
@@ -306,7 +307,7 @@ class NonRefactoringTransformationTests extends IntegrationTest {
 					 encoding: 'UTF-8',
 					 separator: ';',
 					 quotchar: "'",
-                   commentLineStartsWith: '--') {
+                     commentLineStartsWith: '--') {
 				column(name: 'id', index: 1, header: 'id_header')
 				column(name: 'emotion', index: 2, header: 'emotion_header')
 			}
@@ -325,6 +326,7 @@ class NonRefactoringTransformationTests extends IntegrationTest {
 		assertEquals 'UTF-8', action.encoding
 		assertEquals ';', action.separator
 		assertEquals "'", action.quotchar
+		assertEquals "--", action.commentLineStartsWith
 		assertNotNull 'LoadDataChange.resourceAccessor should not be null', action.resourceAccessor
 		def columns = action.columns
 		assertNotNull columns
@@ -354,7 +356,8 @@ class NonRefactoringTransformationTests extends IntegrationTest {
 					 file: new File('data.csv'),
 					 encoding: 'UTF-8',
 					 separator: ';',
-					 quotchar: '"') {
+					 quotchar: '"'
+					 commentLineStartsWith: '--') {
 				column(name: 'id')
 				column(name: 'emotion')
 			}
@@ -382,11 +385,11 @@ class NonRefactoringTransformationTests extends IntegrationTest {
 	}
 
 	/**
-	 * Test parsing a loadData action when the attribute map and column closure
-	 * are both empty.  We don't need to worry about the map or the closure
-	 * being missing because that kind of action doesn't make sense.  In this
-	 * case, Liquibase itself has defaults for the separator and quote chars,
-	 * which is what we check in the test.
+	 * Test parsing a loadUpdateData action when the attribute map and column
+	 * closure are both empty.  We don't need to worry about the map or the
+	 * closure being missing because that kind of action doesn't make sense.
+	 * In this case, Liquibase itself has defaults for the separator and quote
+	 * chars, which is what we check in the test.
 	 */
 	@Test
 	void loadUpdateDataEmpty() {

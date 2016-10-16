@@ -76,7 +76,9 @@ class DatabaseChangeLogDelegateTests extends IntegrationTest {
 
 	@Before
 	void registerParser() {
-		resourceAccessor = new FileSystemResourceAccessor('.')
+		// For most tests, we want a resourceAccessor that has a null base
+		// directory, like the one Liquibase will give us.
+		resourceAccessor = new FileSystemResourceAccessor()
 		scope = JUnitScope.instance.child(Scope.Attr.resourceAccessor, resourceAccessor)
 //		parserFactory = ParserFactory.instance
 //		ParserFactory.getInstance().register(new GroovyLiquibaseChangeLogParser())
@@ -100,6 +102,9 @@ class DatabaseChangeLogDelegateTests extends IntegrationTest {
 	// TODO: This doesn't need to load a real file...
 	@Test
 	void parseEmptyChangelog() {
+		// For the parse test, we need a resourceAccessor that points to the
+		// current working directory.
+		resourceAccessor = new FileSystemResourceAccessor('.')
 		def changeLog = scope.getSingleton(ParserFactory.class).parse(EMPTY_CHANGELOG, ChangeLog.class, scope);
 		assertNotNull "Parsed ChangeLog was null", changeLog
 		assertTrue "Parser result was not a ChangeLog", changeLog instanceof ChangeLog
@@ -109,6 +114,9 @@ class DatabaseChangeLogDelegateTests extends IntegrationTest {
 // TODO: this doesn't need to be a real file.
 	@Test
 	void parseSimpleChangelog() {
+		// For the parse test, we need a resourceAccessor that points to the
+		// current working directory.
+		resourceAccessor = new FileSystemResourceAccessor('.')
 		def changeLog = scope.getSingleton(ParserFactory.class).parse(SIMPLE_CHANGELOG, ChangeLog.class, scope);
 		assertNotNull "Parsed ChangeLog was null", changeLog
 		assertTrue "Parser result was not a ChangeLog", changeLog instanceof ChangeLog
@@ -125,6 +133,9 @@ class DatabaseChangeLogDelegateTests extends IntegrationTest {
 
 	@Test(expected = ParseException)
 	void parsingEmptyDatabaseChangeLogFails() {
+		// For the parse test, we need a resourceAccessor that points to the
+		// current working directory.
+		resourceAccessor = new FileSystemResourceAccessor('.')
 		def changeLog = parseChangeLog("""
 			databaseChangeLog()
 		""")
@@ -135,6 +146,9 @@ class DatabaseChangeLogDelegateTests extends IntegrationTest {
 // TODO: Consider removing support for this feature.
 	@Test
 	void parsingDatabaseChangeLogAsProperty() {
+		// For the parse test, we need a resourceAccessor that points to the
+		// current working directory.
+		resourceAccessor = new FileSystemResourceAccessor('.')
 		def changeLog = parseChangeLog("""
             databaseChangeLog = {
             }
@@ -188,8 +202,11 @@ class DatabaseChangeLogDelegateTests extends IntegrationTest {
 		assertNull changeLog.changeSets[0].labels
 		assertNull changeLog.changeSets[0].dbmsSet
 		assertTrue changeLog.changeSets[0].runInTransaction
-	  assertNull changeLog.changeSets[0].failOnError
-	  assertEquals "HALT", changeLog.changeSets[0].onValidationFail.toString()
+	    assertNull changeLog.changeSets[0].failOnError
+	    assertEquals "HALT", changeLog.changeSets[0].onValidationFail.toString()
+		assertNull changeLog.changeSets[0].objectQuotingStrategy
+		assertNull changeLog.changeSets[0].created
+		assertNull changeLog.changeSets[0].runOrder
 	}
 
 	/**
@@ -209,8 +226,8 @@ class DatabaseChangeLogDelegateTests extends IntegrationTest {
 					  failOnError: true,
 					  onValidationFail: "MARK_RAN",
 					  objectQuotingStrategy: "QUOTE_ONLY_RESERVED_WORDS",
-                    created: 'today',
-                    runOrder: 'first') {
+                      created: 'today',
+                      runOrder: 'first') {
 			  dropTable(tableName: 'monkey')
 			}
 		}
@@ -230,6 +247,8 @@ class DatabaseChangeLogDelegateTests extends IntegrationTest {
 		assertTrue changeLog.changeSets[0].failOnError
 		assertEquals "MARK_RAN", changeLog.changeSets[0].onValidationFail.toString()
 		assertEquals ObjectQuotingStrategy.QUOTE_ONLY_RESERVED_WORDS, changeLog.changeSets[0].objectQuotingStrategy
+		assertEquals 'today', changeLog.changeSets[0].created
+		assertEquals 'first', changeLog.changeSets[0].runOrder
 	}
 
 	/**
@@ -248,6 +267,9 @@ class DatabaseChangeLogDelegateTests extends IntegrationTest {
 					  runInTransaction: false,
 					  failOnError: true,
 					  onValidationFail: "MARK_RAN",
+					  objectQuotingStrategy: "QUOTE_ONLY_RESERVED_WORDS",
+					  created: 'today',
+					  runOrder: 'first',
 			          invalidAttribute: 'invalid') {
 				dropTable(tableName: 'monkey')
 			}
@@ -477,7 +499,7 @@ databaseChangeLog {
     dbms(type: 'mysql')
   }
   includeAll(path: '${includedChangeLogDir}',
-             resourceFilter: 'org.liquibase.groovy.helper.IncludeAllFirstOnlyFilter')
+             filter: 'org.liquibase.groovy.helper.IncludeAllFirstOnlyFilter')
   changeSet(author: 'ssaliman', id: '${ROOT_CHANGE_SET}') {
     addColumn(tableName: 'monkey') {
       column(name: 'emotion', type: 'varchar(50)')
@@ -508,9 +530,6 @@ databaseChangeLog {
 	@Test
 	void includeAllRelative() {
 		createIncludedChangeLogFiles()
-		// For relative tests, the resource accessor needs to point to the
-		// correct changelog directory.
-		resourceAccessor = new FileSystemResourceAccessor(baseDirectory: TMP_CHANGELOG_DIR)
 		def rootChangeLogFile = createFileFrom(TMP_CHANGELOG_DIR, '.groovy', """
 databaseChangeLog {
   preConditions {

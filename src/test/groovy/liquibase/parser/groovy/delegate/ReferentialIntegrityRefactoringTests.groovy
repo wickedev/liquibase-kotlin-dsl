@@ -454,7 +454,8 @@ class ReferentialIntegrityRefactoringTests extends IntegrationTest {
 					catalogName: 'catalog',
 					schemaName: 'schema',
 					tableName: 'monkey',
-					constraintName: 'pk_monkey')
+					constraintName: 'pk_monkey',
+					dropIndex: true)
 		""")
 
 		assertTrue action instanceof DropPrimaryKeysAction
@@ -463,6 +464,7 @@ class ReferentialIntegrityRefactoringTests extends IntegrationTest {
 		def key = action.primaryKeys[0]
 		assertEquals 'catalog.schema.monkey', key.container.toString()
 		assertEquals 'pk_monkey', key.name
+		assertTrue key.dropIndex
 		assertNoOutput()
 	}
 }
