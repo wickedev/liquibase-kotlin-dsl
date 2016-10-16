@@ -302,12 +302,12 @@ class StructuralRefactoringTests extends IntegrationTest {
 		def sql = """CREATE OR REPLACE PROCEDURE testMonkey IS BEGIN -- do something with the monkey END;"""
 		def action = parseAction("""
 			createProcedure(
-					// comments: 'someComments',
+//					 comments: 'someComments',
 					catalogName: 'catalog',
 					schemaName: 'schema',
 					procedureName: 'procedure',
 					dbms: 'mysql',
-					// path: 'mypath',
+//					 path: 'mypath',
 					relativeToChangelogFile: false,
 					// encoding: 'utf8',
 					replaceIfExists: true) { \"${sql}\" }
@@ -411,6 +411,9 @@ class StructuralRefactoringTests extends IntegrationTest {
 		assertEquals 'id', columns[1].name
 		assertEquals 'int', columns[1].type.toString()
 		assertNoOutput()
+		def changeLogString = unparseChangeLog()
+		parseChangeLog(changeLogString)
+		compareChangeLogs()
 	}
 
 	/**

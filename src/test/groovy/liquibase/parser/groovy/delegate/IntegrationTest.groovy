@@ -19,10 +19,13 @@ package liquibase.parser.groovy.delegate
 import liquibase.JUnitScope
 import liquibase.Scope
 import liquibase.changelog.ChangeLog
+import liquibase.exception.ParseException
 import liquibase.parser.ParserFactory
+import liquibase.parser.UnparserFactory
 import liquibase.resource.MockResourceAccessor
 import org.junit.After
 import org.junit.Before
+import org.junit.BeforeClass
 
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
@@ -50,6 +53,7 @@ class IntegrationTest {
 	def sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
 	def oldStdOut = System.out;
 	def bufStr = new ByteArrayOutputStream()
+	def savedChangeLogs = []
 
 	/**
 	 * Set up for each test.  This involves two things; creating a change set
@@ -58,6 +62,7 @@ class IntegrationTest {
 	 */
 	@Before
 	void createChangeSet() {
+		savedChangeLogs = []
 		// Capture stdout to confirm the presence of a deprecation warning.
 		System.out = new PrintStream(bufStr)
 
@@ -93,7 +98,23 @@ class IntegrationTest {
 		def scope = JUnitScope.instance.child(Scope.Attr.resourceAccessor, mockAccessor)
 		def changeLog = scope.getSingleton(ParserFactory.class).parse(path, ChangeLog.class, scope);
 		assertNotNull changeLog
+		savedChangeLogs << changeLog
 		return changeLog
+	}
+
+	def unparseChangeLog() {
+		def bytes = new ByteArrayOutputStream()
+		def path = "test-changelog.groovy"
+		def mockAccessor = new MockResourceAccessor()
+//		mockAccessor.addData(path, "")
+
+		def scope = JUnitScope.instance.child(Scope.Attr.resourceAccessor, mockAccessor)
+		scope.getSingleton(UnparserFactory.class).unparse(savedChangeLogs[0], bytes, path, scope)
+		return bytes.toString()
+	}
+
+	def compareChangeLogs() {
+		assertEquals savedChangeLogs[0], savedChangeLogs[1]
 	}
 
 	/**
@@ -130,7 +151,7 @@ class IntegrationTest {
 	 * parser to parse the changeLog containing our action.
 	 */
 	def parseAction(actionString) {
-		def changeSetString = "changeSet (id: 'test', author: 'steve') {\n${actionString}\n}"
+		def changeSetString = "changeSet (id: 'test', author: 'steve') {\n actions {\n${actionString}\n}\n}"
 		def changeSet = parseChangeSet(changeSetString)
 		assertNotNull changeSet
 		assertNotNull changeSet.actions[0]

@@ -16,6 +16,13 @@
 
 package liquibase.parser.groovy
 
+import liquibase.Scope
+import liquibase.exception.ParseException
+import liquibase.item.datatype.DataType
+import liquibase.parser.AbstractUnparser
+import liquibase.parser.ParsedNode
+import liquibase.util.StringClauses
+
 //import liquibase.serializer.ChangeLogSerializer
 //import liquibase.changelog.ChangeSet
 //import liquibase.change.Change
@@ -36,23 +43,99 @@ package liquibase.parser.groovy
  * @author Steven C. Saliman
  */
 //class GroovyChangeLogSerializer implements ChangeLogSerializer {
-class GroovyUnparser {
-//	ISODateFormat isoFormat = new ISODateFormat()
-//
-//	/**
-//	 * What file extensions can this serializer handle?
-//	 * @return an array of valid file extensions.
-//	 */
-//	@Override
-//	String[] getValidFileExtensions() {
-//		['groovy']
-//	}
-//
-//	@Override
-//	int getPriority() {
-//		return PRIORITY_DEFAULT
-//	}
-///**
+class GroovyUnparser extends AbstractUnparser {
+
+	@Override
+	int getPriority(String path, Scope scope) {
+		return PRIORITY_DEFAULT
+	}
+
+	/**
+	 * Outputs the passed node to the output stream.
+	 * @param node
+	 * @param output
+	 * @param scope
+	 */
+	@Override
+	void unparse(ParsedNode node, OutputStream output, Scope scope) throws ParseException {
+		unparseNode(node, "", 0, output, scope.getLineSeparator())
+	}
+
+	def unparseNode(node, parentNodeName, depth, output, lineSeparator) {
+		// Start by getting the node value and split the child nodes into
+		// attributes and closures
+		def nodeValue = node.value
+		def attributeNodes = []
+		def closureNodes = []
+		node.children.each { child ->
+			if ( child.children.size() == 0 ) {
+				attributeNodes << child
+			} else {
+				closureNodes << child
+			}
+		}
+
+		depth.times { output << "\t" }
+		output << node.name
+
+		if ( node.children.size() == 0 ) {
+			output << ": ${node.value}${lineSeparator}"
+		} else {
+			def length = attributeNodes.size()
+			if ( length > 0 ) {
+				output << "("
+				attributeNodes.eachWithIndex { attr, index ->
+					def written = writeAttribute(attr.name, attr.value, output)
+					// If we wrote something, and we have more, we need a comma
+					if ( written && (index + 1 < length) ) {
+						output << ", "
+					}
+				}
+				output << ")"
+			}
+
+			if ( closureNodes.size() > 0 ) {
+				output << " {${lineSeparator}"
+				closureNodes.each { closure ->
+					unparseNode(closure, node.name, depth+1, output, lineSeparator)
+				}
+				output << "${lineSeparator}"
+				depth.times { output << "\t" }
+				output << "}"
+			}
+		}
+	}
+
+	def writeAttribute(name, value, output) {
+		// Don't write out empty values.
+		if ( value == null )  {
+			return false
+		}
+		// don't write out Liquibase StringClauses with nothing in them.
+		if ( value instanceof StringClauses && value.toString().length() == 0 ) {
+			return false
+		}
+		if ( value instanceof String ) {
+			output << "${name}: '${value}'"
+		} else if ( value instanceof StringClauses ) {
+			if ( value.toString().length() < 1 ) {
+				return false
+			} else {
+				output << "${name}: '${value.toString()}'"
+			}
+		} else if ( value instanceof DataType.StandardType ) {
+			output << "${name}: '${value.toString()}'"
+		} else if ( value instanceof Class ) {
+			output << "${name}: '${value.name}'"
+		} else {
+			output << "${name}: ${value}"
+		}
+		return true
+	}
+
+//		ISODateFormat isoFormat = new ISODateFormat()
+
+//    /**
 //	 * Convert a single serializable Liquibase change into its Groovy
 //	 * representation.
 //	 * @param change the change to serialize.

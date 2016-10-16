@@ -141,6 +141,9 @@ class ArchitecturalRefactoringTests extends IntegrationTest {
 		assertEquals 1, columns.size()
 		assertEquals 'name', columns[0].name
 		assertNoOutput()
+		def changeLogString = unparseChangeLog()
+		parseChangeLog(changeLogString)
+		compareChangeLogs()
 	}
 
 	/**
