@@ -230,7 +230,6 @@ class ChangeSetDelegate {
 
 	void createProcedure(Map params = [:], Closure closure) {
 		def change = makeChangeFromMap('createProcedure', CreateProcedureChange, params)
-		change.resourceAccessor = resourceAccessor
 		change.procedureText = DelegateUtil.expandExpressions(closure.call(), databaseChangeLog)
 		addChange(change)
 	}
@@ -406,7 +405,6 @@ class ChangeSetDelegate {
 		}
 
 		def change = makeColumnarChangeFromMap('loadData', LoadDataChange, LoadDataColumnConfig, params, closure)
-		change.resourceAccessor = resourceAccessor
 		addChange(change)
 	}
 
@@ -416,7 +414,6 @@ class ChangeSetDelegate {
 		}
 
 		def change = makeColumnarChangeFromMap('loadUpdateData', LoadUpdateDataChange, LoadDataColumnConfig, params, closure)
-		change.resourceAccessor = resourceAccessor
 		addChange(change)
 	}
 
@@ -481,7 +478,6 @@ class ChangeSetDelegate {
 			throw new ChangeLogParseException("ChangeSet '${changeSet.id}': 'sql' is an invalid property for 'sqlFile' changes.")
 		}
 		def change = makeChangeFromMap('sqlFile', SQLFileChange, params)
-		change.resourceAccessor = resourceAccessor
 		// Before we add the change, work around the Liquibase bug where sqlFile
 		// change sets don't load the SQL until it is too late to calculate
 		// checksums properly after a clearChecksum command.  See
@@ -610,6 +606,7 @@ class ChangeSetDelegate {
 	 */
 	private def makeChangeFromMap(String name, Class klass, Map sourceMap) {
 		def change = klass.newInstance()
+		change.resourceAccessor = resourceAccessor
 
 		sourceMap.each { key, value ->
 			try {
