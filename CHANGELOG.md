@@ -1,4 +1,10 @@
-Changes for 1.2.0
+Changes for 1.2.2
+=================
+- Added support for property tokens in ```changeSet```, ```include```, and
+  ```includeAll``` attributes (Issue #26)
+  
+-   
+Changes for 1.2.1
 =================
 - Fixed some issues with custom changes (Issue #5 and Issue #8) with thanks to 
   Don Valentino

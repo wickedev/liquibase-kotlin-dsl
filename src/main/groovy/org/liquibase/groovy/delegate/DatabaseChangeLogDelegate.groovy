@@ -83,15 +83,14 @@ class DatabaseChangeLogDelegate {
 			}
 		}
 
-		// Todo: We should probably support expanded expressions here...
 		def changeSet = new ChangeSet(
-				params.id,
-				params.author,
+				DelegateUtil.expandExpressions(params.id, databaseChangeLog),
+				DelegateUtil.expandExpressions(params.author, databaseChangeLog),
 				DelegateUtil.parseTruth(params.runAlways, false),
 				DelegateUtil.parseTruth(params.runOnChange, false),
 				databaseChangeLog.filePath,
-				params.context,
-				params.dbms,
+				DelegateUtil.expandExpressions(params.context, databaseChangeLog),
+				DelegateUtil.expandExpressions(params.dbms, databaseChangeLog),
 				DelegateUtil.parseTruth(params.runInTransaction, true),
 				objectQuotingStrategy,
 				databaseChangeLog)
@@ -122,7 +121,6 @@ class DatabaseChangeLogDelegate {
 	 * Process the include element to include a file with change sets.
 	 * @param params
 	 */
-	// Todo: We should probably support expanded expressions here...
 	void include(Map params = [:]) {
 		if (params.containsKey('path')) {
 			throw new ChangeLogParseException("Error: the 'include' element no longer supports the 'path' attribute.  Please use the 'includeAll' element instead.")
@@ -142,14 +140,16 @@ class DatabaseChangeLogDelegate {
 			params.file = physicalChangeLogLocation.replaceFirst("/[^/]*\$", "") + "/" + params.file
 		}
 
-		includeChangeLog(params.file)
+	   	def fileName = databaseChangeLog
+			    .changeLogParameters
+			    .expandExpressions(params.file, databaseChangeLog)
+		includeChangeLog(fileName)
 	}
 
 	/**
 	 * Process the includeAll element to include all groovy files in a directory.
 	 * @param params
 	 */
-	// Todo: We should probably support expanded expressions here...
 	void includeAll(Map params = [:]) {
 		// validate parameters.
 		def unsupportedKeys = params.keySet() - ['path', 'relativeToChangelogFile', 'errorIfMissingOrEmpty', 'resourceFilter']
@@ -162,10 +162,16 @@ class DatabaseChangeLogDelegate {
 
 		IncludeAllFilter resourceFilter = null
 		if ( params.resourceFilter ) {
-			resourceFilter = (IncludeAllFilter) Class.forName(params.resourceFilter).newInstance();
+			def filterName = databaseChangeLog
+					.changeLogParameters
+					.expandExpressions(params.resourceFilter, databaseChangeLog)
+			resourceFilter = (IncludeAllFilter) Class.forName(filterName).newInstance();
 		}
 
-		loadIncludedChangeSets(params.path, relativeToChangelogFile, resourceFilter,
+		def pathName = databaseChangeLog
+				.changeLogParameters
+				.expandExpressions(params.path, databaseChangeLog)
+		loadIncludedChangeSets(pathName, relativeToChangelogFile, resourceFilter,
 				errorIfMissingOrEmpty,	getStandardChangeLogComparator());
 	}
 

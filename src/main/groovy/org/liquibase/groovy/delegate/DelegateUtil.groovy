@@ -25,15 +25,21 @@ class DelegateUtil {
 	/**
 	 * Helper method that expands a text expression, replacing variables inside
 	 * strings with their values from the database change log parameters.
-	 * @param expression the text to expand
+	 * @param expression the text to expand, or null if the expression is null.
 	 * @param databaseChangeLog the database change log
 	 * @return the text, after substitutions have been made.
 	 */
 	static def expandExpressions(expression, databaseChangeLog) {
-		// Don't expand a null into the text "null"
-		if ( expression != null ) {
-			databaseChangeLog.changeLogParameters.expandExpressions(expression.toString(), databaseChangeLog)
+		// Don't expand a null into the text "null", just return null
+		if ( expression == null ) {
+			return null
 		}
+
+		// Don't try to expand if we have no paramaters.
+		if ( databaseChangeLog.changeLogParameters == null ) {
+			return expression
+		}
+		return databaseChangeLog.changeLogParameters.expandExpressions(expression.toString(), databaseChangeLog)
 	}
 
 	/**

@@ -20,6 +20,7 @@ import liquibase.changelog.ChangeLogParameters
 import liquibase.changelog.DatabaseChangeLog
 import liquibase.database.ObjectQuotingStrategy
 import liquibase.exception.ChangeLogParseException
+import liquibase.exception.UnknownChangelogFormatException
 import liquibase.parser.ChangeLogParser
 import liquibase.parser.ChangeLogParserFactory
 import liquibase.parser.ext.GroovyLiquibaseChangeLogParser
@@ -47,15 +48,15 @@ import static org.junit.Assert.assertTrue
  * @author Steven C. Saliman
  */
 class DatabaseChangeLogDelegateTests {
-	static final def FILE_PATH = "src/test/changelog"
-	static final def RESOURCE_PATH = "classpath:changelog"  // in resources
-	static final def TMP_CHANGELOG_DIR = new File("${FILE_PATH}/tmp")
-	static final def TMP_INCLUDE_DIR = new File("${TMP_CHANGELOG_DIR}/include")
-	static final def EMPTY_CHANGELOG = "${FILE_PATH}/empty-changelog.groovy"
-	static final def SIMPLE_CHANGELOG = "${FILE_PATH}/simple-changelog.groovy"
-	static final def ROOT_CHANGE_SET = 'root-change-set'
-	static final def FIRST_INCLUDED_CHANGE_SET = 'included-change-set-1'
-	static final def SECOND_INCLUDED_CHANGE_SET = 'included-change-set-2'
+	static final FILE_PATH = "src/test/changelog"
+	static final RESOURCE_PATH = "classpath:changelog"  // in resources
+	static final TMP_CHANGELOG_DIR = new File("${FILE_PATH}/tmp")
+	static final TMP_INCLUDE_DIR = new File("${TMP_CHANGELOG_DIR}/include")
+	static final EMPTY_CHANGELOG = "${FILE_PATH}/empty-changelog.groovy"
+	static final SIMPLE_CHANGELOG = "${FILE_PATH}/simple-changelog.groovy"
+	static final ROOT_CHANGE_SET = 'root-change-set'
+	static final FIRST_INCLUDED_CHANGE_SET = 'included-change-set-1'
+	static final SECOND_INCLUDED_CHANGE_SET = 'included-change-set-2'
 
 	def resourceAccessor
 	ChangeLogParserFactory parserFactory
@@ -110,7 +111,6 @@ class DatabaseChangeLogDelegateTests {
 		assertEquals 'tlberglund', changeSet.author
 		assertEquals 'change-set-001', changeSet.id
 	}
-
 
 	@Test(expected=ChangeLogParseException)
 	void parsingEmptyDatabaseChangeLogFails() {
@@ -205,7 +205,45 @@ databaseChangeLog()
 			}
 		}
 
-		ObjectQuotingStrategy o = ObjectQuotingStrategy.valueOf("LEGACY")
+		assertNotNull changeLog.changeSets
+		assertEquals 1, changeLog.changeSets.size()
+		assertEquals 'monkey-change', changeLog.changeSets[0].id
+		assertEquals 'stevesaliman', changeLog.changeSets[0].author
+		assertTrue changeLog.changeSets[0].alwaysRun // the property doesn't match xml or docs.
+		assertTrue changeLog.changeSets[0].runOnChange
+		assertEquals FILE_PATH, changeLog.changeSets[0].filePath
+		assertEquals 'testing', changeLog.changeSets[0].contexts.contexts.toArray()[0]
+		assertEquals 'test_label', changeLog.changeSets[0].labels.toString()
+		assertEquals 'mysql', changeLog.changeSets[0].dbmsSet.toArray()[0]
+		assertFalse changeLog.changeSets[0].runInTransaction
+		assertTrue changeLog.changeSets[0].failOnError
+		assertEquals "MARK_RAN", changeLog.changeSets[0].onValidationFail.toString()
+		assertEquals ObjectQuotingStrategy.QUOTE_ONLY_RESERVED_WORDS, changeLog.changeSets[0].objectQuotingStrategy
+	}
+
+	/**
+	 * Test creating a changeSet with all supported attributes, and one of them
+	 * has an expression to expand.
+	 */
+	@Test
+	void changeSetFullWithProperties() {
+		def changeLog = buildChangeLog {
+			property(name: 'authName', value: 'stevesaliman')
+			changeSet(id: 'monkey-change',
+					author: '\${authName}',
+					dbms: 'mysql',
+					runAlways: true,
+					runOnChange: true,
+					context: 'testing',
+					labels: 'test_label',
+					runInTransaction: false,
+					failOnError: true,
+					onValidationFail: "MARK_RAN",
+					objectQuotingStrategy: "QUOTE_ONLY_RESERVED_WORDS") {
+				dropTable(tableName: 'monkey')
+			}
+		}
+
 		assertNotNull changeLog.changeSets
 		assertEquals 1, changeLog.changeSets.size()
 		assertEquals 'monkey-change', changeLog.changeSets[0].id
@@ -299,6 +337,31 @@ databaseChangeLog()
 	}
 
 	/**
+	 * Try including a file that references an invalid changelog property
+	 * in the the name.  In this case, the fileName property is not set, so it
+	 * can't be expanded and the parser will look for a file named
+	 * '${fileName}.groovy', which of course doesn't exist.
+	 */
+	@Test(expected = ChangeLogParseException)
+	void includeWithInvalidProperty() {
+		def rootChangeLogFile = createFileFrom(TMP_CHANGELOG_DIR, '.groovy', """
+databaseChangeLog {
+  preConditions {
+    dbms(type: 'mysql')
+  }
+  include(file: '\${fileName}.groovy')
+  changeSet(author: 'ssaliman', id: 'ROOT_CHANGE_SET') {
+    addColumn(tableName: 'monkey') {
+      column(name: 'emotion', type: 'varchar(50)')
+    }
+  }
+}
+""")
+		def parser = parserFactory.getParser(rootChangeLogFile.absolutePath, resourceAccessor)
+		def rootChangeLog = parser.parse(rootChangeLogFile.absolutePath, new ChangeLogParameters(), resourceAccessor)
+	}
+
+	/**
 	 * Try including a file.
 	 */
 	@Test
@@ -324,6 +387,63 @@ databaseChangeLog {
     dbms(type: 'mysql')
   }
   include(file: '${includedChangeLogFile}')
+  changeSet(author: 'ssaliman', id: 'ROOT_CHANGE_SET') {
+    addColumn(tableName: 'monkey') {
+      column(name: 'emotion', type: 'varchar(50)')
+    }
+  }
+}
+""")
+
+		def parser = parserFactory.getParser(rootChangeLogFile.absolutePath, resourceAccessor)
+		def rootChangeLog = parser.parse(rootChangeLogFile.absolutePath, new ChangeLogParameters(), resourceAccessor)
+
+		assertNotNull rootChangeLog
+		def changeSets = rootChangeLog.changeSets
+		assertNotNull changeSets
+		assertEquals 2, changeSets.size()
+		assertEquals 'included-change-set', changeSets[0].id
+		assertEquals 'ROOT_CHANGE_SET', changeSets[1].id
+
+		def preconditions = rootChangeLog.preconditionContainer?.nestedPreconditions
+		assertNotNull preconditions
+		assertEquals 2, preconditions.size()
+		assertTrue preconditions[0] instanceof DBMSPrecondition
+		assertTrue preconditions[1] instanceof RunningAsPrecondition
+	}
+
+	/**
+	 * Try including a file that has a database changelog property in the name.
+	 * This proves that we can expand tokens in filenames.
+	 */
+	@Test
+	void includeWithValidProperty() {
+		def includedChangeLogFile = createFileFrom(TMP_INCLUDE_DIR, '.groovy', """
+databaseChangeLog {
+  preConditions {
+    runningAs(username: 'ssaliman')
+  }
+
+  changeSet(author: 'ssaliman', id: 'included-change-set') {
+    renameTable(oldTableName: 'prosaic_table_name', newTableName: 'monkey')
+  }
+}
+""")
+
+		includedChangeLogFile = includedChangeLogFile.canonicalPath
+		includedChangeLogFile = includedChangeLogFile.replaceAll("\\\\", "/")
+		// Let's strip off the extension so the include's file includes a
+		// property but is not just a property.
+		def len = includedChangeLogFile.length()
+		def baseName = includedChangeLogFile.substring(0, len-7)
+
+		def rootChangeLogFile = createFileFrom(TMP_CHANGELOG_DIR, '.groovy', """
+databaseChangeLog {
+  preConditions {
+    dbms(type: 'mysql')
+  }
+  property(name: 'fileName', value: '${baseName}')
+  include(file: '\${fileName}.groovy')
   changeSet(author: 'ssaliman', id: 'ROOT_CHANGE_SET') {
     addColumn(tableName: 'monkey') {
       column(name: 'emotion', type: 'varchar(50)')
@@ -410,6 +530,44 @@ databaseChangeLog {
 	}
 
 	/**
+	 * Try including all files in a directory.  For this test, we want a path
+	 * that contains an invalid token.  The easiest way to do that is to
+	 * simply use a token that doesn't have a matching property.
+	 */
+	@Test(expected = ChangeLogParseException)
+	void includeAllWithInvalidProperty() {
+		def rootChangeLogFile = createFileFrom(TMP_CHANGELOG_DIR, '.groovy', """
+databaseChangeLog {
+  preConditions {
+    dbms(type: 'mysql')
+  }
+  includeAll(path: '\${includedChangeLogDir}')
+  changeSet(author: 'ssaliman', id: '${ROOT_CHANGE_SET}') {
+    addColumn(tableName: 'monkey') {
+      column(name: 'emotion', type: 'varchar(50)')
+    }
+  }
+}
+""")
+
+		def parser = parserFactory.getParser(rootChangeLogFile.absolutePath, resourceAccessor)
+		def rootChangeLog = parser.parse(rootChangeLogFile.absolutePath, new ChangeLogParameters(), resourceAccessor)
+
+		assertNotNull rootChangeLog
+		def changeSets = rootChangeLog.changeSets
+		assertNotNull changeSets
+		assertEquals 3, changeSets.size()
+		assertEquals FIRST_INCLUDED_CHANGE_SET, changeSets[0].id
+		assertEquals SECOND_INCLUDED_CHANGE_SET, changeSets[1].id
+		assertEquals ROOT_CHANGE_SET, changeSets[2].id
+
+		def preconditions = rootChangeLog.preconditionContainer?.nestedPreconditions
+		assertNotNull preconditions
+		assertEquals 2, preconditions.size()
+		assertTrue preconditions[0] instanceof DBMSPrecondition
+		assertTrue preconditions[1] instanceof RunningAsPrecondition
+	}
+	/**
 	 * Try including all files in a directory.  For this test, we want 2 files
 	 * to make sure we include them both, and in the right order.  Note: when
 	 * other tests throw exceptions, this test may also fail because of unclean
@@ -425,6 +583,48 @@ databaseChangeLog {
     dbms(type: 'mysql')
   }
   includeAll(path: '${includedChangeLogDir}')
+  changeSet(author: 'ssaliman', id: '${ROOT_CHANGE_SET}') {
+    addColumn(tableName: 'monkey') {
+      column(name: 'emotion', type: 'varchar(50)')
+    }
+  }
+}
+""")
+
+		def parser = parserFactory.getParser(rootChangeLogFile.absolutePath, resourceAccessor)
+		def rootChangeLog = parser.parse(rootChangeLogFile.absolutePath, new ChangeLogParameters(), resourceAccessor)
+
+		assertNotNull rootChangeLog
+		def changeSets = rootChangeLog.changeSets
+		assertNotNull changeSets
+		assertEquals 3, changeSets.size()
+		assertEquals FIRST_INCLUDED_CHANGE_SET, changeSets[0].id
+		assertEquals SECOND_INCLUDED_CHANGE_SET, changeSets[1].id
+		assertEquals ROOT_CHANGE_SET, changeSets[2].id
+
+		def preconditions = rootChangeLog.preconditionContainer?.nestedPreconditions
+		assertNotNull preconditions
+		assertEquals 2, preconditions.size()
+		assertTrue preconditions[0] instanceof DBMSPrecondition
+		assertTrue preconditions[1] instanceof RunningAsPrecondition
+	}
+	/**
+	 * Try including all files in a directory.  For this test, we want 2 files
+	 * to make sure we include them both, and in the right order.  Note: when
+	 * other tests throw exceptions, this test may also fail because of unclean
+	 * directories.  Fix the other tests first.
+	 */
+	@Test
+	void includeAllWithValidToken() {
+		def includedChangeLogDir = createIncludedChangeLogFiles()
+
+		def rootChangeLogFile = createFileFrom(TMP_CHANGELOG_DIR, '.groovy', """
+databaseChangeLog {
+  preConditions {
+    dbms(type: 'mysql')
+  }
+  property(name: 'includeDir', value: '${includedChangeLogDir}')
+  includeAll(path: '\${includeDir}')
   changeSet(author: 'ssaliman', id: '${ROOT_CHANGE_SET}') {
     addColumn(tableName: 'monkey') {
       column(name: 'emotion', type: 'varchar(50)')
