@@ -1,4 +1,7 @@
 # Groovy Liquibase
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.liquibase/liquibase-groovy-dsl/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.liquibase/liquibase-groovy-dsl)
+[![Javadoc](https://javadoc-emblem.rhcloud.com/doc/org.liquibase/liquibase-groovy-dsl/badge.svg)](http://www.javadoc.io/doc/org.liquibase/liquibase-groovy-dsl)
+
 A pluggable parser for [Liquibase](http://liquibase.org) that allows the
 creation of changelogs in a Groovy DSL, rather than hurtful XML. If this DSL
 isn't reason enough to adopt Liquibase, then there is no hope for you.  This
