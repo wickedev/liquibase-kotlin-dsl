@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2015 Tim Berglund and Steven C. Saliman
+ * Copyright 2011-2017 Tim Berglund and Steven C. Saliman
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ databaseChangeLog(logicalFilePath: '') {
   }
   
   
-  changeSet(id: 'add-column', author: 'tlberglund') {
+  changeSet(id: 'add-column', author: 'stevesaliman') {
     addColumn(tableName: '', schemaName: '') {
       column(name: '', type: '', value: '', defaultValue: '', autoIncrement: false, remarks: '') {
         
@@ -110,29 +110,29 @@ databaseChangeLog(logicalFilePath: '') {
   }
   
   
-  changeSet(id: 'rename-column', author: 'tlberglund') {
+  changeSet(id: 'rename-column', author: 'stevesaliman') {
     renameColumn(schemaName: '', tableName: '', oldColumnName: '', newColumnName: '', columnDataType: '')
   }
   
   
-  changeSet(id: 'modify-column', author: 'tlberglund') {
+  changeSet(id: 'modify-column', author: 'stevesaliman') {
     modifyColumn(schemaName: '', tableName: '') {
       column() { }
     }
   }
   
   
-  changeSet(id: 'drop-column', author: 'tlberglund') {
+  changeSet(id: 'drop-column', author: 'stevesaliman') {
     dropColumn(schemaName: '', tableName: '', columnName: '')
   }
   
   
-  changeSet(id: 'alter-sequence', author: 'tlberglund') {
+  changeSet(id: 'alter-sequence', author: 'stevesaliman') {
     alterSequence(sequenceName: '', incrementBy: '')
   }
   
   
-  changeSet(id: 'create-table', author: 'tlberglund') {
+  changeSet(id: 'create-table', author: 'stevesaliman') {
     createTable(schemaName: '', tablespace: '', tableName: '', remarks: '') {
       column() {}
       column() {}
@@ -142,39 +142,39 @@ databaseChangeLog(logicalFilePath: '') {
   }
   
   
-  changeSet(id: 'rename-table', author: 'tlberglund') {
+  changeSet(id: 'rename-table', author: 'stevesaliman') {
     renameTable(schemaName: '', oldTableName: '', newTableName: '')
   }
   
   
-  changeSet(id: 'drop-table', author: 'tlberglund') {
+  changeSet(id: 'drop-table', author: 'stevesaliman') {
     dropTable(schemaName: '', tableName: '')
   }
   
   
-  changeSet(id: 'create-view', author: 'tlberglund') {
+  changeSet(id: 'create-view', author: 'stevesaliman') {
     createView(schemaName: '', viewName: '', replaceIfExists: true) {
       "SELECT id, emotion FROM monkey"
     }
   }
   
   
-  changeSet(id: 'rename-view', author: 'tlberglund') {
+  changeSet(id: 'rename-view', author: 'stevesaliman') {
     renameView(schemaName: '', oldViewName: '', newViewName: '')
   }
   
   
-  changeSet(id: 'drop-view', author: 'tlberglund') {
+  changeSet(id: 'drop-view', author: 'stevesaliman') {
     dropView(schemaName: '', viewName: '')
   }
   
   
-  changeSet(id: 'merge-columns', author: 'tlberglund') {
+  changeSet(id: 'merge-columns', author: 'stevesaliman') {
     mergeColumns(schemaName: '', tableName: '', column1Name: '', column2Name: '', finalColumnName: '', finalColumnType: '', joinString: ' ')
   }
   
   
-  changeSet(id: 'create-stored-proc', author: 'tlberglund') {
+  changeSet(id: 'create-stored-proc', author: 'stevesaliman') {
     createStoredProcedure """
       CREATE OR REPLACE PROCEDURE testMonkey
       IS
@@ -185,47 +185,47 @@ databaseChangeLog(logicalFilePath: '') {
   }
   
   
-  changeSet(id: 'add-lookup-table', author: 'tlberglund') {
+  changeSet(id: 'add-lookup-table', author: 'stevesaliman') {
     addLookupTable(existingTableName: '', existingColumnName: '', newTableName: '', newColumnName: '', constraintName: '')
   }
   
   
-  changeSet(id: 'add-not-null-constraint', author: 'tlberglund') {
+  changeSet(id: 'add-not-null-constraint', author: 'stevesaliman') {
     addNotNullConstraint(tableName: '', columnName: '', defaultNullValue: '')
   }
   
   
-  changeSet(id: 'drop-not-null-constraint', author: 'tlberglund') {
+  changeSet(id: 'drop-not-null-constraint', author: 'stevesaliman') {
     dropNotNullConstraint(schemaName: '', tableName: '', columnName: '', columnDataType: '')
   }
   
   
-  changeSet(id: 'add-unique-constraint', author: 'tlberglund') {
+  changeSet(id: 'add-unique-constraint', author: 'stevesaliman') {
     addUniqueConstraint(tableName: '', columnNames: '', constraintName: '')
   }
   
   
-  changeSet(id: 'drop-unique-constraint', author: 'tlberglund') {
+  changeSet(id: 'drop-unique-constraint', author: 'stevesaliman') {
     dropUniqueConstraint(schemaName: '', tableName: '', constraintName: '')
   }
   
   
-  changeSet(id: 'create-sequence', author: 'tlberglund') {
+  changeSet(id: 'create-sequence', author: 'stevesaliman') {
     createSequence(sequenceName: '', schemaName: '', incrementBy: '', minValue: '', maxValue: '', ordered: true, startValue: '')
   }
   
   
-  changeSet(id: 'drop-sequence', author: 'tlberglund') {
+  changeSet(id: 'drop-sequence', author: 'stevesaliman') {
     dropSequence(sequenceName: '')
   }
   
   
-  changeSet(id: 'add-auto-increment', author: 'tlberglund') {
+  changeSet(id: 'add-auto-increment', author: 'stevesaliman') {
     addAutoIncrement(schemaName: '', tableName: '', columnName: '', columnDataType: '')
   }
   
   
-  changeSet(id: 'add-default-value', author: 'tlberglund') {
+  changeSet(id: 'add-default-value', author: 'stevesaliman') {
     addDefaultValue(schemaName: '', tableName: '', columnName: '', defaultValue: '')
     addDefaultValue(schemaName: '', tableName: '', columnName: '', defaultValueNumeric: '')
     addDefaultValue(schemaName: '', tableName: '', columnName: '', defaultValueBoolean: '')
@@ -233,12 +233,12 @@ databaseChangeLog(logicalFilePath: '') {
   }
   
   
-  changeSet(id: 'drop-default-value', author: 'tlberglund') {
+  changeSet(id: 'drop-default-value', author: 'stevesaliman') {
     dropDefaultValue(schemaName: '', tableName: '', columnName: '')
   }
   
   
-  changeSet(id: 'add-foreign-key-constraint', author: 'tlberglund') {
+  changeSet(id: 'add-foreign-key-constraint', author: 'stevesaliman') {
     addForeignKeyConstraint(constraintName: '', 
                             baseTableName: '', baseTableSchemaName: '', baseColumnNames: '',
                             referencedTableName: '', referencedTableSchemaName: '', referencedColumnNames: '',
@@ -250,22 +250,22 @@ databaseChangeLog(logicalFilePath: '') {
   }
   
   
-  changeSet(id: 'drop-foreign-key', author: 'tlberglund') {
+  changeSet(id: 'drop-foreign-key', author: 'stevesaliman') {
     dropForeignKeyConstraint(constraintName: '', baseTableName: '', baseTableSchemaName: '')
   }
   
   
-  changeSet(id: 'add-primary-key', author: 'tlberglund') {
+  changeSet(id: 'add-primary-key', author: 'stevesaliman') {
     addPrimaryKey(schemaName: '', tablespace: '', tableName: '', columnNames: '', constraintName: '')
   }
   
   
-  changeSet(id: 'drop-primary-key', author: 'tlberglund') {
+  changeSet(id: 'drop-primary-key', author: 'stevesaliman') {
     dropPrimaryKey(schemaName: '', tableName: '', constraintName: '')
   }
   
   
-  changeSet(id: 'insert-data', author: 'tlberglund') {
+  changeSet(id: 'insert-data', author: 'stevesaliman') {
     insert(schemaName: '', tableName: '') {
       column(name: '', value: '')
       column(name: '', valueNumeric: '')
@@ -275,7 +275,7 @@ databaseChangeLog(logicalFilePath: '') {
   }
   
   
-  changeSet(id: 'load-data', author: 'tlberglund') {
+  changeSet(id: 'load-data', author: 'stevesaliman') {
     loadData(schemaName: '', tableName: '', file: '', encoding: 'UTF8|etc') {
       column(name: '', index: 2, type: 'NUMERIC')
       column(name: '', index: 3, type: 'BOOLEAN')
@@ -285,7 +285,7 @@ databaseChangeLog(logicalFilePath: '') {
   }
   
   
-  changeSet(id: 'load-update-data', author: 'tlberglund') {
+  changeSet(id: 'load-update-data', author: 'stevesaliman') {
     loadUpdateData(schemaName: '', tableName: '', primaryKey: '', file: '', encoding: '') {
       column(name: '', index: 2, type: 'NUMERIC')
       column(name: '', index: 3, type: 'BOOLEAN')
@@ -295,7 +295,7 @@ databaseChangeLog(logicalFilePath: '') {
   }
   
   
-  changeSet(id: 'update', author: 'tlberglund') {
+  changeSet(id: 'update', author: 'stevesaliman') {
     update(schemaName: '', tableName: '') {
       column(name: '', value: '')
       column(name: '', valueNumeric: '')
@@ -306,24 +306,24 @@ databaseChangeLog(logicalFilePath: '') {
   }
   
   
-  changeSet(id: 'delete-data', author: 'tlberglund') {
+  changeSet(id: 'delete-data', author: 'stevesaliman') {
     delete(schemaName: '', tableName: '') {
         where "id=39" // optional
     }
   }
   
   
-  changeSet(id: 'tag', author: 'tlberglund') {
+  changeSet(id: 'tag', author: 'stevesaliman') {
     tagDatabase(tag: 'monkey')
   }
   
   
-  changeSet(id: 'stop', author: 'tlberglund') {
+  changeSet(id: 'stop', author: 'stevesaliman') {
     stop('Migration stopped because something bad went down')
   }
   
   
-  changeSet(id: 'create-index', author: 'tlberglund') {
+  changeSet(id: 'create-index', author: 'stevesaliman') {
     createIndex(schemaName: '', tablespace: '', tableName: '', indexName: '', unique: true) {
       column(name: '')
       column(name: '')
@@ -332,24 +332,24 @@ databaseChangeLog(logicalFilePath: '') {
   }
   
   
-  changeSet(id: 'drop-index', author: 'tlberglund') {
+  changeSet(id: 'drop-index', author: 'stevesaliman') {
     dropIndex(tableName: '', indexName: '')
   }
   
   
-  changeSet(id: 'custom-sql', author: 'tlberglund') {
+  changeSet(id: 'custom-sql', author: 'stevesaliman') {
     sql(stripComments: true, splitStatements: false, endDelimiter: ';') {
       "INSERT INTO ANIMALS (id, species, status) VALUES (1, 'monkey', 'angry')"
     }
   }
   
   
-  changeSet(id: 'sql-file', author: 'tlberglund') {
+  changeSet(id: 'sql-file', author: 'stevesaliman') {
     sqlFile(path: '', stripComments: true, splitStatements: '', encoding: '', endDelimiter: '')
   }
   
   
-  changeSet(id: 'custom-refactoring', author: 'tlberglund') {
+  changeSet(id: 'custom-refactoring', author: 'stevesaliman') {
     customChange(class: 'net.saliman.liquibase.MonkeyRefactoring') {
       tableName('animal')
       species('monkey')
@@ -358,7 +358,7 @@ databaseChangeLog(logicalFilePath: '') {
   }
   
   
-  changeSet(id: 'shell-command', author: 'tlberglund') {
+  changeSet(id: 'shell-command', author: 'stevesaliman') {
     executeCommand(executable: '') {
       arg('--monkey')
       arg('--skip:1')

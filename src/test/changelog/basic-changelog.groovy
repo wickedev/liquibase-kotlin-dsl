@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2015 Tim Berglund and Steven C. Saliman
+ * Copyright 2011-2017 Tim Berglund and Steven C. Saliman
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 databaseChangeLog() {
 
-  changeSet(author: 'tlberglund', id: 'change-set-001') {
+  changeSet(author: 'stevesaliman', id: 'change-set-001') {
     comment "This is a comment"
     renameTable(schemaName: 'not-used', oldTableName: 'monkey', newTableName: 'users')
   }
