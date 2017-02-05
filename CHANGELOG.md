@@ -3,7 +3,12 @@ Changes for 1.2.2
 - Added support for property tokens in ```changeSet```, ```include```, and
   ```includeAll``` attributes (Issue #26)
   
--   
+- Fixed a problem with file based attributes of the ```column``` method 
+  (Issue #22) with thanks to Viachaslau Tratsiak (@restorer)  
+  
+- Rollback changes that need access to resources, like ```sqlFile``` can find
+  them (Issue #24)
+   
 Changes for 1.2.1
 =================
 - Fixed some issues with custom changes (Issue #5 and Issue #8) with thanks to 
