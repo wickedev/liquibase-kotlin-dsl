@@ -37,7 +37,7 @@ import liquibase.changelog.DatabaseChangeLog
  * @author Steven C. Saliman
  */
 class ConstraintDelegateTests {
-	def oldStdOut = System.out;
+	def oldStdOut = System.out
 	def bufStr = new ByteArrayOutputStream()
 	/**
 	 * Set up for each test by and capturing standard out so that tests can check

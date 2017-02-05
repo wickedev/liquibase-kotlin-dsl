@@ -38,7 +38,7 @@ import java.text.SimpleDateFormat
  * @author Steven C. Saliman
  */
 class ColumnDelegateTests {
-  def sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+	def sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
 
 	/**
 	 * Build a column with no attributes and no closure to make sure we don't

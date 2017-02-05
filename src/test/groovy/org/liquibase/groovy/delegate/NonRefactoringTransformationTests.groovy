@@ -96,6 +96,7 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		assertNull changes[0].schemaName
 		assertNull changes[0].tableName
 		assertNull changes[0].where
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -119,6 +120,7 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		assertEquals 'schema', changes[0].schemaName
 		assertEquals 'monkey', changes[0].tableName
 		assertEquals "emotion='angry' AND active=true", changes[0].where
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -141,6 +143,7 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		assertEquals 'schema', changes[0].schemaName
 		assertEquals 'monkey', changes[0].tableName
 		assertNull changes[0].where
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -187,6 +190,7 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		assertNull changes[0].tableName
 		assertNull changes[0].dbms
 		assertEquals 0, changes[0].columns.size
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 	/**
@@ -218,6 +222,7 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		assertEquals 'schema', changes[0].schemaName
 		assertEquals 'monkey', changes[0].tableName
 		assertEquals 'oracle, db2', changes[0].dbms
+		assertNotNull changes[0].resourceAccessor
 		def columns = changes[0].columns
 		assertNotNull columns
 		assertTrue columns.every { column -> column instanceof ColumnConfig }
@@ -258,7 +263,6 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 	 */
 	@Test
 	void loadDataEmpty() {
-		resourceAccessor = new FileSystemResourceAccessor()
 		buildChangeSet {
 			loadData([:]) {	}
 		}
@@ -275,7 +279,7 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		assertNull changes[0].encoding
 		assertEquals ",", changes[0].separator
 		assertEquals '"', changes[0].quotchar
-		assertNotNull 'LoadDataChange.resourceAccessor should not be null', changes[0].resourceAccessor
+		assertNotNull changes[0].resourceAccessor
 		def columns = changes[0].columns
 		assertNotNull columns
 		assertEquals 0, columns.size()
@@ -292,8 +296,6 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 	 */
 	@Test
 	void loadDataFull() {
-		resourceAccessor = new FileSystemResourceAccessor()
-
 		buildChangeSet {
 			loadData(catalogName: 'catalog',
 					 schemaName: 'schema',
@@ -321,7 +323,7 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		assertEquals 'UTF-8', changes[0].encoding
 		assertEquals ';', changes[0].separator
 		assertEquals "'", changes[0].quotchar
-		assertNotNull 'LoadDataChange.resourceAccessor should not be null', changes[0].resourceAccessor
+		assertNotNull changes[0].resourceAccessor
 		def columns = changes[0].columns
 		assertNotNull columns
 		assertTrue columns.every { column -> column instanceof LoadDataColumnConfig }
@@ -363,8 +365,6 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 	 */
 	@Test(expected = ChangeLogParseException)
 	void loadDataWithWhereClause() {
-		resourceAccessor = new FileSystemResourceAccessor()
-
 		buildChangeSet {
 			loadData(catalogName: 'catalog',
 					 schemaName: 'schema',
@@ -387,7 +387,6 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 	 */
 	@Test
 	void loadUpdateDataEmpty() {
-		resourceAccessor = new FileSystemResourceAccessor()
 		buildChangeSet {
 			loadUpdateData([:]) {	}
 		}
@@ -407,7 +406,7 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		assertEquals '"', changes[0].quotchar
 		assertNull changes[0].primaryKey
 		assertFalse changes[0].onlyUpdate // False is the Lioquibase default
-		assertNotNull 'LoadDataChange.resourceAccessor should not be null', changes[0].resourceAccessor
+		assertNotNull changes[0].resourceAccessor
 		def columns = changes[0].columns
 		assertNotNull columns
 		assertEquals 0, columns.size()
@@ -423,8 +422,6 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 	 */
 	@Test
 	void loadUpdateDataFull() {
-		resourceAccessor = new FileSystemResourceAccessor()
-
 		buildChangeSet {
 			loadUpdateData(catalogName: 'catalog',
 					       schemaName: 'schema',
@@ -456,7 +453,7 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		assertEquals "'", changes[0].quotchar
 		assertEquals 'id', changes[0].primaryKey
 		assertTrue changes[0].onlyUpdate
-		assertNotNull 'LoadDataChange.resourceAccessor should not be null', changes[0].resourceAccessor
+		assertNotNull changes[0].resourceAccessor
 		def columns = changes[0].columns
 		assertNotNull columns
 		assertTrue columns.every { column -> column instanceof LoadDataColumnConfig }
@@ -494,8 +491,6 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 	 */
 	@Test(expected = ChangeLogParseException)
 	void loadUpdateDataWithWhereClause() {
-		resourceAccessor = new FileSystemResourceAccessor()
-
 		buildChangeSet {
 			loadUpdateData(catalogName: 'catalog',
 					       schemaName: 'schema',
@@ -522,6 +517,7 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		assertTrue changeSet.changes[0] instanceof OutputChange
 		assertNull changeSet.changes[0].message
 		assertEquals "", changeSet.changes[0].target
+		assertNotNull changeSet.changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -539,6 +535,7 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		assertTrue changeSet.changes[0] instanceof OutputChange
 		assertEquals 'some helpful message', changeSet.changes[0].message
 		assertEquals 'STDOUT', changeSet.changes[0].target
+		assertNotNull changeSet.changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -574,6 +571,7 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		assertEquals 'monkey', changeSet.changes[0].tableName
 		assertEquals 'emotion', changeSet.changes[0].columnName
 		assertEquals 'some helpful message', changeSet.changes[0].remarks
+		assertNotNull changeSet.changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -607,6 +605,7 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		assertEquals 'schema', changeSet.changes[0].schemaName
 		assertEquals 'monkey', changeSet.changes[0].tableName
 		assertEquals 'some helpful message', changeSet.changes[0].remarks
+		assertNotNull changeSet.changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -626,6 +625,7 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		assertEquals 1, changes.size()
 		assertTrue changes[0] instanceof StopChange
 		assertEquals 'Stop command in changelog file', changes[0].message
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -644,6 +644,7 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		assertEquals 1, changes.size()
 		assertTrue changes[0] instanceof StopChange
 		assertEquals 'Stop the refactoring. Just...stop.', changes[0].message
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -662,6 +663,7 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		assertEquals 1, changes.size()
 		assertTrue changes[0] instanceof StopChange
 		assertEquals 'Stop the refactoring. Just...stop.', changes[0].message
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -681,6 +683,7 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		assertEquals 1, changes.size()
 		assertTrue changes[0] instanceof TagDatabaseChange
 		assertNull changes[0].tag
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -699,6 +702,7 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		assertEquals 1, changes.size()
 		assertTrue changes[0] instanceof TagDatabaseChange
 		assertEquals 'monkey', changes[0].tag
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -717,6 +721,7 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		assertEquals 1, changes.size()
 		assertTrue changes[0] instanceof TagDatabaseChange
 		assertEquals 'monkey', changes[0].tag
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -742,6 +747,7 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		def columns = changes[0].columns
 		assertNotNull columns
 		assertEquals 0, columns.size()
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -771,6 +777,7 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		assertEquals 'schema', changes[0].schemaName
 		assertEquals 'monkey', changes[0].tableName
 		assertNull changes[0].where
+		assertNotNull changes[0].resourceAccessor
 		def columns = changes[0].columns
 		assertNotNull columns
 		assertTrue columns.every { column -> column instanceof ColumnConfig }
@@ -808,6 +815,7 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		assertEquals 'schema', changes[0].schemaName
 		assertEquals 'monkey', changes[0].tableName
 		assertEquals 'id=882', changes[0].where
+		assertNotNull changes[0].resourceAccessor
 		def columns = changes[0].columns
 		assertNotNull columns
 		assertTrue columns.every { column -> column instanceof ColumnConfig }

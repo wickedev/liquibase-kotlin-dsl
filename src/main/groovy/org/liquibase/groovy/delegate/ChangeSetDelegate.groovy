@@ -87,7 +87,8 @@ class ChangeSetDelegate {
 	void rollback(Closure closure) {
 		def delegate = new ChangeSetDelegate(changeSet: changeSet,
 						databaseChangeLog: databaseChangeLog,
-						inRollback: true)
+						inRollback: true,
+						resourceAccessor: resourceAccessor)
 		closure.delegate = delegate
 		closure.resolveStrategy = Closure.DELEGATE_FIRST
 		def sql = DelegateUtil.expandExpressions(closure.call(), databaseChangeLog)
@@ -237,6 +238,7 @@ class ChangeSetDelegate {
 	void createProcedure(String storedProc) {
 		def change = new CreateProcedureChange()
 		change.procedureText = DelegateUtil.expandExpressions(storedProc, databaseChangeLog)
+		change.setResourceAccessor(resourceAccessor)
 		addChange(change)
 	}
 
@@ -278,6 +280,7 @@ class ChangeSetDelegate {
 		}
 		String className = DelegateUtil.expandExpressions(params['class'], databaseChangeLog)
 		change.setClass(className)
+		change.setResourceAccessor(resourceAccessor)
 
 		if ( closure ) {
 			def delegate = new KeyValueDelegate()
@@ -468,6 +471,7 @@ class ChangeSetDelegate {
 	void sql(String sql) {
 		def change = new RawSQLChange()
 		change.sql = DelegateUtil.expandExpressions(sql, databaseChangeLog)
+		change.setResourceAccessor(resourceAccessor)
 		addChange(change)
 	}
 
@@ -505,6 +509,7 @@ class ChangeSetDelegate {
 	void stop(String message) {
 		def change = new StopChange()
 		change.message = DelegateUtil.expandExpressions(message, databaseChangeLog)
+		change.setResourceAccessor(resourceAccessor)
 		addChange(change)
 	}
 
@@ -526,6 +531,7 @@ class ChangeSetDelegate {
 	void tagDatabase(String tagName) {
 		def change = new TagDatabaseChange()
 		change.tag = DelegateUtil.expandExpressions(tagName, databaseChangeLog)
+		change.setResourceAccessor(resourceAccessor)
 		addChange(change)
 	}
 

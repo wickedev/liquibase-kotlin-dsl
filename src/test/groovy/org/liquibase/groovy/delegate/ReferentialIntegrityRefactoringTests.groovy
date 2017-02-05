@@ -122,6 +122,7 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 		assertNull changes[0].initiallyDeferred
 		assertNull changes[0].onDelete
 		assertNull changes[0].onUpdate
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -168,6 +169,7 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 		assertFalse changes[0].initiallyDeferred
 		assertEquals 'RESTRICT', changes[0].onDelete
 		assertEquals 'CASCADE', changes[0].onUpdate
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -216,6 +218,7 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 		assertTrue changes[0].initiallyDeferred
 		assertEquals 'SET DEFAULT', changes[0].onDelete // set by deleteCascade: true
 		assertEquals 'SET NULL', changes[0].onUpdate
+		assertNotNull changes[0].resourceAccessor
 		assertPrinted("addForeignKeyConstraint's referencesUniqueColumn parameter has been deprecated")
 	}
 
@@ -263,6 +266,7 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 		assertTrue changes[0].initiallyDeferred
 		assertEquals 'NO ACTION', changes[0].onDelete
 		assertEquals 'NO ACTION', changes[0].onUpdate
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -308,6 +312,7 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 		assertTrue changes[0].initiallyDeferred
 		assertEquals 'CASCADE', changes[0].onDelete // set by deleteCascade: true
 		assertEquals 'NO ACTION', changes[0].onUpdate
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -336,6 +341,7 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 		assertNull changes[0].forIndexCatalogName
 		assertNull changes[0].forIndexSchemaName
 		assertNull changes[0].forIndexName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -374,6 +380,7 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 		assertEquals 'index_catalog', changes[0].forIndexCatalogName
 		assertEquals 'index_schema', changes[0].forIndexSchemaName
 		assertEquals 'pk_monkey_idx', changes[0].forIndexName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -395,6 +402,7 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 		assertNull changes[0].baseTableCatalogName
 		assertNull changes[0].baseTableSchemaName
 		assertNull changes[0].baseTableName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -420,6 +428,7 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 		assertEquals 'catalog', changes[0].baseTableCatalogName
 		assertEquals 'schema', changes[0].baseTableSchemaName
 		assertEquals 'monkey', changes[0].baseTableName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -442,6 +451,7 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 		assertNull changes[0].baseTableSchemaName
 		assertNull changes[0].baseTableName
 		assertNull changes[0].constraintName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -468,6 +478,7 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 		assertEquals 'schema', changes[0].baseTableSchemaName
 		assertEquals 'monkey', changes[0].baseTableName
 		assertEquals 'fk_monkey_emotion', changes[0].constraintName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -490,6 +501,7 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 		assertNull changes[0].schemaName
 		assertNull changes[0].tableName
 		assertNull changes[0].constraintName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -515,6 +527,7 @@ class ReferentialIntegrityRefactoringTests extends ChangeSetTests {
 		assertEquals 'schema', changes[0].schemaName
 		assertEquals 'monkey', changes[0].tableName
 		assertEquals 'pk_monkey', changes[0].constraintName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 }

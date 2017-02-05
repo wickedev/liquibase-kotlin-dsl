@@ -32,20 +32,20 @@ import org.liquibase.groovy.custom.MyCustomSqlChange
  */
 class DelegateExtensionTests extends ChangeSetTests {
 
-  @Test
-  void testMyCustomSqlChange() {
-    buildChangeSet {
-      myCustomSqlChange()
-    }
+	@Test
+	void testMyCustomSqlChange() {
+		buildChangeSet {
+			myCustomSqlChange()
+		}
 
-    def changes = changeSet.changes
+		def changes = changeSet.changes
 
-    assertNotNull changes
-    assertEquals 1, changes.size()
-    assertTrue changes[0] instanceof CustomProgrammaticChangeWrapper
-    assertTrue changes[0].customChange instanceof MyCustomSqlChange
-    assertEquals(new RawSQLChange("SELECT * FROM monkey").sql,
-                 changes[0].customChange.generateStatements(null)[0].sql);
-	  assertNoOutput()
-  }
+		assertNotNull changes
+		assertEquals 1, changes.size()
+		assertTrue changes[0] instanceof CustomProgrammaticChangeWrapper
+		assertTrue changes[0].customChange instanceof MyCustomSqlChange
+		assertEquals(new RawSQLChange("SELECT * FROM monkey").sql,
+				changes[0].customChange.generateStatements(null)[0].sql);
+		assertNoOutput()
+	}
 }

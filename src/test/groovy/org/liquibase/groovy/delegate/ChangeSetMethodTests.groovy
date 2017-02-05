@@ -24,6 +24,7 @@ import liquibase.change.core.RawSQLChange
 import liquibase.change.core.UpdateDataChange
 import liquibase.exception.ChangeLogParseException
 import liquibase.exception.RollbackImpossibleException
+import liquibase.resource.FileSystemResourceAccessor
 import org.junit.Test
 import org.junit.Ignore
 import static org.junit.Assert.*
@@ -73,7 +74,10 @@ class ChangeSetMethodTests extends ChangeSetTests {
 	}
 
 	/**
-	 * Test a rollback with a single statement passed as a string.
+	 * Test a rollback with a single statement passed as a string.  In this
+	 * test, we expect a null resource accessor because they are not needed
+	 * for rollbacks that are just SQL, and Liquibase doesn't give us an easy
+	 * way to pass in a resource accessor.
 	 */
 	@Test
 	void rollbackString() {
@@ -87,12 +91,16 @@ class ChangeSetMethodTests extends ChangeSetTests {
 		assertNotNull changes
 		assertEquals 1, changes.size()
 		assertEquals(new RawSQLChange("DROP TABLE monkey").sql, changes[0].sql)
+		assertNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
 
 	/**
-	 * Test rollback with two statements passed as strings.
+	 * Test rollback with two statements passed as strings. In this test, we
+	 * expect a null resource accessor because they are not needed for
+	 * rollbacks that are just SQL, and Liquibase doesn't give us an easy way
+	 * to pass in a resource accessor.
 	 */
 	@Test
 	void rollbackTwoStrings() {
@@ -106,12 +114,17 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 		assertNotNull changes
 		assertEquals 2, changes.size()
 		assertEquals(new RawSQLChange("UPDATE monkey_table SET emotion='angry' WHERE status='PENDING'").sql, changes[0].sql)
+		assertNull changes[0].resourceAccessor
 		assertEquals(new RawSQLChange("ALTER TABLE monkey_table DROP COLUMN angry").sql, changes[1].sql)
+		assertNull changes[1].resourceAccessor
 		assertNoOutput()
 	}
 
 	/**
-	 * Rollback one statement given in a closure
+	 * Rollback one statement given in a closure.  In this test, we expect a
+	 * null resource accessor because they are not needed for rollbacks that
+	 * are just SQL, and Liquibase doesn't give us an easy way to pass in a
+	 * resource accessor.
 	 */
 	@Test
 	void rollbackOneStatementInClosure() {
@@ -126,11 +139,15 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 		assertNotNull changes
 		assertEquals 1, changes.size()
 		assertEquals(new RawSQLChange("UPDATE monkey_table SET emotion='angry' WHERE status='PENDING'").sql, changes[0].sql)
+		assertNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
 	/**
-	 * Rollback two statements given in a closure
+	 * Rollback two statements given in a closure. In this test, we expect a
+	 * null resource accessor because they are not needed for rollbacks that
+	 * are just SQL, and Liquibase doesn't give us an easy way to pass in a
+	 * resource accessor.
 	 */
 	@Test
 	void rollbackTwoStatementInClosure() {
@@ -146,7 +163,9 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 		assertNotNull changes
 		assertEquals 2, changes.size()
 		assertEquals(new RawSQLChange("UPDATE monkey_table SET emotion='angry' WHERE status='PENDING'").sql, changes[0].sql)
+		assertNull changes[0].resourceAccessor
 		assertEquals(new RawSQLChange("ALTER TABLE monkey_table DROP COLUMN angry").sql, changes[1].sql)
+		assertNull changes[1].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -167,6 +186,7 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 		assertEquals 1, changes.size()
 		assertTrue changes[0] instanceof DeleteDataChange
 		assertEquals 'monkey', changes[0].tableName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -192,15 +212,19 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 		assertEquals 2, changes.size()
 		assertTrue changes[0] instanceof UpdateDataChange
 		assertEquals 'monkey', changes[0].tableName
+		assertNotNull changes[0].resourceAccessor
 		assertTrue changes[1] instanceof DropColumnChange
 		assertEquals 'monkey', changes[1].tableName
 		assertEquals 'emotion', changes[1].columnName
+		assertNotNull changes[1].resourceAccessor
 		assertNoOutput()
 	}
 
 	/**
 	 * This is a wacky combination. Let's use a refactoring paired with raw SQL.
-	 * I don't know wha the XML parser does, but the Groovy parser
+	 * I don't know wha the XML parser does, but the Groovy parser can handle
+	 * it.  In this case, we expect a resource accessor to be set in the
+	 * change based rollback, but not the SQL based one.
 	 */
 	@Test
 	void rollbackCombineRefactoringWithSql() {
@@ -219,7 +243,9 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 		assertEquals 2, changes.size()
 		assertTrue changes[0] instanceof UpdateDataChange
 		assertEquals 'monkey', changes[0].tableName
+		assertNotNull changes[0].resourceAccessor
 		assertEquals(new RawSQLChange("ALTER TABLE monkey_table DROP COLUMN angry").sql, changes[1].sql)
+		assertNull changes[1].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -268,6 +294,7 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 		assertEquals 1, changes.size()
 		assertTrue changes[0] instanceof AddColumnChange
 		assertEquals 'monkey', changes[0].tableName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -293,6 +320,7 @@ ALTER TABLE monkey_table DROP COLUMN angry;"""
 		assertEquals 1, changes.size()
 		assertTrue changes[0] instanceof AddColumnChange
 		assertEquals 'monkey', changes[0].tableName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 

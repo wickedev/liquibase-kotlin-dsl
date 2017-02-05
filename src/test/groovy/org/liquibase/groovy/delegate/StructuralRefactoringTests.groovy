@@ -94,6 +94,7 @@ class StructuralRefactoringTests extends ChangeSetTests {
 		assertNull changes[0].catalogName
 		assertNull changes[0].schemaName
 		assertNull changes[0].tableName
+		assertNotNull changes[0].resourceAccessor
 		def columns = changes[0].columns
 		assertNotNull columns
 		assertEquals 0, columns.size()
@@ -121,6 +122,7 @@ class StructuralRefactoringTests extends ChangeSetTests {
 		assertEquals 'zoo', changes[0].catalogName
 		assertEquals 'animal', changes[0].schemaName
 		assertEquals 'monkey', changes[0].tableName
+		assertNotNull changes[0].resourceAccessor
 		def columns = changes[0].columns
 		assertNotNull columns
 		assertEquals 1, columns.size()
@@ -150,6 +152,7 @@ class StructuralRefactoringTests extends ChangeSetTests {
 		assertEquals 'zoo', changes[0].catalogName
 		assertEquals 'animal', changes[0].schemaName
 		assertEquals 'monkey', changes[0].tableName
+		assertNotNull changes[0].resourceAccessor
 		def columns = changes[0].columns
 		assertNotNull columns
 		assertEquals 2, columns.size()
@@ -195,6 +198,7 @@ class StructuralRefactoringTests extends ChangeSetTests {
 		assertNull changes[0].relativeToChangelogFile
 		assertNull changes[0].encoding
 		assertNull changes[0].replaceIfExists
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -230,6 +234,7 @@ END;"""
 		assertNull changes[0].relativeToChangelogFile
 		assertNull changes[0].encoding
 		assertNull changes[0].replaceIfExists
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -265,6 +270,7 @@ END;"""
 		assertNull changes[0].relativeToChangelogFile
 		assertNull changes[0].encoding
 		assertNull changes[0].replaceIfExists
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -308,6 +314,7 @@ END;"""
 		assertFalse changes[0].relativeToChangelogFile
 		assertEquals 'utf8', changes[0].encoding
 		assertTrue changes[0].replaceIfExists
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -401,6 +408,7 @@ END;"""
 		assertNull changes[0].tablespace
 		assertNull changes[0].tableName
 		assertNull changes[0].remarks
+		assertNotNull changes[0].resourceAccessor
 
 		def columns = changes[0].columns
 		assertNotNull columns
@@ -436,6 +444,7 @@ END;"""
 		assertEquals 'oracle_tablespace', changes[0].tablespace
 		assertEquals 'monkey', changes[0].tableName
 		assertEquals 'angry', changes[0].remarks
+		assertNotNull changes[0].resourceAccessor
 
 		def columns = changes[0].columns
 		assertNotNull columns
@@ -483,6 +492,7 @@ END;"""
 		assertNull changes[0].replaceIfExists
 		assertNull changes[0].fullDefinition
 		assertNull changes[0].selectQuery
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -515,6 +525,7 @@ END;"""
 		assertTrue changes[0].replaceIfExists
 		assertFalse changes[0].fullDefinition
 		assertEquals "SELECT * FROM monkey WHERE state='angry'", changes[0].selectQuery
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -538,6 +549,7 @@ END;"""
 		assertNull changes[0].tableName
 		assertNull changes[0].columnName
 		assertEquals 0, changes[0].columns.size()
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -566,6 +578,7 @@ END;"""
 		assertEquals 'schema', changes[0].schemaName
 		assertEquals 'monkey', changes[0].tableName
 		assertEquals 'emotion', changes[0].columnName
+		assertNotNull changes[0].resourceAccessor
 		def columns = changes[0].columns
 		assertNotNull columns
 		assertEquals 2, columns.size()
@@ -599,6 +612,7 @@ END;"""
 		assertEquals 'schema', changes[0].schemaName
 		assertEquals 'monkey', changes[0].tableName
 		assertEquals 'emotion', changes[0].columnName
+		assertNotNull changes[0].resourceAccessor
 		def columns = changes[0].columns
 		assertNotNull columns
 		assertEquals 0, columns.size()
@@ -639,6 +653,7 @@ END;"""
 		assertNull changes[0].catalogName
 		assertNull changes[0].schemaName
 		assertNull changes[0].procedureName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -663,6 +678,7 @@ END;"""
 		assertEquals 'catalog', changes[0].catalogName
 		assertEquals 'schema', changes[0].schemaName
 		assertEquals 'procedureName', changes[0].procedureName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -685,6 +701,7 @@ END;"""
 		assertNull changes[0].schemaName
 		assertNull changes[0].tableName
 		assertNull changes[0].cascadeConstraints
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -711,6 +728,7 @@ END;"""
 		assertEquals 'schema', changes[0].schemaName
 		assertEquals 'fail_table', changes[0].tableName
 		assertTrue changes[0].cascadeConstraints
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -732,6 +750,7 @@ END;"""
 		assertNull changes[0].catalogName
 		assertNull changes[0].schemaName
 		assertNull changes[0].viewName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -756,6 +775,7 @@ END;"""
 		assertEquals 'catalog', changes[0].catalogName
 		assertEquals 'schema', changes[0].schemaName
 		assertEquals 'fail_view', changes[0].viewName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -782,6 +802,7 @@ END;"""
 		assertNull changes[0].finalColumnName
 		assertNull changes[0].finalColumnType
 		assertNull changes[0].joinString
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -816,6 +837,7 @@ END;"""
 		assertEquals 'full_name', changes[0].finalColumnName
 		assertEquals 'varchar(99)', changes[0].finalColumnType
 		assertEquals ' ', changes[0].joinString
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -839,6 +861,7 @@ END;"""
 		assertNull changes[0].tableName
 		assertNull changes[0].columnName
 		assertNull changes[0].newDataType
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -867,6 +890,7 @@ END;"""
 		assertEquals 'table', changes[0].tableName
 		assertEquals 'first_name', changes[0].columnName
 		assertEquals 'varchar(99)', changes[0].newDataType
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -892,6 +916,7 @@ END;"""
 		assertNull changes[0].newColumnName
 		assertNull changes[0].columnDataType
 		assertNull changes[0].remarks
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -924,6 +949,7 @@ END;"""
 		assertEquals 'win', changes[0].newColumnName
 		assertEquals 'varchar(9001)', changes[0].columnDataType
 		assertEquals 'just because', changes[0].remarks
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -946,6 +972,7 @@ END;"""
 		assertNull changes[0].schemaName
 		assertNull changes[0].oldTableName
 		assertNull changes[0].newTableName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -971,6 +998,7 @@ END;"""
 		assertEquals 'schema', changes[0].schemaName
 		assertEquals 'fail_table', changes[0].oldTableName
 		assertEquals 'win_table', changes[0].newTableName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -993,6 +1021,7 @@ END;"""
 		assertNull changes[0].schemaName
 		assertNull changes[0].oldViewName
 		assertNull changes[0].newViewName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -1019,9 +1048,8 @@ END;"""
 		assertEquals 'schema', changes[0].schemaName
 		assertEquals 'fail_view', changes[0].oldViewName
 		assertEquals 'win_view', changes[0].newViewName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
-
-
 }
 

@@ -16,6 +16,7 @@
 
 package org.liquibase.groovy.delegate
 
+import liquibase.resource.FileSystemResourceAccessor
 import org.junit.After
 import org.junit.Before
 import liquibase.changelog.ChangeLogParameters
@@ -40,7 +41,7 @@ class ChangeSetTests {
 	def CHANGESET_FILEPATH = '/filePath'
 	def sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
 	def changeSet
-	def resourceAccessor
+	def resourceAccessor = new FileSystemResourceAccessor()
 	def oldStdOut = System.out;
 	def bufStr = new ByteArrayOutputStream()
 

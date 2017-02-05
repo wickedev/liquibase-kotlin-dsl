@@ -144,7 +144,7 @@ databaseChangeLog()
 		}
 
 		def databaseChangeLog = new DatabaseChangeLog('changelog.xml')
-	  databaseChangeLog.changeLogParameters = new ChangeLogParameters()
+	    databaseChangeLog.changeLogParameters = new ChangeLogParameters()
 		def delegate = new DatabaseChangeLogDelegate(databaseChangeLog)
 		closure.delegate = delegate
 		closure.call()
@@ -173,15 +173,16 @@ databaseChangeLog()
 		assertEquals 1, changeLog.changeSets.size()
 		assertNull changeLog.changeSets[0].id
 		assertNull changeLog.changeSets[0].author
-		assertFalse changeLog.changeSets[0].alwaysRun // the property doesn't match xml or docs.
+		assertFalse changeLog.changeSets[0].alwaysRun
+		// the property doesn't match xml or docs.
 		assertFalse changeLog.changeSets[0].runOnChange
 		assertEquals FILE_PATH, changeLog.changeSets[0].filePath
 		assertEquals 0, changeLog.changeSets[0].contexts.contexts.size()
 		assertNull changeLog.changeSets[0].labels
 		assertNull changeLog.changeSets[0].dbmsSet
 		assertTrue changeLog.changeSets[0].runInTransaction
-	  assertNull changeLog.changeSets[0].failOnError
-	  assertEquals "HALT", changeLog.changeSets[0].onValidationFail.toString()
+		assertNull changeLog.changeSets[0].failOnError
+		assertEquals "HALT", changeLog.changeSets[0].onValidationFail.toString()
 	}
 
 	/**

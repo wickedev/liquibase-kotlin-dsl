@@ -95,6 +95,7 @@ class DataQualityRefactoringTests extends ChangeSetTests {
 		assertNull changes[0].columnDataType
 		assertNull changes[0].startWith
 		assertNull changes[0].incrementBy
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -127,6 +128,7 @@ class DataQualityRefactoringTests extends ChangeSetTests {
 		assertEquals 'boolean', changes[0].columnDataType
 		assertEquals 10G, changes[0].startWith
 		assertEquals 5G, changes[0].incrementBy
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -157,6 +159,7 @@ class DataQualityRefactoringTests extends ChangeSetTests {
 		assertNull changes[0].defaultValueDate
 		assertNull changes[0].defaultValueNumeric
 		assertNull changes[0].defaultValueSequenceNext
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -200,6 +203,7 @@ class DataQualityRefactoringTests extends ChangeSetTests {
 		assertEquals '20101109T130400Z', changes[0].defaultValueDate
 		assertEquals '2.718281828459045', changes[0].defaultValueNumeric
 		assertEquals 'sequence', changes[0].defaultValueSequenceNext.value
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -228,6 +232,7 @@ class DataQualityRefactoringTests extends ChangeSetTests {
 		assertNull changes[0].newColumnName
 		assertNull changes[0].newColumnDataType
 		assertNull changes[0].constraintName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -266,6 +271,7 @@ class DataQualityRefactoringTests extends ChangeSetTests {
 		assertEquals 'emotion_display', changes[0].newColumnName
 		assertEquals 'varchar(50)', changes[0].newColumnDataType
 		assertEquals 'fk_monkey_emotion', changes[0].constraintName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -291,6 +297,7 @@ class DataQualityRefactoringTests extends ChangeSetTests {
 		assertNull changes[0].columnName
 		assertNull changes[0].defaultNullValue
 		assertNull changes[0].columnDataType
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -323,6 +330,7 @@ class DataQualityRefactoringTests extends ChangeSetTests {
 		assertEquals 'emotion', changes[0].columnName
 		assertEquals 'angry', changes[0].defaultNullValue
 		assertEquals 'varchar(75)', changes[0].columnDataType
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -353,6 +361,7 @@ class DataQualityRefactoringTests extends ChangeSetTests {
 		assertNull changes[0].forIndexCatalogName
 		assertNull changes[0].forIndexSchemaName
 		assertNull changes[0].forIndexName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -397,6 +406,7 @@ class DataQualityRefactoringTests extends ChangeSetTests {
 		assertEquals 'index_catalog', changes[0].forIndexCatalogName
 		assertEquals 'index_schema', changes[0].forIndexSchemaName
 		assertEquals 'unique_constraint_idx', changes[0].forIndexName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -441,6 +451,7 @@ class DataQualityRefactoringTests extends ChangeSetTests {
 		assertEquals 'index_catalog', changes[0].forIndexCatalogName
 		assertEquals 'index_schema', changes[0].forIndexSchemaName
 		assertEquals 'unique_constraint_idx', changes[0].forIndexName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -485,6 +496,7 @@ class DataQualityRefactoringTests extends ChangeSetTests {
 		assertEquals 'index_catalog', changes[0].forIndexCatalogName
 		assertEquals 'index_schema', changes[0].forIndexSchemaName
 		assertEquals 'unique_constraint_idx', changes[0].forIndexName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -512,6 +524,7 @@ class DataQualityRefactoringTests extends ChangeSetTests {
 		assertNull changes[0].ordered // it is an Object and can be null.
 		assertNull changes[0].cacheSize
 		assertNull changes[0].willCycle
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -549,6 +562,7 @@ class DataQualityRefactoringTests extends ChangeSetTests {
 		assertTrue changes[0].ordered
 		assertEquals 10G, changes[0].cacheSize
 		assertTrue changes[0].willCycle
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -577,6 +591,7 @@ class DataQualityRefactoringTests extends ChangeSetTests {
 		assertNull changes[0].ordered
 		assertNull changes[0].cycle
 		assertNull changes[0].cacheSize
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -616,6 +631,7 @@ class DataQualityRefactoringTests extends ChangeSetTests {
 		assertTrue changes[0].ordered
 		assertEquals 314G, changes[0].cacheSize
 		assertFalse changes[0].cycle
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -639,6 +655,7 @@ class DataQualityRefactoringTests extends ChangeSetTests {
 		assertNull changes[0].tableName
 		assertNull changes[0].columnName
 		assertNull changes[0].columnDataType
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -667,6 +684,7 @@ class DataQualityRefactoringTests extends ChangeSetTests {
 		assertEquals 'monkey', changes[0].tableName
 		assertEquals 'emotion', changes[0].columnName
 		assertEquals 'varchar', changes[0].columnDataType
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -690,6 +708,7 @@ class DataQualityRefactoringTests extends ChangeSetTests {
 		assertNull changes[0].tableName
 		assertNull changes[0].columnName
 		assertNull changes[0].columnDataType
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -717,6 +736,7 @@ class DataQualityRefactoringTests extends ChangeSetTests {
 		assertEquals 'monkey', changes[0].tableName
 		assertEquals 'emotion', changes[0].columnName
 		assertEquals 'varchar(75)', changes[0].columnDataType
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -738,6 +758,7 @@ class DataQualityRefactoringTests extends ChangeSetTests {
 		assertNull changes[0].catalogName
 		assertNull changes[0].schemaName
 		assertNull changes[0].sequenceName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -762,6 +783,7 @@ class DataQualityRefactoringTests extends ChangeSetTests {
 		assertEquals 'catalog', changes[0].catalogName
 		assertEquals 'schema', changes[0].schemaName
 		assertEquals 'sequence', changes[0].sequenceName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -785,6 +807,7 @@ class DataQualityRefactoringTests extends ChangeSetTests {
 		assertNull changes[0].tableName
 		assertNull changes[0].constraintName
 		assertNull changes[0].uniqueColumns
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -813,6 +836,7 @@ class DataQualityRefactoringTests extends ChangeSetTests {
 		assertEquals 'table', changes[0].tableName
 		assertEquals 'unique_constraint', changes[0].constraintName
 		assertEquals 'unique_column', changes[0].uniqueColumns
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -835,6 +859,7 @@ class DataQualityRefactoringTests extends ChangeSetTests {
 		assertNull changes[0].schemaName
 		assertNull changes[0].oldSequenceName
 		assertNull changes[0].newSequenceName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
 
@@ -862,9 +887,8 @@ class DataQualityRefactoringTests extends ChangeSetTests {
 		assertEquals 'schema', changes[0].schemaName
 		assertEquals 'old_sequence', changes[0].oldSequenceName
 		assertEquals 'new_sequence', changes[0].newSequenceName
+		assertNotNull changes[0].resourceAccessor
 		assertNoOutput()
 	}
-
-
 }
 
