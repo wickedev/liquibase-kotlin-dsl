@@ -32,7 +32,7 @@ class ChangeSetSerializerTests extends SerializerTests {
   void serializeSimpleChangeSet() {
     def changeSet = new ChangeSet(
       'drop-table',
-      'tlberglund',
+      'stevesaliman',
       false,
       false,
       '.',
@@ -44,7 +44,7 @@ class ChangeSetSerializerTests extends SerializerTests {
 
     def serializedText = serializer.serialize(changeSet, true)
     def expectedText = """\
-changeSet(id: 'drop-table', author: 'tlberglund') {
+changeSet(id: 'drop-table', author: 'stevesaliman') {
   dropTable(schemaName: 'schema', tableName: 'monkey')
 }"""
     assertEquals expectedText, serializedText
@@ -52,10 +52,10 @@ changeSet(id: 'drop-table', author: 'tlberglund') {
 
   @Test
   void serializeCompleteChangeSet() {
-    def comment = "This is a Liquibase comment by Tim \\\"Tim\\\" Berglund"
+    def comment = "This is a Liquibase comment by Steve \\\"Steve\\\" Saliman"
     def changeSet = new ChangeSet(
       'drop-table',
-      'tlberglund',
+      'stevesaliman',
       true,
       true,
       '.',
@@ -69,7 +69,7 @@ changeSet(id: 'drop-table', author: 'tlberglund') {
 
     def serializedText = serializer.serialize(changeSet, true)
     def expectedText = """\
-changeSet(id: 'drop-table', author: 'tlberglund', runAlways: true, runOnChange: true, context: 'dev,staging', dbms: 'oracle,mysql') {
+changeSet(id: 'drop-table', author: 'stevesaliman', runAlways: true, runOnChange: true, context: 'dev,staging', dbms: 'oracle,mysql') {
   comment "${comment}"
   dropTable(schemaName: 'schema', tableName: 'monkey')
   addForeignKeyConstraint(baseColumnNames: 'emotion_id', baseTableName: 'monkey', baseTableSchemaName: 'base_schema', constraintName: 'fk_monkey_emotion', deferrable: true, initiallyDeferred: true, onDelete: 'CASCADE', onUpdate: 'CASCADE', referencedColumnNames: 'id', referencedTableName: 'emotions', referencedTableSchemaName: 'referenced_schema')

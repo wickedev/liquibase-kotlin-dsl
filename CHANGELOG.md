@@ -8,6 +8,9 @@ Changes for 1.2.2
   
 - Rollback changes that need access to resources, like ```sqlFile``` can find
   them (Issue #24)
+ 
+- Explicitly set a value for the ```output``` change's ```target``` attribute
+  if no value was given.  This is a workaround for a Liquibase bug. (Issue #28)
    
 Changes for 1.2.1
 =================

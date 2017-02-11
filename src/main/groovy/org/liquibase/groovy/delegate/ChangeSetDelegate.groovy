@@ -429,6 +429,14 @@ class ChangeSetDelegate {
 	}
 
 	void output(Map params) {
+		// Workaround for Issue #28:  Liquibase initializes the target to the
+		// invalid value of an empty string instead of null, then checks for
+		// null when deciding if it wants to use the default of STDERR.
+		// workaround this by explicitly setting the default if no target was
+		// given.
+		if ( !params.containsKey('target') ) {
+			params.target = 'STDERR'
+		}
 		addMapBasedChange('output', OutputChange, params)
 	}
 

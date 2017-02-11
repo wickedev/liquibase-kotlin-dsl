@@ -505,7 +505,9 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 	}
 
 	/**
-	 * Test an empty output change
+	 * Test an empty output change. Note that we do not expect an empty target.
+	 * This is because of the workaround for issue #26 where we explicitly set
+	 * a default value to avoid a Liquibase bug.
 	 */
 	@Test
 	void outputEmpty() {
@@ -516,7 +518,7 @@ class NonRefactoringTransformationTests extends ChangeSetTests {
 		assertEquals 1, changeSet.changes.size()
 		assertTrue changeSet.changes[0] instanceof OutputChange
 		assertNull changeSet.changes[0].message
-		assertEquals "", changeSet.changes[0].target
+		assertEquals "STDERR", changeSet.changes[0].target
 		assertNotNull changeSet.changes[0].resourceAccessor
 		assertNoOutput()
 	}

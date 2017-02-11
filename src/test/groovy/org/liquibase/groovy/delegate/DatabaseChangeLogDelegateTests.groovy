@@ -108,7 +108,7 @@ class DatabaseChangeLogDelegateTests {
 		assertEquals 1, changeSets.size()
 		def changeSet = changeSets[0]
 		assertNotNull "ChangeSet was null", changeSet
-		assertEquals 'tlberglund', changeSet.author
+		assertEquals 'stevesaliman', changeSet.author
 		assertEquals 'change-set-001', changeSet.id
 	}
 
