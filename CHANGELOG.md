@@ -11,6 +11,9 @@ Changes for 1.2.2
  
 - Explicitly set a value for the ```output``` change's ```target``` attribute
   if no value was given.  This is a workaround for a Liquibase bug. (Issue #28)
+ 
+- Changed the way included files are found so that classpath resources can be
+  used in Spring Boot applications (Issue #13)
    
 Changes for 1.2.1
 =================

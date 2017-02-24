@@ -9,6 +9,10 @@ project was started by Tim Berglund, and is currently maintained by Steve
 Saliman.
 
 ## News
+###February 23, 2017
+Release 1.2.2 is a minor release that resolves a few bugs.  See the CHANGELOG
+for more details.
+
 ###November 30, 2015
 The Liquibase Groovy DSL now supports Liquibase 3.4.2.
 
@@ -207,7 +211,7 @@ sql { """
 * The documentation for version 3.1.1 of Liquibase mentions the new
   ```beforeColumn```, ```afterColumn```, and ```position``` attributes that you
   can put on a ```column``` statement to control where a new column is placed in
-  an existing table.  What the documentation leaves out is that these attributes
+  an existing table.  What 1.2the documentation leaves out is that these attributes
   don't work :-)
 * Version 3.4.0 of Liquibase introduced two new attributes to the 
   ```includeAll``` element of a databaseChangeLog, both of which are
