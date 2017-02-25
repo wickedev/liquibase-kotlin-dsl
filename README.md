@@ -10,8 +10,10 @@ Saliman.
 
 ## News
 ###February 23, 2017
-Release 1.2.2 is a minor release that resolves a few bugs.  See the CHANGELOG
-for more details.
+Release 1.2.2 of the Groovy DSL is a minor release that resolves a few bugs. 
+See the CHANGELOG for more details.  Note that if you use this DSL via the 
+Gradle Liquibase plugin, you will need version 1.2.3 of that plugin NOT 1.2.2,
+as that version has a broken dependency on the SNAPSHOT version of the DSL. 
 
 ###November 30, 2015
 The Liquibase Groovy DSL now supports Liquibase 3.4.2.
