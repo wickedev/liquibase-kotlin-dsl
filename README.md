@@ -9,32 +9,33 @@ project was started by Tim Berglund, and is currently maintained by Steve
 Saliman.
 
 ## News
-###February 23, 2017
+
+### February 23, 2017
 Release 1.2.2 of the Groovy DSL is a minor release that resolves a few bugs. 
 See the CHANGELOG for more details.  Note that if you use this DSL via the 
 Gradle Liquibase plugin, you will need version 1.2.3 of that plugin NOT 1.2.2,
 as that version has a broken dependency on the SNAPSHOT version of the DSL. 
 
-###November 30, 2015
+### November 30, 2015
 The Liquibase Groovy DSL now supports Liquibase 3.4.2.
 
-###August 3, 2015
+### August 3, 2015
 The Liquibase Groovy DSL now supports Liquibase 3.3.5.
 
-###May 16, 2015
+### May 16, 2015
 We are proud to announce that the Liquibase Groovy DSL is now a part of the 
 Liquibase organization.  I will continue maintain the code, but bringing this 
 project into the Liquibase organization will help keep all things Liquibase 
 together in one place.  This will help promote Liquibase adoption by making it
 easier for more people to use, and it will help people stay up to date with the
 latest releases.  As part of that move, the artifact name has changed from 
-```net.saliman:groovy-liquibase-dsl``` to
-```org.liquibase:liquibase-groovy-dsl``` to be consistent with the rest of the
+`net.saliman:groovy-liquibase-dsl` to
+`org.liquibase:liquibase-groovy-dsl` to be consistent with the rest of the
 Liquibase artifacts.  A special thank you to Nathan Voxland for his help and 
 support in bringing the Liquibase project and the Groovy DSL together into one 
 home.
  
-###March 9, 2015
+### March 9, 2015
 The Liquibase Groovy DSL now supports Liquibase 3.3.2, and is built with Groovy
 2.4.1.  Version 1.0.2 fixes a bug with version 1.0.1 that prevented it from
 working with Java 7 or earlier.
@@ -61,9 +62,9 @@ following procedure:
 
 3. Once you are sure all of your change sets work with the latest Groovy DSL and
    Liquibase 3, clear all checksums that were calculated by Liquibase 2 by using
-   the ```clearChecksums``` command in all databases.
+   the `clearChecksums` command in all databases.
 
-4. Finally, run a ```changeLogSync``` on all databases to calculate new
+4. Finally, run a `changeLogSync` on all databases to calculate new
     checksums.
 
 ## Usage
@@ -105,55 +106,55 @@ with a couple of the gaping holes in Liquibase's documentation of the XML.
 
 ##### Additions to the XML format:
 * In general, boolean attributes can be specified as either strings or booleans.
-  For example, ```changeSet(runAlways: 'true')``` can also be written as
-  ```changeSet(runAlways: true)```.
+  For example, `changeSet(runAlways: 'true')` can also be written as
+  `changeSet(runAlways: true)`.
 * The Groovy DSL supports a simplified means of passing arguments to the
-  ```executeCommand change```.  Instead of:
+  `executeCommand change`.  Instead of:
 
-  ```groovy
+```groovy
 execute {
   arg(value: 'somevalue')
 }
 ```
-  You can use this the simpler form:
+You can use this the simpler form:
 ```groovy
 execute {
   arg 'somevalue'
 }
 ```
-* The ```sql``` change does not require a closure for the actual SQL.  You can
-  just pass the string like this: ```sql 'select some_stuff from some_table'```
-  If you want to use the ```comments``` element of a ```sql``` change, you need
+* The `sql` change does not require a closure for the actual SQL.  You can
+  just pass the string like this: `sql 'select some_stuff from some_table'`
+  If you want to use the `comments` element of a `sql` change, you need
   to use the closure form, and the comment must be in the closure BEFORE the
   SQL, like this:
 
-  ```groovy
+```groovy
 sql {
   comment('we should not have added this...')
   'delete from my_table'
 }
 ```
-* The  ```stop``` change can take a message as an argument as well as an
-  attribute.  In other words, ```stop 'message'``` works as well as the more
-  XMLish ```stop(message: 'message')```
-* A ```customPrecondition```  can take parameters.  the XMLish way to pass them
-  is with ```param(name: 'myParam', value: 'myValue')``` statements in the
+* The  `stop` change can take a message as an argument as well as an
+  attribute.  In other words, `stop 'message'` works as well as the more
+  XMLish `stop(message: 'message')`
+* A `customPrecondition`  can take parameters.  the XMLish way to pass them
+  is with `param(name: 'myParam', value: 'myValue')` statements in the
   customPrecondition's closure.  In the Groovy DSL, you can also have
-   ```myParam('myValue')```
-* The ```validChecksum``` element of a change set is not well documented.
+   `myParam('myValue')`
+* The `validChecksum` element of a change set is not well documented.
   Basically you can use this when changeSet's current checksum will not match
   what is stored in the database. This might happen if you, for example want to
   reformat a changeSet to add white space.  This doesn't change the
   functionality of the changeset, but it will cause Liquibase to generate new
-  checksums for it.  The ```validateChecksum``` element tells Liquibase to
-  consider the checksums in the ```validChecksum``` element to be valid, even
+  checksums for it.  The `validateChecksum` element tells Liquibase to
+  consider the checksums in the `validChecksum` element to be valid, even
   if it doesn't match what is in the database.
 * The Liquibase documentation tells you how to set a property for a
-  databaseChangeLog by using the ```property``` element.  What it doesn't tell
+  databaseChangeLog by using the `property` element.  What it doesn't tell
   you is that you can also set properties by loading a property file.  To do
-  this, you can have ```property(file: 'my_file.properties')``` in the closure
+  this, you can have `property(file: 'my_file.properties')` in the closure
   for the databaseChangeLog.
-* Liquibase has an ```includeAll``` element in the databaseChangeLog that
+* Liquibase has an `includeAll` element in the databaseChangeLog that
   includes all the files in the given directory.  The Groovy DSL implementation
   only includes groovy files, and it makes sure they are included in
   alphabetical order.  This is really handy for keeping changes in a different
@@ -171,8 +172,8 @@ sql { """
 ```
 
 ##### Items that were left out of the XML documentation
-* The ```createIndex``` and ```dropIndex``` changes have an undocumented
-  ```associatedWith``` attribute.  From an old Liquibase forum, it appears to be
+* The `createIndex` and `dropIndex` changes have an undocumented
+  `associatedWith` attribute.  From an old Liquibase forum, it appears to be
    an attempt to solve the problem that occurs because some databases
    automatically create indexes on primary keys and foreign keys, and others
    don't.  The idea is that you would have a change to create the primary key or
@@ -181,15 +182,15 @@ sql { """
    will already exist for some databases so that Liquibase can skip the change
    if we are in one of those databases.  The Liquibase authors do say it is
    experimental, so use at your own risk...
-* The ```executeCommand``` change has an undocumented ```os``` attribute.  The
-  ```os``` attribute is a string with  a list of operating systems under which
+* The `executeCommand` change has an undocumented `os` attribute.  The
+  `os` attribute is a string with  a list of operating systems under which
   the command should execute.  If present, the ```os.name``` system property
   will be checked against this list, and the command will only run if the
   operating system is in the list.
-* The ```column``` element has some undocumented attributes that are pretty
+* The `column` element has some undocumented attributes that are pretty
   significant.  They include:
-    - ```valueSequenceNext```, ```valueSequenceCurrent```, and
-      ```defaultValueSequenceNext```, which appear to link values for a column
+    - `valueSequenceNext`, `valueSequenceCurrent`, and
+      `defaultValueSequenceNext`, which appear to link values for a column
       to database sequences.
 
     - A column can be set auto-number if it the ```autoIncrement``` attribute is
