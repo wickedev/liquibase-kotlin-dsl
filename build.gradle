@@ -1,20 +1,21 @@
-#!groovy
-// The above triggers groovy syntax highlighting in vim
-
 buildscript {
-  repositories {
-	  jcenter()
-		mavenCentral()
-	}
-	dependencies {
-	  classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:0.6'
-	}
+    repositories {
+        jcenter()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:0.6'
+    }
 }
 
-apply plugin: 'groovy'
-apply plugin: 'maven'
-apply plugin: 'signing'
-apply plugin: 'com.jfrog.bintray'
+plugins {
+    id "org.jetbrains.kotlin.jvm" version "1.1.4"
+}
+
+//apply plugin: 'groovy'
+apply plugin: 'maven-publish'
+//apply plugin: 'signing'
+//apply plugin: 'com.jfrog.bintray'
 
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
@@ -22,182 +23,161 @@ targetCompatibility = 1.6
 // Release version that won't conflict with the bintray plugin
 def releaseVersion = '1.2.2'
 group = 'org.liquibase'
-archivesBaseName = 'liquibase-groovy-dsl'
+archivesBaseName = 'liquibase-kotlin-dsl'
 version = releaseVersion
 ext.isSnapshot = releaseVersion.endsWith('SNAPSHOT')
 
-if ( isSnapshot ) {
-  println 'using snapshot'
-  ext.mavenCentralUploadUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
+if (isSnapshot) {
+    println 'using snapshot'
+    ext.mavenCentralUploadUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
 } else {
-  println 'using staging'
-  ext.mavenCentralUploadUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+    println 'using staging'
+    ext.mavenCentralUploadUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
 }
 
 configurations {
-  archives
+    archives
 }
-
 
 repositories {
-  mavenCentral()
-  mavenLocal()
+    mavenCentral()
+    mavenLocal()
 }
-
 
 dependencies {
-  compile 'org.codehaus.groovy:groovy:2.4.1'
-  compile 'org.codehaus.groovy:groovy-sql:2.4.1'
-  compile 'org.liquibase:liquibase-core:3.4.2'
-  testCompile 'junit:junit:4.12'
-  testRuntime 'com.h2database:h2:1.4.185'
-  archives 'org.apache.maven.wagon:wagon-ssh:2.8'
-  archives 'org.apache.maven.wagon:wagon-ssh-external:2.8'
-}
+    compile "org.jetbrains.kotlin:kotlin-stdlib:1.1.4"
+//    compile "org.jetbrains.kotlin:kotlin-compiler:1.1.4"
+    compile("org.jetbrains.kotlin:kotlin-script-util:1.1.4") {
+        exclude module: 'kotlin-stdlib'
+        exclude module: 'kotlin-compiler'
+    }
 
+    compile 'org.liquibase:liquibase-core:3.4.2'
+    testCompile 'junit:junit:4.12'
+    testCompile "org.jetbrains.kotlin:kotlin-test:1.1.4"
+    testRuntime 'com.h2database:h2:1.4.185'
+    archives 'org.apache.maven.wagon:wagon-ssh:2.8'
+    archives 'org.apache.maven.wagon:wagon-ssh-external:2.8'
+}
 
 task sourceJar(type: Jar) {
-  description = 'An archive of the source code for Maven Central'
-  classifier = 'sources'
-  from sourceSets.main.allSource
+    description = 'An archive of the source code for Maven Central'
+    classifier = 'sources'
+    from sourceSets.main.allSource
 }
-
-
-task groovydocJar(type: Jar, dependsOn: groovydoc) {
-  description = 'An archive of the GroovyDocs for Maven Central'
-  classifier = 'javadoc'
-  from groovydoc
-}
-
+/*
 artifacts {
-  archives jar, groovydocJar, sourceJar
+    archives jar, sourceJar
 }
 
 signing {
-  sign configurations.archives
+    sign configurations.archives
 }
 
 // Only *Require* signing if we are uploading a non snapshot version.  If we
 // do need to sign, make sure we've got the properties we need to do the
 // signing.
-import org.gradle.plugins.signing.Sign
 gradle.taskGraph.whenReady { taskGraph ->
-  tasks.withType(org.gradle.plugins.signing.Sign).all {
-    required = taskGraph.hasTask(':uploadArchives') && !isSnapshot
-    if ( required ) {
-      // Use Java's console to read from the console (no good for a CI
-      // environment)
-      Console console = System.console()
-      console.printf '\n\nWe have to sign some things in this build...\n\n'
+    tasks.withType(Sign).all {
+        required = taskGraph.hasTask(':uploadArchives') && !isSnapshot
+        if (required) {
+            // Use Java's console to read from the console (no good for a CI
+            // environment)
+            Console console = System.console()
+            console.printf '\n\nWe have to sign some things in this build...\n\n'
 
-      if ( !project.hasProperty('signing.keyId') ) {
-        def id = console.readLine('PGP Public Key Id: ')
-        allprojects { ext.'signing.keyId' = id }
-      }
+            if (!project.hasProperty('signing.keyId')) {
+                def id = console.readLine('PGP Public Key Id: ')
+                allprojects { ext.'signing.keyId' = id }
+            }
 
-      if ( !project.hasProperty('signing.secretKeyRingFile') ) {
-        def file = console.readLine('PGP Secret Key Ring File (absolute path): ')
-        allprojects { ext.'signing.secretKeyRingFile' = file }
-      }
+            if (!project.hasProperty('signing.secretKeyRingFile')) {
+                def file = console.readLine('PGP Secret Key Ring File (absolute path): ')
+                allprojects { ext.'signing.secretKeyRingFile' = file }
+            }
 
-      if ( !project.hasProperty('signing.password') ) {
-        def password = console.readPassword('PGP Private Key Password: ')
-        allprojects { ext.'signing.password' = password }
-      }
+            if (!project.hasProperty('signing.password')) {
+                def password = console.readPassword('PGP Private Key Password: ')
+                allprojects { ext.'signing.password' = password }
+            }
 
-      console.printf '\nThanks.\n\n'
+            console.printf '\nThanks.\n\n'
+        }
     }
-  }
 }
 
 uploadArchives {
-  // We can't use taskGraph.whenReady because it doesn't resolve until after
-  // configuration.  The startParameter is not as good, but it probably
-  // good enough for our purposes.
-  if ( gradle.startParameter.taskNames.contains('uploadArchives') ) {
-    // Use Java's console to read from the console (no good for a CI
-    // environment)
-    Console console = System.console()
-    console.printf '\n\nWe have to upload some things in this build...\n\n'
+    // We can't use taskGraph.whenReady because it doesn't resolve until after
+    // configuration.  The startParameter is not as good, but it probably
+    // good enough for our purposes.
+    if (gradle.startParameter.taskNames.contains('uploadArchives')) {
+        // Use Java's console to read from the console (no good for a CI
+        // environment)
+        Console console = System.console()
+        console.printf '\n\nWe have to upload some things in this build...\n\n'
 
-    if ( !project.hasProperty('mavenCentralUsername') ) {
-      def mavenCentralUsername = console.readLine('Maven Central Username: ')
-      allprojects { ext.'mavenCentralUsername' = mavenCentralUsername }
-    }
-
-    if ( !project.hasProperty('mavenCentralPassword') ) {
-      def mavenCentralPassword = console.readLine('Maven Central Password: ')
-      allprojects { ext.'mavenCentralPassword' = mavenCentralPassword }
-    }
-
-    repositories {
-      mavenDeployer {
-        if ( signing.signatory ) {
-          beforeDeployment { signing.signPom(it) }
+        if (!project.hasProperty('mavenCentralUsername')) {
+            def mavenCentralUsername = console.readLine('Maven Central Username: ')
+            allprojects { ext.'mavenCentralUsername' = mavenCentralUsername }
         }
-        configuration = configurations.archives
-        //repository(url: 'file://$buildDir/m2repo')
-        repository(url: mavenCentralUploadUrl) {
-          authentication(userName: mavenCentralUsername,
-                  password: mavenCentralPassword)
-          releases(updatePolicy: 'always')
-          snapshots(updatePolicy: 'always')
+
+        if (!project.hasProperty('mavenCentralPassword')) {
+            def mavenCentralPassword = console.readLine('Maven Central Password: ')
+            allprojects { ext.'mavenCentralPassword' = mavenCentralPassword }
         }
-        pom.project(pomConfiguration)
-      }
+
+        repositories {
+            mavenDeployer {
+                if (signing.signatory) {
+                    beforeDeployment { signing.signPom(it) }
+                }
+                configuration = configurations.archives
+                //repository(url: 'file://$buildDir/m2repo')
+                repository(url: mavenCentralUploadUrl) {
+                    authentication(userName: mavenCentralUsername,
+                            password: mavenCentralPassword)
+                    releases(updatePolicy: 'always')
+                    snapshots(updatePolicy: 'always')
+                }
+                pom.project(pomConfiguration)
+            }
+        }
     }
-  }
 }
 
 def getPomConfiguration() {
-  return {
-    name('Groovy Liquibase DSL')
-    description('A Groovy-based DSL for the Liquibase database refactoring tool.')
-    url('https://github.com/liquibase/liquibase-groovy-dsl')
-    licenses {
-      license {
-        name 'The Apache Software License, Version 2.0'
-        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-        distribution 'repo'
-      }
+    return {
+        name('Kotlin Liquibase DSL')
+        description('A Kotlin-based DSL for the Liquibase database refactoring tool.')
+        url('https://github.com/redundent/liquibase-kotlin-dsl')
+        licenses {
+            license {
+                name 'The Apache Software License, Version 2.0'
+                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                distribution 'repo'
+            }
+        }
+        developers {
+            developer {
+                id 'redundent'
+                name 'Jason Blackwell'
+                email 'redundent@gmail.com'
+            }
+        }
     }
-    developers {
-      developer {
-        id 'stevesaliman'
-        name 'Steven C. Saliman'
-        email 'support@saliman.net'
-      }
+}*/
+
+publishing {
+    repositories {
+        mavenLocal()
     }
-    scm {
-      connection('scm:https://liquibase@github.com/liquibase/liquibase-groovy-dsl')
-      developerConnection('scm:git@github.com:liquibase/liquibase-groovy-dsl.git')
-      url('https://github.com/liquibase/liquibase-groovy-dsl')
+    publications {
+        maven(MavenPublication) {
+            from components.java
+
+            artifact sourceJar {
+                classifier 'sources'
+            }
+        }
     }
-  }
 }
-
-bintray {
-  user = project.hasProperty('bintrayUsername') ? project.getProperty('bintrayUsername') : ''
-  key = project.hasProperty('bintrayApiKey') ? project.getProperty('bintrayApiKey') : ''
-
-  configurations = [ 'archives' ]
-
-  pkg {
-    // repo = 'gradle-plugins'
-    repo = 'maven'
-    name = 'liquibase-groovy-dsl'
-    desc = 'A parser that can parse Groovy change sets for the Liquibase database update tool.'
-    licenses = [ 'Apache-2.0' ]
-    websiteUrl = 'https://github.com/liquibase/liquibase-groovy-dsl'
-    issueTrackerUrl = 'https://github.com/liquibase/liquibase-groovy-dsl/issues'
-    vcsUrl = 'https://github.com/liquibase/liquibase-groovy-dsl.git'
-    labels = [ 'liquibase', 'groovy' ]
-    publicDownloadNumbers = true
-    version {
-      // name = version
-      // vcsTag = version
-      vcsTag = "Release_${releaseVersion}"
-    }
-  }
-}
-

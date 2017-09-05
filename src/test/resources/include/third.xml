@@ -1,4 +1,4 @@
-<!-- This file should excluded because it is not a groovy file -->
+<!-- This file should excluded because it is not a kotlin file -->
 <databaseChangeLog>
 	<changeSet author="ssaliman" id="included-change-set-3">
 		<addColumn tableName="monkey">
