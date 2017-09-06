@@ -17,7 +17,20 @@
 
 package org.liquibase.kotlin
 
+import liquibase.changelog.ChangeLogParameters
+import liquibase.changelog.ChangeSet
+import liquibase.changelog.DatabaseChangeLog
+import liquibase.database.ObjectQuotingStrategy
+import liquibase.exception.ChangeLogParseException
+import liquibase.parser.ChangeLogParserFactory
 import liquibase.parser.ext.KotlinLiquibaseChangeLogParser
+import liquibase.precondition.Precondition
+import liquibase.precondition.core.DBMSPrecondition
+import liquibase.precondition.core.PreconditionContainer
+import liquibase.precondition.core.RunningAsPrecondition
+import liquibase.resource.ClassLoaderResourceAccessor
+import liquibase.resource.FileSystemResourceAccessor
+import liquibase.resource.ResourceAccessor
 import org.junit.After
 import org.junit.Before
 import org.junit.Test

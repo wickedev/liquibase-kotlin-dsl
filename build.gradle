@@ -9,7 +9,7 @@ buildscript {
 }
 
 plugins {
-    id "org.jetbrains.kotlin.jvm" version "1.1.4"
+    id "org.jetbrains.kotlin.jvm" version "1.1.4-2"
 }
 
 //apply plugin: 'groovy'
@@ -45,16 +45,12 @@ repositories {
 }
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib:1.1.4"
-//    compile "org.jetbrains.kotlin:kotlin-compiler:1.1.4"
-    compile("org.jetbrains.kotlin:kotlin-script-util:1.1.4") {
-        exclude module: 'kotlin-stdlib'
-        exclude module: 'kotlin-compiler'
-    }
+    compile "org.jetbrains.kotlin:kotlin-stdlib:1.1.4-2"
+    compile "org.jetbrains.kotlin:kotlin-compiler-embeddable:1.1.4-2"
 
     compile 'org.liquibase:liquibase-core:3.4.2'
     testCompile 'junit:junit:4.12'
-    testCompile "org.jetbrains.kotlin:kotlin-test:1.1.4"
+    testCompile "org.jetbrains.kotlin:kotlin-test:1.1.4-2"
     testRuntime 'com.h2database:h2:1.4.185'
     archives 'org.apache.maven.wagon:wagon-ssh:2.8'
     archives 'org.apache.maven.wagon:wagon-ssh-external:2.8'
