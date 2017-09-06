@@ -1,5 +1,7 @@
 # Kotlin Liquibase
 
+[![Build Status](https://travis-ci.org/redundent/liquibase-kotlin-dsl.svg?branch=master)](https://travis-ci.org/redundent/liquibase-kotlin-dsl)
+
 A pluggable parser for [Liquibase](http://liquibase.org) that allows the
 creation of changelogs in a Kotlin DSL, rather than hurtful XML. If this DSL
 isn't reason enough to adopt Liquibase, then there is no hope for you.  This
