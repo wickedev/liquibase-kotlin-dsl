@@ -1,65 +1,56 @@
 buildscript {
-    repositories {
-        jcenter()
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:0.6'
-    }
+	repositories {
+		jcenter()
+		mavenCentral()
+	}
+	dependencies {
+		classpath("com.jfrog.bintray.gradle:gradle-bintray-plugin:0.6")
+	}
 }
 
 plugins {
-    id "org.jetbrains.kotlin.jvm" version "1.1.4-2"
+	kotlin("jvm") version "1.2.41"
+	`maven-publish`
 }
 
 //apply plugin: 'groovy'
-apply plugin: 'maven-publish'
 //apply plugin: 'signing'
 //apply plugin: 'com.jfrog.bintray'
 
-sourceCompatibility = 1.6
-targetCompatibility = 1.6
-
 // Release version that won't conflict with the bintray plugin
-def releaseVersion = '1.2.2'
-group = 'org.liquibase'
-archivesBaseName = 'liquibase-kotlin-dsl'
-version = releaseVersion
-ext.isSnapshot = releaseVersion.endsWith('SNAPSHOT')
-
-if (isSnapshot) {
-    println 'using snapshot'
-    ext.mavenCentralUploadUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
-} else {
-    println 'using staging'
-    ext.mavenCentralUploadUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
-}
+group = "org.liquibase"
+version = "1.2.2"
 
 configurations {
-    archives
+	"archives"()
 }
 
 repositories {
-    mavenCentral()
-    mavenLocal()
+	mavenCentral()
+	mavenLocal()
 }
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib:1.1.4-2"
-    compile "org.jetbrains.kotlin:kotlin-compiler-embeddable:1.1.4-2"
-
-    compile 'org.liquibase:liquibase-core:3.4.2'
-    testCompile 'junit:junit:4.12'
-    testCompile "org.jetbrains.kotlin:kotlin-test:1.1.4-2"
-    testRuntime 'com.h2database:h2:1.4.185'
-    archives 'org.apache.maven.wagon:wagon-ssh:2.8'
-    archives 'org.apache.maven.wagon:wagon-ssh-external:2.8'
+	compile(kotlin("compiler"))
+	compile(kotlin("script-util"))
+	compile("org.liquibase:liquibase-core:3.4.2")
+	testCompile("junit:junit:4.12")
+	testCompile(kotlin("test"))
+	testRuntime("com.h2database:h2:1.4.185")
+	archives("org.apache.maven.wagon:wagon-ssh:2.8")
+	archives("org.apache.maven.wagon:wagon-ssh-external:2.8")
 }
 
-task sourceJar(type: Jar) {
-    description = 'An archive of the source code for Maven Central'
-    classifier = 'sources'
-    from sourceSets.main.allSource
+tasks {
+	"sourceJar"(Jar::class) {
+		description = "An archive of the source code for Maven Central"
+		classifier = "sources"
+		from(java.sourceSets["main"].allSource)
+	}
+
+	getting(Wrapper::class) {
+		gradleVersion = "4.7"
+	}
 }
 /*
 artifacts {
@@ -163,17 +154,18 @@ def getPomConfiguration() {
     }
 }*/
 
-publishing {
-    repositories {
-        mavenLocal()
-    }
-    publications {
-        maven(MavenPublication) {
-            from components.java
-
-            artifact sourceJar {
-                classifier 'sources'
-            }
-        }
-    }
-}
+//    publishing {
+//        repositories {
+//            mavenLocal()
+//        }
+//        publications {
+//            maven(MavenPublication) {
+//                from components.java
+//
+//                        artifact sourceJar {
+//                    classifier 'sources'
+//                }
+//            }
+//        }
+//    }
+//}

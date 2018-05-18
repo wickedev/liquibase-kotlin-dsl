@@ -104,10 +104,6 @@ sql { """
 * The ```constraints``` element also has some hidden gems:
     - Some databases automatically create indexes for primary keys. The
       ```primaryKeyTablespace``` can be used to control the tablespace.
-    - A foreign key can be made by using the ```references``` attribute like
-      this: ```references = "monkey(id)"```, It can also be done like this:
-      ```referencedTableName = "monkey", referencedColumnNames = "id"``` for those
-    who prefer to separate out the table from the column.
     - There is also a ```checkConstraint``` attribute, that appears to be
       useful for defining a check constraint, but I could not determine the
       proper syntax for it yet.  For now, it may be best to stick to custom

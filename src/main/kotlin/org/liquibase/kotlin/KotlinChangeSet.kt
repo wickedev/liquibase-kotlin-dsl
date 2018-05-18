@@ -783,7 +783,7 @@ class KotlinChangeSet(
 		})
 	}
 
-	internal fun addChange(change: AbstractChange) {
+	private fun addChange(change: AbstractChange) {
 		change.resourceAccessor = resourceAccessor
 		changeSet.addChange(change)
 	}

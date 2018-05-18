@@ -23,8 +23,12 @@ import liquibase.exception.ChangeLogParseException
 import liquibase.parser.ChangeLogParser
 import liquibase.resource.ResourceAccessor
 import org.liquibase.kotlin.KotlinDatabaseChangeLog
+import java.io.ByteArrayOutputStream
 import java.io.InputStreamReader
+import java.io.PrintStream
+import javax.script.Compilable
 import javax.script.ScriptEngineManager
+import javax.script.ScriptException
 
 /**
  * This is the main parser class for the Liquibase Kotlin DSL.  It is the
@@ -42,13 +46,33 @@ open class KotlinLiquibaseChangeLogParser : ChangeLogParser {
 		val realLocation = physicalChangeLogLocation.replace("\\\\", "/")
 		val inputStreams = resourceAccessor.getResourcesAsStream(realLocation)
 		if (inputStreams == null || inputStreams.size < 1) {
-			throw ChangeLogParseException(realLocation + " does not exist")
+			throw ChangeLogParseException("$realLocation does not exist")
 		}
 
 		inputStreams.first().use { inputStream ->
-			val engine = ScriptEngineManager().getEngineByExtension("kts")!!
+			val engine = ScriptEngineManager().getEngineByExtension("kts")!! as Compilable
+
+			val err = System.err
+			val out = System.out
+			val compiled = try {
+				PrintStream(ByteArrayOutputStream()).use {
+					//Set the err and out values to avoid junk messages being written to the console.
+					System.setErr(it)
+					System.setOut(it)
+					InputStreamReader(inputStream).use {
+						engine.compile(it)
+					}
+				}
+			} catch (e: ScriptException) {
+				throw ScriptException("Compilation error", "$physicalChangeLogLocation.kts", e.lineNumber, e.columnNumber)
+						.apply { initCause(e) }
+			} finally {
+				System.setErr(err)
+				System.setOut(out)
+			}
+
 			@Suppress("UNCHECKED_CAST")
-			val clPair = engine.eval(InputStreamReader(inputStream)) as? Pair<String?, ((KotlinDatabaseChangeLog).() -> Unit)?>
+			val clPair = compiled.eval() as? Pair<String?, ((KotlinDatabaseChangeLog).() -> Unit)?>
 					?: throw IllegalArgumentException("eval returned something unexpected")
 
 			val changeLog = DatabaseChangeLog(clPair.first ?: physicalChangeLogLocation)
@@ -66,9 +90,8 @@ open class KotlinLiquibaseChangeLogParser : ChangeLogParser {
 		}
 	}
 
-
 	override fun supports(changeLogFile: String, resourceAccessor: ResourceAccessor): Boolean {
-		return changeLogFile.endsWith(".kt") || changeLogFile.endsWith(".kts")
+		return changeLogFile.endsWith(".kts")
 	}
 
 	override fun getPriority(): Int = ChangeLogParser.PRIORITY_DEFAULT
