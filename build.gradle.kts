@@ -14,7 +14,7 @@ plugins {
 }
 
 group = "com.faendir.liquibase"
-version = "1.2.3"
+version = "1.2.4"
 
 configurations {
     "archives"()
@@ -27,7 +27,7 @@ repositories {
 
 dependencies {
     implementation(kotlin("compiler"))
-    implementation(kotlin("scripting-compiler"))
+    api(kotlin("scripting-compiler"))
     implementation(kotlin("script-util"))
     implementation("org.liquibase:liquibase-core:3.4.2")
     testImplementation("junit:junit:4.12")
