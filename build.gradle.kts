@@ -13,9 +13,8 @@ plugins {
     idea
 }
 
-// Release version that won't conflict with the bintray plugin
-group = "org.liquibase"
-version = "1.2.2"
+group = "com.faendir.liquibase"
+version = "1.2.3"
 
 configurations {
     "archives"()
@@ -46,11 +45,45 @@ val sourcesJar by tasks.registering(Jar::class) {
 publishing {
     repositories {
         mavenLocal()
+        maven {
+            setUrl("https://api.bintray.com/maven/f43nd1r/maven/liquibase-kotlin-dsl/;publish=1")
+            name = "bintray"
+            credentials {
+                username = findProperty("artifactoryUser") as String?
+                password = findProperty("artifactoryApiKey") as String?
+            }
+        }
     }
     publications {
-        register("maven", MavenPublication::class) {
+        create<MavenPublication>("maven") {
             from(components["java"])
             artifact(sourcesJar.get())
+            pom {
+                name.set("liquibase-kotlin-dsl")
+                description.set("kotlin dsl plugin for liquibase")
+                url.set("https://github.com/F43nd1r/liquibase-kotlin-dsl")
+
+                scm {
+                    connection.set("scm:git:https://github.com/F43nd1r/liquibase-kotlin-dsl.git")
+                    developerConnection.set("scm:git:git@github.com:F43nd1r/liquibase-kotlin-dsl.git")
+                    url.set("https://github.com/F43nd1r/liquibase-kotlin-dsl.git")
+                }
+
+                licenses {
+                    license {
+                        name.set("The Apache License, Version 2.0")
+                        url.set("https://www.gnu.org/licenses/gpl-3.0.en.html")
+                        distribution.set("repo")
+                    }
+                }
+
+                developers {
+                    developer {
+                        id.set("f43nd1r")
+                        name.set("Lukas Morawietz")
+                    }
+                }
+            }
         }
     }
 }
