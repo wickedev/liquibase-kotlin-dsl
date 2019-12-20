@@ -19,16 +19,9 @@ package liquibase.parser.ext
 
 import liquibase.changelog.ChangeLogParameters
 import liquibase.changelog.DatabaseChangeLog
-import liquibase.exception.ChangeLogParseException
 import liquibase.parser.ChangeLogParser
 import liquibase.resource.ResourceAccessor
-import org.liquibase.kotlin.KotlinDatabaseChangeLog
-import java.io.ByteArrayOutputStream
-import java.io.InputStreamReader
-import java.io.PrintStream
-import javax.script.Compilable
-import javax.script.ScriptEngineManager
-import javax.script.ScriptException
+import org.liquibase.kotlin.KotlinDatabaseChangeLogDefinition
 
 /**
  * This is the main parser class for the Liquibase Kotlin DSL.  It is the
@@ -39,60 +32,26 @@ import javax.script.ScriptException
  * @author Steven C. Saliman
  * @author Jason Blackwell
  */
+@Suppress("unused")
 open class KotlinLiquibaseChangeLogParser : ChangeLogParser {
-	override fun parse(physicalChangeLogLocation: String, changeLogParameters: ChangeLogParameters?,
-			  resourceAccessor: ResourceAccessor): DatabaseChangeLog {
+    override fun parse(physicalChangeLogLocation: String, changeLogParameters: ChangeLogParameters?, resourceAccessor: ResourceAccessor): DatabaseChangeLog {
+        val clazz = try {
+            KotlinLiquibaseChangeLogParser::class.java.classLoader.loadClass(physicalChangeLogLocation.removeSuffix(".kt"))
+        } catch (e: ClassNotFoundException) {
+            throw RuntimeException("$physicalChangeLogLocation is not a class", e)
+        }
+        if (clazz.isAssignableFrom(KotlinDatabaseChangeLogDefinition::class.java)) {
+            throw RuntimeException("$physicalChangeLogLocation is not a class implementing ${KotlinDatabaseChangeLogDefinition::class.java.simpleName}")
+        }
+        if (clazz.getConstructor() == null) {
+            throw RuntimeException("$physicalChangeLogLocation needs to have a public no-arg constructor")
+        }
+        return (clazz.newInstance() as KotlinDatabaseChangeLogDefinition).define()
+    }
 
-		val realLocation = physicalChangeLogLocation.replace("\\\\", "/")
-		val inputStreams = resourceAccessor.getResourcesAsStream(realLocation)
-		if (inputStreams == null || inputStreams.size < 1) {
-			throw ChangeLogParseException("$realLocation does not exist")
-		}
+    override fun supports(changeLogFile: String, resourceAccessor: ResourceAccessor): Boolean {
+        return changeLogFile.endsWith(".kt")
+    }
 
-		inputStreams.first().use { inputStream ->
-			val engine = ScriptEngineManager().getEngineByExtension("kts")!! as Compilable
-
-			val err = System.err
-			val out = System.out
-			val compiled = try {
-				PrintStream(ByteArrayOutputStream()).use {
-					//Set the err and out values to avoid junk messages being written to the console.
-					System.setErr(it)
-					System.setOut(it)
-					InputStreamReader(inputStream).use {
-						engine.compile(it)
-					}
-				}
-			} catch (e: ScriptException) {
-				throw ScriptException("Compilation error", "$physicalChangeLogLocation.kts", e.lineNumber, e.columnNumber)
-						.apply { initCause(e) }
-			} finally {
-				System.setErr(err)
-				System.setOut(out)
-			}
-
-			@Suppress("UNCHECKED_CAST")
-			val clPair = compiled.eval() as? Pair<String?, ((KotlinDatabaseChangeLog).() -> Unit)?>
-					?: throw IllegalArgumentException("eval returned something unexpected")
-
-			val changeLog = DatabaseChangeLog(clPair.first ?: physicalChangeLogLocation)
-			// The changeLog will have been populated by the script
-			changeLog.changeLogParameters = changeLogParameters
-
-			val ktChangeLog = KotlinDatabaseChangeLog(changeLog)
-			ktChangeLog.resourceAccessor = resourceAccessor
-
-			clPair.second?.let {
-				ktChangeLog.it()
-			}
-
-			return changeLog
-		}
-	}
-
-	override fun supports(changeLogFile: String, resourceAccessor: ResourceAccessor): Boolean {
-		return changeLogFile.endsWith(".kts")
-	}
-
-	override fun getPriority(): Int = ChangeLogParser.PRIORITY_DEFAULT
+    override fun getPriority(): Int = ChangeLogParser.PRIORITY_DEFAULT
 }

@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 buildscript {
     repositories {
         jcenter()
@@ -14,7 +16,7 @@ plugins {
 }
 
 group = "com.faendir.liquibase"
-version = "1.2.4"
+version = "2.0.0"
 
 configurations {
     "archives"()
@@ -26,15 +28,8 @@ repositories {
 }
 
 dependencies {
-    implementation(kotlin("compiler"))
-    api(kotlin("scripting-compiler"))
-    implementation(kotlin("script-util"))
     implementation("org.liquibase:liquibase-core:3.4.2")
-    testImplementation("junit:junit:4.12")
-    testImplementation(kotlin("test"))
-    testRuntimeOnly("com.h2database:h2:1.4.185")
-    archives("org.apache.maven.wagon:wagon-ssh:2.8")
-    archives("org.apache.maven.wagon:wagon-ssh-external:2.8")
+    implementation(kotlin("stdlib-jdk8"))
 }
 
 val sourcesJar by tasks.registering(Jar::class) {
@@ -86,4 +81,12 @@ publishing {
             }
         }
     }
+}
+val compileKotlin: KotlinCompile by tasks
+compileKotlin.kotlinOptions {
+    jvmTarget = "1.8"
+}
+val compileTestKotlin: KotlinCompile by tasks
+compileTestKotlin.kotlinOptions {
+    jvmTarget = "1.8"
 }
