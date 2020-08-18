@@ -398,7 +398,7 @@ class KotlinChangeSet(
 
 	fun alterSequence(sequenceName: String, catalogName: String? = null, schemaName: String? = null, incrementBy: Any? = null,
 					  maxValue: Any? = null, minValue: Any? = null, ordered: Any? = null, cacheSize: Any? = null,
-					  willCycle: Any? = null) {
+					  cycle: Any? = null) {
 		addChange(AlterSequenceChange().apply {
 			this.sequenceName = sequenceName.eval()
 			this.catalogName = catalogName?.eval()
@@ -408,7 +408,7 @@ class KotlinChangeSet(
 			this.minValue = minValue?.evalBigInteger()
 			this.isOrdered = ordered?.evalBool()
 			this.cacheSize = cacheSize?.evalBigInteger()
-			this.willCycle = willCycle?.evalBool()
+			this.cycle = cycle?.evalBool()
 		})
 	}
 
@@ -481,7 +481,7 @@ class KotlinChangeSet(
 
 	fun customChange(className: String, params: ((KotlinParameterWrapper).() -> Unit)? = null) {
 		val customChangeWrapper = CustomChangeWrapper().apply {
-			classLoader = KotlinChangeSet@this.javaClass.classLoader
+			classLoader = this@KotlinChangeSet.javaClass.classLoader
 			setClass(className.eval())
 		}
 

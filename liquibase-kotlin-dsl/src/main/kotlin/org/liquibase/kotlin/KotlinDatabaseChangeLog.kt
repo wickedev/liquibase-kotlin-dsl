@@ -78,8 +78,6 @@ class KotlinDatabaseChangeLog(databaseChangeLog: DatabaseChangeLog) : BaseObject
         includeChangeLog(fileName)
     }
 
-    fun include(clazz: Class<out KotlinDatabaseChangeLogDefinition>) = include(clazz.name + ".kt")
-
     /**
      * Process the includeAll element to include all kotlin files in a directory.
      */

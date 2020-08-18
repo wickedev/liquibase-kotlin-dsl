@@ -113,7 +113,7 @@ class KotlinPrecondition(onFail: PreconditionContainer.FailOption?,
 
 	fun customPrecondition(className: String, params: ((KotlinParameterWrapper).() -> Unit)? = null) {
 		val precondition = CustomPreconditionWrapper().apply {
-			this.classLoader = KotlinPrecondition@this.javaClass.classLoader
+			this.classLoader = this@KotlinPrecondition.javaClass.classLoader
 			this.className = className.eval()
 		}
 

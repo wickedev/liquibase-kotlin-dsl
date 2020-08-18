@@ -1,1 +1,3 @@
-rootProject.name = "liquibase-kotlin-dsl"
+include("script-definition")
+include("liquibase-kotlin-dsl")
+include("example")

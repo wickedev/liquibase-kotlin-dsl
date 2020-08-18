@@ -1,15 +1,41 @@
 # Kotlin Liquibase
 
-[![Build Status](https://travis-ci.org/redundent/liquibase-kotlin-dsl.svg?branch=master)](https://travis-ci.org/redundent/liquibase-kotlin-dsl)
+A pluggable parser for [Liquibase](http://liquibase.org) that allows the creation of changelogs in a Kotlin DSL, rather than hurtful XML. If this DSL isn't reason enough to adopt Liquibase, then there is no hope for you.  This project is based off of [redundent/liquibase-kotlin-dsl](https://github.com/redundent/liquibase-kotlin-dsl) which itself is based on [Liquibase groovy dsl](https://github.com/liquibase/liquibase-groovy-dsl).
 
-A pluggable parser for [Liquibase](http://liquibase.org) that allows the
-creation of changelogs in a Kotlin DSL, rather than hurtful XML. If this DSL
-isn't reason enough to adopt Liquibase, then there is no hope for you.  This
-project is HEAVILY based off of Groovy Liquibase which was started by Tim Berglund, and is currently maintained by Steve
-Saliman.
+## Usage
+0. Configure Kotlin
 
-## News
+1. Add the dependency `build.gradle.kts`
+```kotlin
+dependencies {
+    implementation("com.faendir.liquibase:liquibase-kotlin-dsl:3.0.0")
+}
+```
 
+2. Then create your changelog file **in your source directory**, e.g. `src/main/kotlin/com/faendir/liquibase/main.changelog.kts`. Make sure your file name ends with `.changelog.kts`.
+
+Your file must end with a call to `databaseChangeLog {}`. E.g.
+```kotlin
+databaseChangeLog {
+    changeSet("test-1", "f43nd1r") {
+        createTable("test") {
+            column(name = "test", type = "LONGTEXT") {
+                constraints(nullable = false)
+            }
+        }
+    }
+}
+```
+
+3. Tell liquibase where your changelog is.
+E.g. in spring boot `application.properties`
+```properties
+spring.liquibase.changelog=com/faendir/liquibase/main.changelog.kts
+```
+
+See also: example project in this repository.
+
+## Advanced Information
 ##### Additions to the XML format:
 * In general, boolean attributes can be specified as either strings or booleans.
   For example, `changeSet(runAlways = "true")` can also be written as
@@ -133,10 +159,10 @@ sql { """
   ```addPrimaryKey``` and ```addUniqueConstraint``` changes.  These attributes
   allow you to specify the index that will be used to implement the primary key
    and unique constraint, respectively.
-* Liquibase 3.4.0 added the undocumented ```cacheSize``` and ```willCycle``` 
+* Liquibase 3.4.0 added the undocumented ```cacheSize``` and ```cycle``` 
   attributes to the ```alterSequence```  change. ```cacheSize``` sets how many 
   numbers of the sequence will be fetched into memory for each query that 
-  accesses the sequence.  ```willCycle``` determines if the sequence should 
+  accesses the sequence.  ```cycle``` determines if the sequence should 
   start over when it reaches its maximum value.
 
 ## License
