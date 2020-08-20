@@ -9,7 +9,7 @@ import kotlin.script.experimental.api.ide
 import kotlin.script.experimental.jvm.dependenciesFromClassContext
 import kotlin.script.experimental.jvm.jvm
 
-class ChangelogScriptConfiguration(body: Builder.() -> Unit = {}) : ScriptCompilationConfiguration( {
+class ChangelogScriptConfiguration : ScriptCompilationConfiguration( {
   defaultImports("org.liquibase.kotlin.*")
   ide {
     acceptedLocations(ScriptAcceptedLocation.Everywhere)
@@ -17,7 +17,6 @@ class ChangelogScriptConfiguration(body: Builder.() -> Unit = {}) : ScriptCompil
   jvm {
     dependenciesFromClassContext(ChangelogScript::class, wholeClasspath = true)
   }
-  body()
 })
 
 @KotlinScript(fileExtension = "changelog.kts", compilationConfiguration = ChangelogScriptConfiguration::class)
