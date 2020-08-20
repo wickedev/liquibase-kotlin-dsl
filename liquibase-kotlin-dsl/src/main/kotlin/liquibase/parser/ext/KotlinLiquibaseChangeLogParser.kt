@@ -15,7 +15,7 @@ open class KotlinLiquibaseChangeLogParser : ChangeLogParser {
         } catch (e: ClassNotFoundException) {
             throw RuntimeException("$physicalChangeLogLocation is not a class", e)
         }
-        if (clazz.isAssignableFrom(ChangelogScript::class.java)) {
+        if (!ChangelogScript::class.java.isAssignableFrom(clazz)) {
             throw RuntimeException("$physicalChangeLogLocation is not a class implementing ${ChangelogScript::class.java.simpleName}")
         }
         val instance = clazz.constructors.single().newInstance()
