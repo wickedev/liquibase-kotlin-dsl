@@ -1,0 +1,90 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.faendir.liquibase",
+    "module": "liquibase-kotlin-dsl",
+    "version": "3.0.1",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "6.6",
+      "buildId": "3i7xtyvfsfac3iyldeuhs4nuhi"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 15,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.localToProject": "public",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "com.faendir.liquibase",
+          "module": "script-definition",
+          "version": {
+            "requires": "3.0.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "liquibase-kotlin-dsl-3.0.1.jar",
+          "url": "liquibase-kotlin-dsl-3.0.1.jar",
+          "size": 79210,
+          "sha512": "99fe2e396b1ef134facd7ae16edfe17ea625856c285ebed9415dc97c5f7484684ffc31e5f60aad7d756b35ffbe0b55713c6973b3198f05c810a45723a2d74d2e",
+          "sha256": "125bca07b6834c2a3789d45b900648d3bc851cf31c29bad5f828f25e8181fd16",
+          "sha1": "a8b22626ea650ad88d87793b6db37000fb2e59ea",
+          "md5": "264bc26b60ec2be6073eb55e89dd1526"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 15,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.localToProject": "public",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.liquibase",
+          "module": "liquibase-core",
+          "version": {
+            "requires": "3.10.2"
+          }
+        },
+        {
+          "group": "com.faendir.liquibase",
+          "module": "script-definition",
+          "version": {
+            "requires": "3.0.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "liquibase-kotlin-dsl-3.0.1.jar",
+          "url": "liquibase-kotlin-dsl-3.0.1.jar",
+          "size": 79210,
+          "sha512": "99fe2e396b1ef134facd7ae16edfe17ea625856c285ebed9415dc97c5f7484684ffc31e5f60aad7d756b35ffbe0b55713c6973b3198f05c810a45723a2d74d2e",
+          "sha256": "125bca07b6834c2a3789d45b900648d3bc851cf31c29bad5f828f25e8181fd16",
+          "sha1": "a8b22626ea650ad88d87793b6db37000fb2e59ea",
+          "md5": "264bc26b60ec2be6073eb55e89dd1526"
+        }
+      ]
+    }
+  ]
+}
