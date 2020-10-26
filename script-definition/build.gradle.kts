@@ -1,10 +1,11 @@
 plugins {
+    kotlin("jvm")
     id("maven-publish")
-    id("org.jetbrains.kotlin.jvm")
 }
 
 dependencies {
     implementation(kotlin("scripting-jvm"))
+    implementation(kotlin("stdlib-jdk8"))
 }
 
 publishing {
